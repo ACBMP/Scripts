@@ -1,0 +1,115 @@
+import vapoursynth as vs
+core = vs.core
+core.max_cache_size=64
+from functools import partial
+import os
+
+os.environ['LC_ALL'] = 'C'
+
+def OCR(screenshot, game, players):
+    img = core.ffms2.Source(screenshot)
+    img = img.resize.Point(format=vs.GRAY8, matrix_s="709")
+    if game.lower() == "acb":
+        # these are for 6-man lobbies only atm
+        scale = img.width / 1280
+        left = 231 * scale
+        top = 148 * scale
+        right = 525 * scale
+        bottom = 420 * scale
+        binarize = 117
+        img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
+        common = {
+                "$S": "$5",
+                "$g": "$9",
+                "Tha$Fazz": "Tha Fazz",
+                "EtermityEzioWolf": "EternityEzioWolf",
+                "DevelSpnt": "DevelSpirit",
+                "DaokO": "Daok0",
+                "piesiol": "piesio1",
+                }
+    elif game.lower() == "acr":
+        scale = img.width / 1280
+        left = 518 * scale
+        top = [194 * scale, 360 * scale]
+        right=352 * scale
+        bottom = [430 * scale, 264 * scale]
+        binarize = 155
+        t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
+        b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
+        img = core.std.StackVertical([t, b])
+    else:
+        return OCR(screenshot, "acb", players)
+   
+    # upscaling helps lol
+    # too high -> OOM
+    img = img.resize.Spline16(img.width * 3, img.height * 3)
+    
+    # can't use a sophisticated denoising algorithm so just use this to reduce noise & ringing
+    img = img.std.Convolution(matrix=[1, 2, 1, 2, 4, 2, 1, 2, 1]) 
+    
+    # split players
+    img_arr = []
+    m = int(players)
+    for i in range(1, m + 1):
+        img_arr.append(img.std.Crop(bottom=img.height / m * (m - i), top=img.height / m * (i - 1)))
+    
+    img = img_arr[0]
+    for i in img_arr[1:]:
+        img += i
+    
+    # invert if main player (the one taking the screenshot)
+    def check_invert(n, f, c):
+        if f.props.PlaneStatsAverage < .6:
+            return c.std.Invert()
+        else:
+            return c
+    
+    img = img.std.FrameEval(partial(check_invert, c=img), img.std.PlaneStats())
+    
+    # binarize output to ease scanning
+    # ACB: 120
+    # ACR: 155
+    # AC4: ?
+    img = img.std.Binarize(binarize)
+   
+    # and finally a quick sharpen (not that importnat tbh)
+    img = img.warp.AWarpSharp2()
+    # alternatively (this is less than ideal)
+    #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
+     
+    # the actual OCR
+    img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
+    
+    # print OCR results onto frame
+    def print_subs(n, f, c, result_f):
+        # prepare AN format for each player
+        # store n so we can sort and don't have to do this single-threaded
+        result = str(n) + str(f.props.OCRString).replace("b'", "").replace("'", "").replace(" ", "$").replace("\\n", ", ")
+        # common mistakes
+        for m in [*common]:
+            result = result.replace(m, common[m])
+        result_f.append(result)
+        return c.sub.Subtitle(result, style="sans-serif,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1")
+    
+    # prepare list which will store all the results
+    result_f = []
+    
+    # progress update
+    def __vs_out_updated(c, t):
+        if c == t:
+            print("Frame: {}/{}".format(c, t), end="\n")
+        else:
+            print("Frame: {}/{}".format(c, t), end="\r")
+    
+    
+    # run script
+    with open(os.devnull, 'wb') as f:
+        processed = img.std.FrameEval(partial(print_subs, c=img, result_f=result_f), img)
+        processed.output(f, progress_update=__vs_out_updated)
+    
+    # remove n from earlier and join
+    return ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
+
+
+if __name__ == "__main__":
+    print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
