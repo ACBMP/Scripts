@@ -757,7 +757,7 @@ async def ocr_screenshot(message):
     def guild_params():
         if message.guild.id in conf.e_servers:
             game = "acb"
-            players = 2
+            players = 4
         elif message.guild.id in conf.mh_servers:
             game = "acb"
             players = 6

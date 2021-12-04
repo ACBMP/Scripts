@@ -7,16 +7,17 @@ import os
 os.environ['LC_ALL'] = 'C'
 
 def OCR(screenshot, game, players):
+    players = int(players)
     img = core.ffms2.Source(screenshot)
     img = img.resize.Point(format=vs.GRAY8, matrix_s="709")
     if game.lower() == "acb":
         # these are for 6-man lobbies only atm
         scale = img.width / 1280
-        left = 231 * scale
+        left = 230 * scale
         top = 148 * scale
         right = 525 * scale
-        bottom = 420 * scale
-        binarize = 117
+        bottom = 420 + (25 * abs(6 - players)) * scale
+        binarize = [135, 145] # highlight, rest
         img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
         common = {
                 "$S": "$5",
@@ -33,7 +34,7 @@ def OCR(screenshot, game, players):
         top = [194 * scale, 360 * scale]
         right=352 * scale
         bottom = [430 * scale, 264 * scale]
-        binarize = 155
+        binarize = [155, 155]
         t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
@@ -49,7 +50,7 @@ def OCR(screenshot, game, players):
     
     # split players
     img_arr = []
-    m = int(players)
+    m = players
     for i in range(1, m + 1):
         img_arr.append(img.std.Crop(bottom=img.height / m * (m - i), top=img.height / m * (i - 1)))
     
@@ -57,21 +58,15 @@ def OCR(screenshot, game, players):
     for i in img_arr[1:]:
         img += i
     
-    # invert if main player (the one taking the screenshot)
+    # invert if main player (the one taking the screenshot) and binarize
     def check_invert(n, f, c):
         if f.props.PlaneStatsAverage < .6:
-            return c.std.Invert()
+            return c.std.Invert().std.Binarize(binarize[0])
         else:
-            return c
+            return c.std.Binarize(binarize[1])
     
     img = img.std.FrameEval(partial(check_invert, c=img), img.std.PlaneStats())
-    
-    # binarize output to ease scanning
-    # ACB: 120
-    # ACR: 155
-    # AC4: ?
-    img = img.std.Binarize(binarize)
-   
+      
     # and finally a quick sharpen (not that importnat tbh)
     img = img.warp.AWarpSharp2()
     # alternatively (this is less than ideal)
