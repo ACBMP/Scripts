@@ -23,12 +23,9 @@ def read_and_update():
             entry_dict["new"]=True
 
             #mode
-            if csv_entry[0] == "M":
-                entry_dict["mode"]="Manhunt"
-                modes["mh"] = True
-            elif csv_entry[0] == "E":
-                entry_dict["mode"]="Escort"
-                modes["e"] = True
+            if csv_entry[0] in ["M", "E"]:
+                entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
+                modes[check_mode(csv_entry[0], short=True)] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue

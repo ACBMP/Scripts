@@ -171,7 +171,7 @@ def tweet(mode):
         if first.count() == 1:
             first = db.players.find({f"{mode}rank" : 1})
             first = first[0]
-            text = f"Congratulations to {first['name']} for climbing the mountain and attaining the coveted first place with {first['{mode}mmr']} points!"
+            text = f"Congratulations to {first['name']} for climbing the mountain and attaining the coveted first place with {first[f'{mode}mmr']} points!"
         else:
             first = db.players.find({f"{mode}rank" : 1})
             players, players_joined = join_players(first)
@@ -182,7 +182,7 @@ def tweet(mode):
     elif hichange.count() > 0:
         if hichange.count() == 1:
             hichange = hichange[0]
-            text = f"Congratulations to {hichange['name']} for climbing from rank {hichange['{mode}rank'] + hichange['{mode}rankchange']} all the way to rank {hichange['{mode}rank']}!"
+            text = f"Congratulations to {hichange['name']} for climbing from rank {hichange[f'{mode}rank'] + hichange[f'{mode}rankchange']} all the way to rank {hichange[f'{mode}rank']}!"
         else:
             players, players_joined = join_players(hichange)
             text = f"{players_joined} and {players[-1]['name']} did some impressive climbing today!"
@@ -197,7 +197,7 @@ def tweet(mode):
         if r == 0:
             if first.count() == 1:
                 first = first[0]
-                text = f"{first['name']} currently sits atop our leaderboards with {first['{mode}mmr']} points."
+                text = f"{first['name']} currently sits atop our leaderboards with {first[f'{mode}mmr']} points."
                 first_place_frame(mode, "table.png")
             else:
                 players, players_joined = join_players(first)

@@ -34,10 +34,11 @@ def OCR(screenshot, game, players):
         top = [194 * scale, 360 * scale]
         right=352 * scale
         bottom = [430 * scale, 264 * scale]
-        binarize = [155, 155]
+        binarize = [155, 110]
         t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
+        common = {}
     else:
         return OCR(screenshot, "acb", players)
    
@@ -60,7 +61,7 @@ def OCR(screenshot, game, players):
     
     # invert if main player (the one taking the screenshot) and binarize
     def check_invert(n, f, c):
-        if f.props.PlaneStatsAverage < .6:
+        if f.props.PlaneStatsMin > 75:
             return c.std.Binarize(binarize[0], v0=255, v1=0)
         else:
             return c.std.Binarize(binarize[1])
