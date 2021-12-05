@@ -38,7 +38,9 @@ def OCR(screenshot, game, players):
         t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
-        common = {}
+        common = {
+                "piesiol": "piesio1",
+                }
     else:
         return OCR(screenshot, "acb", players)
    

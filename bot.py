@@ -773,14 +773,15 @@ async def ocr_screenshot(message):
         return game, players
 
     msg = message.content.lower()
-    msg = msg.replace("ocr ", "")
+    msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
+    print(msg)
     
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
         players = msg[1]
         game = msg[0]
-    elif msg != "":
+    elif msg != [""]:
         try:
             players = int(msg[0])
             game = guild_params()[0]
@@ -789,6 +790,7 @@ async def ocr_screenshot(message):
             players = guild_params()[1]
     else:
         game, players = guild_params()
+    print(game, players)
     # download the image and save to folder then send the results of the OCR script
     if message.attachments:
         img = requests.get(message.attachments[0].url)
