@@ -1,5 +1,6 @@
 # rename me to botconfig.py
 discord_id = ""
+admin = #int
 main_server = #int
 e_servers = [] #ints
 mh_servers = [] #ints

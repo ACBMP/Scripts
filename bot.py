@@ -98,8 +98,6 @@ insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than y
 def find_insult():
     return random.choice(insults)
 
-conf.main_server = conf.main_server
-
 # change bot presence function
 # it just appends queues if there's someone in one
 # otherwise it shows Wanted 6/9
@@ -805,7 +803,7 @@ async def ocr_screenshot(message):
 
 # add users to the db
 async def user_add(message):
-    if get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server:
+    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id == conf.admin:
         msg = message.content[9:]
         info = msg.split("; ")
         name = info[0]
