@@ -833,8 +833,8 @@ async def user_add(message):
                 "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
                 "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
-                "aarstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
-                "aadstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+                "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
                 "discord_id":discord_id}
                 )
             await message.channel.send("Successfully added user.")
