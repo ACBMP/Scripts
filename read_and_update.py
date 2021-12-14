@@ -4,6 +4,7 @@ import historyupdate
 import ranks
 import tweet
 import botconfig as conf
+from util import *
 
 def read_and_update():
     client = MongoClient('mongodb://localhost:27017/')

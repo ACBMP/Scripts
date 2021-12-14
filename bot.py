@@ -773,7 +773,6 @@ async def ocr_screenshot(message):
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
-    print(msg)
     
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
@@ -814,7 +813,30 @@ async def user_add(message):
         discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
         db = connect()
         try:
-            db.players.insert_one({"name":name, "ign":ign, "link":link, "nation":nation, "platforms":platforms, "emmr":int(800), "mhmmr":int(800), "ehistory":{"dates":[], "mmrs":[]}, "mhhistory":{"dates":[], "mmrs":[]}, "egames":{"total":int(0), "won":int(0), "lost":int(0)}, "mhgames":{"total":int(0), "won":int(0), "lost":int(0)}, "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)}, "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)}, "discord_id":discord_id})
+            db.players.insert_one({
+                "name":name,
+                "ign":ign,
+                "link":link,
+                "nation":nation,
+                "platforms":platforms,
+                "emmr":int(800),
+                "mhmmr":int(800),
+                "aarmmr":int(800),
+                "aadmmr":int(800),
+                "ehistory":{"dates":[], "mmrs":[]},
+                "mhhistory":{"dates":[], "mmrs":[]},
+                "aarhistory":{"dates":[], "mmrs":[]},
+                "aadhistory":{"dates":[], "mmrs":[]},
+                "egames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "aarstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "aadstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "discord_id":discord_id}
+                )
             await message.channel.send("Successfully added user.")
         except:
             await message.channel.send("An error has occured.")
