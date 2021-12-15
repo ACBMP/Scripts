@@ -164,7 +164,7 @@ def new_matches():
                     db.players.update_one(
                             {"ign": player_["player"]},
                             {"$inc": {
-                                f"f{mode}games.total": 1,
+                                f"{mode}games.total": 1,
                                 f"{mode}games.won": team_x_stat[0],
                                 f"{mode}games.lost": team_x_stat[1],
                                 f"{mode}stats.totalscore": player_["score"],
@@ -200,7 +200,7 @@ def new_matches():
                     db.players.update_one(
                             {"ign": player_["player"]},
                             {"$inc": {
-                                f"f{mode}games.total": 1,
+                                f"{mode}games.total": 1,
                                 f"{mode}games.won": team_x_stat[0],
                                 f"{mode}games.lost": team_x_stat[1],
                                 f"{mode}stats.totalscore": player_["score"],
