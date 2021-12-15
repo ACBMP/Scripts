@@ -140,54 +140,76 @@ def new_matches():
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         
-        team_1_stat=[0,0]
-        team_2_stat=[0,0]
+        team_stat = [[0, 0], [0, 0]]
         if m["outcome"] == 1:
-            team_1_stat=[1,0]
-            team_2_stat=[0,1]
+            team_stat = [[1, 0], [0, 1]]
         elif m["outcome"] == 2:
-            team_1_stat=[0,1]
-            team_2_stat=[1,0]
+            team_stat = [[0, 1], [1, 0]]
+
         #Updating the relevant MMR
-        if m["mode"]=="Escort":
+        if m["mode"] in ["Escort", "Manhunt"]:
+            mode = check_mode(m["mode"], short=True)
             for resultentry in result:
-                db.players.update_one({"name":resultentry["name"]},{"$set":{"emmr":resultentry["mmr"]}})
+                db.players.update_one(
+                        {"name": resultentry["name"]},
+                        {"$set": {
+                            f"{mode}mmr":
+                            resultentry["mmr"]
+                            }}
+                        )
 
-            for player_ in m["team1"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"egames.total":1,"egames.won":team_1_stat[0],"egames.lost":team_1_stat[1], "estats.totalscore":player_["score"],"estats.kills":player_["kills"], "estats.deaths":player_["deaths"]}})
+            for team in [1, 2]:
+                team_x_stat = team_start[team - 1]
+                for player_ in m[f"team{team}"]:
+                    db.players.update_one(
+                            {"ign": player_["player"]},
+                            {"$inc": {
+                                f"f{mode}games.total": 1,
+                                f"{mode}games.won": team_x_stat[0],
+                                f"{mode}games.lost": team_x_stat[1],
+                                f"{mode}stats.totalscore": player_["score"],
+                                f"{mode}stats.kills": player_["kills"],
+                                f"{mode}stats.deaths": player_["deaths"]
+                                }}
+                            )
+    
+                    temp_player = db.players.find_one({"ign": player_["player"]})
+    
+                    if temp_player[f"{mode}stats"]["highscore"] < player_["score"]:
+                        db.players.update_one(
+                                {"ign": player_["player"]},
+                                {"$set": {f"{mode}stats.highscore": player_["score"]}}
+                                )
 
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["estats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"estats.highscore":player_["score"]}})
-
-            for player_ in m["team2"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"egames.total":1,"egames.won":team_2_stat[0],"egames.lost":team_2_stat[1], "estats.totalscore":player_["score"],"estats.kills":player_["kills"], "estats.deaths":player_["deaths"]}})
-
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["estats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"estats.highscore":player_["score"]}})
-                
-        else:
+        elif m["mode"] == "Artifact assault":
+            # we still have to figure out runners and defenders!
+            # otherwise the mode doesn't make sense because we separate stats by role
+            mode = check_mode(m["mode"], short=True)
             for resultentry in result:
-                db.players.update_one({"name":resultentry["name"]},{"$set":{"mhmmr":resultentry["mmr"]}})
+                db.players.update_one(
+                        {"name": resultentry["name"]},
+                        {"$set": {
+                            f"{mode}mmr":
+                            resultentry["mmr"]
+                            }}
+                        )
 
-            for player_ in m["team1"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"mhgames.total":1,"mhgames.won":team_1_stat[0],"mhgames.lost":team_1_stat[1], "mhstats.totalscore":player_["score"],"mhstats.kills":player_["kills"], "mhstats.deaths":player_["deaths"]}})
-
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["mhstats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"mhstats.highscore":player_["score"]}})
-
-            for player_ in m["team2"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"mhgames.total":1,"mhgames.won":team_2_stat[0],"mhgames.lost":team_2_stat[1], "mhstats.totalscore":player_["score"],"mhstats.kills":player_["kills"], "mhstats.deaths":player_["deaths"]}})
-                
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["mhstats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"mhstats.highscore":player_["score"]}})
+            for team in [1, 2]:
+                team_x_stat = team_start[team - 1]
+                for player_ in m[f"team{team}"]:
+                    db.players.update_one(
+                            {"ign": player_["player"]},
+                            {"$inc": {
+                                f"f{mode}games.total": 1,
+                                f"{mode}games.won": team_x_stat[0],
+                                f"{mode}games.lost": team_x_stat[1],
+                                f"{mode}stats.totalscore": player_["score"],
+                                f"{mode}stats.kills": player_["kills"],
+                                f"{mode}stats.deaths": player_["deaths"]
+                                f"{mode}stats.conceded": player_["conceded"]
+                                f"{mode}stats.scored": player_["scored"]
+                                }}
+                            )
         
         db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
         print("Match updated successfully!")

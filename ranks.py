@@ -4,7 +4,7 @@ import itertools
 # I have yet to run this so nobody has a rank yet
 
 def main():
-    for mode in ["mh", "e"]:
+    for mode in ["mh", "e", "aar", "aad"]:
         db = connect()
         players = db.players.find({f"{mode}games.total": {"$gte":10}})
         p_sorted = sorted(players, key=lambda player: player[f"{mode}mmr"], reverse=True)

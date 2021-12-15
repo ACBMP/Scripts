@@ -36,7 +36,7 @@ def update():
 
 
 def mmr_update(d, db, p, mode):
-    if mode not in ["e", "mh"]:
+    if mode not in ["e", "mh", "aar", "aad"]:
         raise ValueError("mmr_update: Unrecognized mode!")
 
     dates = p[f"{mode}history"]["dates"]
