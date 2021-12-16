@@ -121,22 +121,17 @@ def new_matches():
 
     for i in range(len(matches)):
         m = matches[i]
-        t1=[]
-        t2=[]
-        s1 = 0
-        s2 = 0
+        t = [[], []]
+        s = [0, 0]
         i = 0
-        for player in m["team1"]:
-            temp_ = identify_player(db, player["player"])
-            t1.append(temp_)
-            s1 += m["team1"][i]["score"]
-        for player in m["team2"]:
-            temp_ = identify_player(db, player["player"])
-            t2.append(temp_)
-            s2 += m["team2"][i]["score"]
-            i += 1
+        for team in [1, 2]:
+            for player in m[f"team{team}"]:
+                temp_ = identify_player(db, player["player"])
+                t[team - 1].append(temp_)
+                s[team - 1] += m[f"team{team}"][i]["score"]
+                i += 1
 
-        result = team_ratings(match=m, team_1=t1, team_2=t2, outcome=m["outcome"], score_1=s1, score_2=s2)
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1])
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         
@@ -159,7 +154,7 @@ def new_matches():
                         )
 
             for team in [1, 2]:
-                team_x_stat = team_start[team - 1]
+                team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
                     db.players.update_one(
                             {"ign": player_["player"]},
@@ -185,17 +180,9 @@ def new_matches():
             # we still have to figure out runners and defenders!
             # otherwise the mode doesn't make sense because we separate stats by role
             mode = check_mode(m["mode"], short=True)
-            for resultentry in result:
-                db.players.update_one(
-                        {"name": resultentry["name"]},
-                        {"$set": {
-                            f"{mode}mmr":
-                            resultentry["mmr"]
-                            }}
-                        )
 
             for team in [1, 2]:
-                team_x_stat = team_start[team - 1]
+                team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
                     db.players.update_one(
                             {"ign": player_["player"]},
@@ -210,7 +197,16 @@ def new_matches():
                                 f"{mode}stats.scored": player_["scored"]
                                 }}
                             )
-        
+
+             for resultentry in result:
+                db.players.update_one(
+                        {"name": resultentry["name"]},
+                        {"$set": {
+                            f"{mode}mmr":
+                            resultentry["mmr"]
+                            }}
+                        )
+       
         db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
         print("Match updated successfully!")
 
