@@ -26,7 +26,7 @@ def read_and_update():
             #mode
             if csv_entry[0] in ["M", "E", "AA"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
-                modes[check_mode(csv_entry[0], short=True)] = True
+#                modes[check_mode(csv_entry[0], short=True)] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue
@@ -35,8 +35,6 @@ def read_and_update():
         
             #players
             number_of_players = int(csv_entry[1])
-            team1 = []
-            team2 = []
             teams = [[], []]
             for index in range(0, number_of_players):
                 teams[0].append(csv_entry[3 + index])
