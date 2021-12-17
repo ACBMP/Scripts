@@ -92,16 +92,24 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
     
     result = []
     # update values in database
-    for i in range(l):
-        if match["mode"]=="Escort":
-            player1={"name":team_1[i]["name"], "mmr":int(round(new_R(R=team_1[i]["emmr"], S=S[0], E=E_1, N=(team_1[i]["egames"]["total"] + 1), t1=score_1, t2=score_2)))}
-            player2={"name":team_2[i]["name"], "mmr":int(round(new_R(R=team_2[i]["emmr"], S=S[1], E=E_2, N=(team_2[i]["egames"]["total"] + 1), t1=score_1, t2=score_2)))}
-        else:
-            player1={"name":team_1[i]["name"], "mmr":int(round(new_R(R=team_1[i]["mhmmr"], S=S[0], E=E_1, N=(team_1[i]["mhgames"]["total"] + 1), t1=score_1, t2=score_2)))}
-            player2={"name":team_2[i]["name"], "mmr":int(round(new_R(R=team_2[i]["mhmmr"], S=S[1], E=E_2, N=(team_2[i]["mhgames"]["total"] + 1), t1=score_1, t2=score_2)))}
-        result.append(player1)
-        result.append(player2)
+    mode = check_mode(match["mode"], short=True)
+    teams = [team_1, team_2]
+    Es = [E_1, E_2]
 
+    # iterate through number of players per team
+    for i in range(l):
+        # iterate through both teams
+        for j in range(2):
+           result.append({
+                    "name": teams[j][i]["name"],
+                    "mmr": int(round(new_R(
+                        R=teams[j][i][f"{mode}mmr"],
+                        S=S[j],
+                        E=Es[j],
+                        N=(teams[j][i][f"{mode}games"]["total"] + 1),
+                        t1=score_1, t2=score_2
+                        )))
+                    })
 
     return result
 
