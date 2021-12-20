@@ -193,7 +193,10 @@ def new_matches():
             for team in [1, 2]:
                 # find kd for every player in team
                 for p in m[f"team{team}"]:
-                    kds[p["player"]] = p["kills"] / p["deaths"]
+                    try:
+                        kds[p["player"]] = p["kills"] / p["deaths"]
+                    except ZeroDivisionError:
+                        kds[p["player"]] = 1000 # easier than inf I think
                 # sort the kds, this creates a list of tuples
                 kds = sorted(kds[team - 1].items(), key=lambda x: x[1])
                 # highest kds are defenders
