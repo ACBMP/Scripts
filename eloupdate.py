@@ -189,20 +189,36 @@ def new_matches():
             # otherwise the mode doesn't make sense because we separate stats by role
             mode = check_mode(m["mode"], short=True)
 
+            kds = {}
+            for team in [1, 2]:
+                # find kd for every player in team
+                for p in m[f"team{team}"]:
+                    kds[p["player"]] = p["kills"] / p["deaths"]
+                # sort the kds, this creates a list of tuples
+                kds = sorted(kds[team - 1].items(), key=lambda x: x[1])
+                # highest kds are defenders
+                role = "d"
+                # go through every player
+                for i in range(len(m[f"team{team}"])):
+                    # set role value 
+                    m[f"team{team}"][kds[i][0]["role"]] = role
+                    if i > 1:
+                        role = "r"
+
             for team in [1, 2]:
                 team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
                     db.players.update_one(
                             {"ign": player_["player"]},
                             {"$inc": {
-                                f"{mode}games.total": 1,
-                                f"{mode}games.won": team_x_stat[0],
-                                f"{mode}games.lost": team_x_stat[1],
-                                f"{mode}stats.totalscore": player_["score"],
-                                f"{mode}stats.kills": player_["kills"],
-                                f"{mode}stats.deaths": player_["deaths"]
-                                f"{mode}stats.conceded": player_["conceded"]
-                                f"{mode}stats.scored": player_["scored"]
+                                f"{mode}{role}games.total": 1,
+                                f"{mode}{role}games.won": team_x_stat[0],
+                                f"{mode}{role}games.lost": team_x_stat[1],
+                                f"{mode}{role}stats.totalscore": player_["score"],
+                                f"{mode}{role}stats.kills": player_["kills"],
+                                f"{mode}{role}stats.deaths": player_["deaths"]
+                                f"{mode}{role}stats.conceded": player_["conceded"]
+                                f"{mode}{role}stats.scored": player_["scored"]
                                 }}
                             )
 
