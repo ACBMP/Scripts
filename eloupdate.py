@@ -74,17 +74,14 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
     else:
         raise ValueError("outcome must be 1 for team_1, 2 for team_2, or 0 for a tie!")
     
+    mode = check_mode(match["mode"], short=True)
+
     # calculate total rating for each team 
     R_old_1 = []
     R_old_2 = []
-    if match["mode"]=="Escort":
-        for i in range(l):
-            R_old_1.append(team_1[i]["emmr"])
-            R_old_2.append(team_2[i]["emmr"])
-    else:
-        for i in range(l):
-            R_old_1.append(team_1[i]["mhmmr"])
-            R_old_2.append(team_2[i]["mhmmr"])
+    for i in range(l):
+        R_old_1.append(team_1[i][f"{mode}mmr"])
+        R_old_2.append(team_2[i][f"{mode}mmr"])
     
     # calculate expected outcome for each team
     E_1 = E([w_mean(R_old_1, R_old_2)[0], w_mean(R_old_2, R_old_1)[0]])
@@ -92,7 +89,6 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
     
     result = []
     # update values in database
-    mode = check_mode(match["mode"], short=True)
     teams = [team_1, team_2]
     Es = [E_1, E_2]
 
@@ -132,13 +128,22 @@ def new_matches():
         t = [[], []]
         s = [0, 0]
         i = 0
+        R_team = [0, 0] # team ratings which should be calculated in the loop
+        score_key = "score" if mode != "AA" else "scored"
         for team in [1, 2]:
             for player in m[f"team{team}"]:
                 temp_ = identify_player(db, player["player"])
                 t[team - 1].append(temp_)
-                s[team - 1] += m[f"team{team}"][i]["score"]
+                s[team - 1] += m[f"team{team}"][i][score_key]
+                if m["mode"] in ["Escort", "Manhunt"]:
+                    R_team[team - 1] += temp[f"{m[check_mode(m["mode"], short=True)}mmr"]
+                elif m["mode"] == "AA":
+                    R_team[team - 1] += temp[f"{m[check_mode(m["mode"], short=True)}{role}mmr"]
                 i += 1
 
+        # for AA team_ratings needs to be passed which roles to use to calculate the team ratings
+        # realistically the rating should be passed anyway since we're already looping through the teams above anyway
+        # we also need to pass the mode separately so it knows to differentiate between defenders and runners
         result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1])
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
