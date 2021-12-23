@@ -43,7 +43,7 @@ def read_and_update():
 
             for i in range(2):
                 team_n = f"team{i + 1}"
-                entry_dict[team_n] = {}
+                entry_dict[team_n] = []
                 for entry in teams[i]:
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
@@ -70,7 +70,7 @@ def main():
     eloupdate.new_matches()
     historyupdate.update()
     ranks.main()
-    tweet.tweet("e")
+#    tweet.tweet("e")
 #    for key in modes.keys():
 #        if modes[key]:
 #            tweet.tweet(key)

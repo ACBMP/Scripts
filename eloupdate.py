@@ -129,17 +129,18 @@ def new_matches():
         s = [0, 0]
         i = 0
         R_team = [0, 0] # team ratings which should be calculated in the loop
-        score_key = "score" if mode != "AA" else "scored"
+        score_key = "score" if m["mode"] != "AA" else "scored"
         for team in [1, 2]:
             for player in m[f"team{team}"]:
                 temp_ = identify_player(db, player["player"])
                 t[team - 1].append(temp_)
                 s[team - 1] += m[f"team{team}"][i][score_key]
                 if m["mode"] in ["Escort", "Manhunt"]:
-                    R_team[team - 1] += temp[f"{m[check_mode(m["mode"], short=True)}mmr"]
+                    R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}mmr"]
                 elif m["mode"] == "AA":
-                    R_team[team - 1] += temp[f"{m[check_mode(m["mode"], short=True)}{role}mmr"]
+                    R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}{role}mmr"]
                 i += 1
+            i = 0
 
         # for AA team_ratings needs to be passed which roles to use to calculate the team ratings
         # realistically the rating should be passed anyway since we're already looping through the teams above anyway
@@ -224,13 +225,13 @@ def new_matches():
                                 f"{mode}{role}games.lost": team_x_stat[1],
                                 f"{mode}{role}stats.totalscore": player_["score"],
                                 f"{mode}{role}stats.kills": player_["kills"],
-                                f"{mode}{role}stats.deaths": player_["deaths"]
-                                f"{mode}{role}stats.conceded": player_["conceded"]
+                                f"{mode}{role}stats.deaths": player_["deaths"],
+                                f"{mode}{role}stats.conceded": player_["conceded"],
                                 f"{mode}{role}stats.scored": player_["scored"]
                                 }}
                             )
 
-             for resultentry in result:
+            for resultentry in result:
                 db.players.update_one(
                         {"name": resultentry["name"]},
                         {"$set": {
