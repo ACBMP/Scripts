@@ -16,7 +16,7 @@ from teams import find_teams
 from util import *
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import partial
 import AC_Score_OCR
 import requests
@@ -794,7 +794,11 @@ async def ocr_screenshot(message):
         fname = f"screenshots/{str(datetime.now())}.png"
         with open(fname, "wb") as f:
             f.write(img.content)
-        await message.channel.send(AC_Score_OCR.OCR(fname, game, players))
+        try:
+            result = AC_Score_OCR.OCR(fname, game, players)
+        except:
+            result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
+        await message.channel.send(result)
         return
     else:
         await message.channel.send("Could not find attachment.")
@@ -802,7 +806,7 @@ async def ocr_screenshot(message):
 
 # add users to the db
 async def user_add(message):
-    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id == conf.admin:
+    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
         msg = message.content[9:]
         info = msg.split("; ")
         name = info[0]
@@ -810,8 +814,13 @@ async def user_add(message):
         link = info[2]
         nation = info[3]
         platforms = info[4].split(", ")
-        discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
+        try:
+            discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
+        except IndexError:
+            discord_id = ""
         db = connect()
+        starting_mmr = 800
+        d = date.today().strftime("%y-%m-%d")
         try:
             db.players.insert_one({
                 "name":name,
@@ -819,14 +828,14 @@ async def user_add(message):
                 "link":link,
                 "nation":nation,
                 "platforms":platforms,
-                "emmr":int(800),
-                "mhmmr":int(800),
-                "aarmmr":int(800),
-                "aadmmr":int(800),
-                "ehistory":{"dates":[], "mmrs":[]},
-                "mhhistory":{"dates":[], "mmrs":[]},
-                "aarhistory":{"dates":[], "mmrs":[]},
-                "aadhistory":{"dates":[], "mmrs":[]},
+                "emmr":starting_mmr,
+                "mhmmr":starting_mmr,
+                "aarmmr":starting_mmr,
+                "aadmmr":starting_mmr,
+                "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
                 "egames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
@@ -835,6 +844,14 @@ async def user_add(message):
                 "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
                 "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
                 "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+                "erank": 0,
+                "erankchange": 0,
+                "mhrank": 0,
+                "mhrankchange": 0,
+                "aarrank": 0,
+                "aarrankchange": 0,
+                "aadrank": 0,
+                "aadrankchange": 0,
                 "discord_id":discord_id}
                 )
             await message.channel.send("Successfully added user.")
@@ -895,7 +912,10 @@ async def on_message(message):
         message.content = message.content[3:]
         # help message
         if message.content.lower().startswith("help"):
-            await message.channel.send(embed=help_message(message))
+            try:
+                await message.channel.send(embed=help_message(message))
+            except UnboundLocalError:
+                await message.channel.send("Could not find the function you're looking for.")
             return
      
         # lookup

@@ -35,7 +35,10 @@ def Kc(N, R):
         return 15
 
 def score(t1, t2):
-    return abs(t1 - t2) / ((t1 + t2) / 2)
+    try:
+        return abs(t1 - t2) / ((t1 + t2) / 2)
+    except ZeroDivisionError:
+        return 0
     
 def w_mean(rankings, rankings_o):
     mean = sum(rankings_o) / len(rankings_o)
@@ -55,7 +58,7 @@ def w_mean(rankings, rankings_o):
     return sum([rankings[_] * weights[_] for _ in range(len(rankings))]) / sum(weights), weights
 
 
-def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
+def team_ratings(match, team_1, team_2, outcome, score_1, score_2, kds=None):
 
     # team sizes
     l = len(team_1)
@@ -73,15 +76,16 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
         S = [.5, .5]
     else:
         raise ValueError("outcome must be 1 for team_1, 2 for team_2, or 0 for a tie!")
-    
-    mode = check_mode(match["mode"], short=True)
 
     # calculate total rating for each team 
     R_old_1 = []
     R_old_2 = []
-    for i in range(l):
-        R_old_1.append(team_1[i][f"{mode}mmr"])
-        R_old_2.append(team_2[i][f"{mode}mmr"])
+    if kds is None:
+        mode = check_mode(match["mode"], short=True)
+        for i in range(l):
+            R_old_1.append(team_1[i][f"{mode}mmr"])
+            R_old_2.append(team_2[i][f"{mode}mmr"])
+
     
     # calculate expected outcome for each team
     E_1 = E([w_mean(R_old_1, R_old_2)[0], w_mean(R_old_2, R_old_1)[0]])
