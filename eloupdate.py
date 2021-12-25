@@ -58,7 +58,7 @@ def w_mean(rankings, rankings_o):
     return sum([rankings[_] * weights[_] for _ in range(len(rankings))]) / sum(weights), weights
 
 
-def team_ratings(match, team_1, team_2, outcome, score_1, score_2, kds=None):
+def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
 
     # team sizes
     l = len(team_1)
@@ -80,7 +80,13 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, kds=None):
     # calculate total rating for each team 
     R_old_1 = []
     R_old_2 = []
-    if kds is None:
+    # disgusting
+    if aa:
+        role = match["team1"]["role"]
+        R_old_1.append(team_1[i][f"aa{role}mmr"])
+        role = match["team2"]["role"]
+        R_old_2.append(team_2[i][f"aa{role}mmr"])
+    else:
         mode = check_mode(match["mode"], short=True)
         for i in range(l):
             R_old_1.append(team_1[i][f"{mode}mmr"])
@@ -100,10 +106,10 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, kds=None):
     for i in range(l):
         # iterate through both teams
         for j in range(2):
-           result.append({
+            result.append({
                     "name": teams[j][i]["name"],
                     "mmr": int(round(new_R(
-                        R=teams[j][i][f"{mode}mmr"],
+                        R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j}][role]}mmr"],
                         S=S[j],
                         E=Es[j],
                         N=(teams[j][i][f"{mode}games"]["total"] + 1),
@@ -133,7 +139,29 @@ def new_matches():
         s = [0, 0]
         i = 0
         R_team = [0, 0] # team ratings which should be calculated in the loop
-        score_key = "score" if m["mode"] != "AA" else "scored"
+        score_key = "score"
+        if m["mode"] == "AA":
+            score_key += "d"
+
+            kds = {}
+            for team in [1, 2]:
+                # find kd for every player in team
+                for p in m[f"team{team}"]:
+                    try:
+                        kds[p["player"]] = p["kills"] / p["deaths"]
+                    except ZeroDivisionError:
+                        kds[p["player"]] = 1000 # easier than inf I think
+                # sort the kds, this creates a list of tuples
+                kds = sorted(kds[team - 1].items(), key=lambda x: x[1])
+                # highest kds are defenders
+                role = "d"
+                # go through every player
+                for i in range(len(m[f"team{team}"])):
+                    # set role value on match 
+                    m[f"team{team}"][kds[i][0]]["role"] = role
+                    if i > 1:
+                        role = "r"
+
         for team in [1, 2]:
             for player in m[f"team{team}"]:
                 temp_ = identify_player(db, player["player"])
@@ -146,10 +174,7 @@ def new_matches():
                 i += 1
             i = 0
 
-        # for AA team_ratings needs to be passed which roles to use to calculate the team ratings
-        # realistically the rating should be passed anyway since we're already looping through the teams above anyway
-        # we also need to pass the mode separately so it knows to differentiate between defenders and runners
-        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1])
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "AA")
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         
@@ -198,25 +223,6 @@ def new_matches():
             # we still have to figure out runners and defenders!
             # otherwise the mode doesn't make sense because we separate stats by role
             mode = check_mode(m["mode"], short=True)
-
-            kds = {}
-            for team in [1, 2]:
-                # find kd for every player in team
-                for p in m[f"team{team}"]:
-                    try:
-                        kds[p["player"]] = p["kills"] / p["deaths"]
-                    except ZeroDivisionError:
-                        kds[p["player"]] = 1000 # easier than inf I think
-                # sort the kds, this creates a list of tuples
-                kds = sorted(kds[team - 1].items(), key=lambda x: x[1])
-                # highest kds are defenders
-                role = "d"
-                # go through every player
-                for i in range(len(m[f"team{team}"])):
-                    # set role value 
-                    m[f"team{team}"][kds[i][0]["role"]] = role
-                    if i > 1:
-                        role = "r"
 
             for team in [1, 2]:
                 team_x_stat = team_stat[team - 1]
