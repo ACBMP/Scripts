@@ -19,18 +19,13 @@ def update():
     for i in range(len(players)):
         p = players[i]
 
-        # if player has no mmrhistory update it
-        if p["mhhistory"]["mmrs"] == []:
-            mmr_update(d, db, p, "mh")
-        # if player's current mmr differs from previous mmr update it
-        elif p["mhmmr"] != p["mhhistory"]["mmrs"][-1]:
-            mmr_update(d, db, p, "mh")
-
-        # same for escort
-        if p["ehistory"]["mmrs"] == []:
-            mmr_update(d, db, p, "e")
-        elif p["emmr"] != p["ehistory"]["mmrs"][-1]:
-            mmr_update(d, db, p, "e")
+        for mode in ["mh", "e", "aar", "aad"]:
+            # if player has no mmrhistory update it
+            if p[f"{mode}history"]["mmrs"] == []:
+                mmr_update(d, db, p, mode)
+            # if player's current mmr differs from previous mmr update it
+            elif p[f"{mode}mmr"] != p[f"{mode}history"]["mmrs"][-1]:
+                mmr_update(d, db, p, mode)
         
     return
 

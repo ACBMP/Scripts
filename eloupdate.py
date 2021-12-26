@@ -82,10 +82,11 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
     R_old_2 = []
     # disgusting
     if aa:
-        role = match["team1"]["role"]
-        R_old_1.append(team_1[i][f"aa{role}mmr"])
-        role = match["team2"]["role"]
-        R_old_2.append(team_2[i][f"aa{role}mmr"])
+        for i in range(l):
+            role = match["team1"][i]["role"]
+            R_old_1.append(team_1[i][f"aa{role}mmr"])
+            role = match["team2"][i]["role"]
+            R_old_2.append(team_2[i][f"aa{role}mmr"])
     else:
         mode = check_mode(match["mode"], short=True)
         for i in range(l):
@@ -109,13 +110,15 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
             result.append({
                     "name": teams[j][i]["name"],
                     "mmr": int(round(new_R(
-                        R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j}][role]}mmr"],
+                        R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j + 1}'][i]['role']}mmr"],
                         S=S[j],
                         E=Es[j],
-                        N=(teams[j][i][f"{mode}games"]["total"] + 1),
+                        N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
                         t1=score_1, t2=score_2
                         )))
                     })
+            if aa:
+                result[-1]["role"] = match[f'team{j + 1}'][i]['role']
 
     return result
 
@@ -140,28 +143,36 @@ def new_matches():
         i = 0
         R_team = [0, 0] # team ratings which should be calculated in the loop
         score_key = "score"
-        if m["mode"] == "AA":
+        if m["mode"] == "Artifact assault":
             score_key += "d"
 
-            kds = {}
+            kds = [{}, {}]
             for team in [1, 2]:
                 # find kd for every player in team
                 for p in m[f"team{team}"]:
                     try:
-                        kds[p["player"]] = p["kills"] / p["deaths"]
+                        kds[team - 1][p["player"]] = p["kills"] / p["deaths"]
                     except ZeroDivisionError:
-                        kds[p["player"]] = 1000 # easier than inf I think
+                        kds[team - 1][p["player"]] = 1000 # easier than inf I think
                 # sort the kds, this creates a list of tuples
-                kds = sorted(kds[team - 1].items(), key=lambda x: x[1])
+                kds[team - 1] = sorted(kds[team - 1].items(), key=lambda x: x[1])
                 # highest kds are defenders
-                role = "d"
+                role = "r"
                 # go through every player
                 for i in range(len(m[f"team{team}"])):
-                    # set role value on match 
-                    m[f"team{team}"][kds[i][0]]["role"] = role
                     if i > 1:
-                        role = "r"
+                        role = "d"
+                    # set role value on match 
+                    found = False
+                    j = 0
+                    # go thru players until we find the right player
+                    while not found:
+                        if m[f"team{team}"][j]["player"] == kds[team-1][i][0]:
+                            m[f"team{team}"][j]["role"] = role
+                            found = True
+                        j += 1
 
+        i = 0
         for team in [1, 2]:
             for player in m[f"team{team}"]:
                 temp_ = identify_player(db, player["player"])
@@ -169,12 +180,12 @@ def new_matches():
                 s[team - 1] += m[f"team{team}"][i][score_key]
                 if m["mode"] in ["Escort", "Manhunt"]:
                     R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}mmr"]
-                elif m["mode"] == "AA":
+                elif m["mode"] == "Artifact assault":
                     R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}{role}mmr"]
                 i += 1
             i = 0
 
-        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "AA")
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault")
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         
@@ -224,9 +235,11 @@ def new_matches():
             # otherwise the mode doesn't make sense because we separate stats by role
             mode = check_mode(m["mode"], short=True)
 
+            concededs = [sum([p["scored"] for p in m[f"team{team}"]]) for team in [2, 1]]
             for team in [1, 2]:
                 team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
+                    role = player_["role"]
                     db.players.update_one(
                             {"ign": player_["player"]},
                             {"$inc": {
@@ -236,7 +249,7 @@ def new_matches():
                                 f"{mode}{role}stats.totalscore": player_["score"],
                                 f"{mode}{role}stats.kills": player_["kills"],
                                 f"{mode}{role}stats.deaths": player_["deaths"],
-                                f"{mode}{role}stats.conceded": player_["conceded"],
+                                f"{mode}{role}stats.conceded": concededs[team - 1],
                                 f"{mode}{role}stats.scored": player_["scored"]
                                 }}
                             )
@@ -245,7 +258,7 @@ def new_matches():
                 db.players.update_one(
                         {"name": resultentry["name"]},
                         {"$set": {
-                            f"{mode}mmr":
+                            f"{mode}{resultentry['role']}mmr":
                             resultentry["mmr"]
                             }}
                         )
