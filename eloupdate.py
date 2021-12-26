@@ -240,8 +240,9 @@ def new_matches():
                 team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
                     role = player_["role"]
+                    name = identify_player(db, player_["player"])["name"]
                     db.players.update_one(
-                            {"ign": player_["player"]},
+                            {"name": name},
                             {"$inc": {
                                 f"{mode}{role}games.total": 1,
                                 f"{mode}{role}games.won": team_x_stat[0],
