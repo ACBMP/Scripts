@@ -34,12 +34,17 @@ def OCR(screenshot, game, players):
         top = [194 * scale, 360 * scale]
         right=352 * scale
         bottom = [430 * scale, 264 * scale]
-        binarize = [155, 110]
+        binarize = [150, 115]
         t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
         common = {
                 "piesiol": "piesio1",
+                "piesio[": "piesio1",
+                "$M$": "$11$",
+                "$N$": "$11$",
+                "$n$": "$11$",
+                "IQueazo": "iQueazo"
                 }
     else:
         return OCR(screenshot, "acb", players)

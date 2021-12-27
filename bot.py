@@ -36,8 +36,13 @@ async def on_ready():
 scheduler = AsyncIOScheduler()
 scheduler.start()
 
-modes_list = ['e', 'mh']
-modes_dict = {'e' : "Escort", 'mh' : "Manhunt"}
+modes_list = ['e', 'mh', 'aar', 'aad']
+modes_dict = {
+        'e' : "Escort",
+        'mh' : 'Manhunt',
+        'aar' : 'AA Running',
+        'aad' : 'AA Defending'
+        }
 
 # we save the queues here as simple arrays since we don't expect to scale
 # read out the queues from the queues file that saves state for restarts
@@ -196,9 +201,7 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
          embedVar.set_footer(text="For more information, use AN help [COMMAND].")
 
     # if the channel name fits we add the AN db/parsing functions
-    # only works on #secualhealing server
-    # this is the same as above honestly
-    if (message.channel.name == "an-help" or message.channel.name == "assassinsnetwork") and message.guild.id == conf.main_server:
+    if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server:
         if msg != "":
             if msg == "ocr":
                 return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
@@ -239,8 +242,15 @@ def lookup_user(message):
     player = message.content.replace("lookup ", "")
     player = player.replace("  ", " ")
     db = connect()
-    # this only checks according to AN usernames so maybe this should be changed to search for IGNs
-    player_db = identify_player(db, player)
+    if player == "lookup":
+        player_db = db.players.find_one({"discord_id" : str(message.author.id)})
+        player = player_db["name"]
+    elif "@" in player:
+        discord_id = player.replace("@!", "").replace(">", "").replace("<", "")
+        player_db = db.players.find_one({"discord_id" : discord_id})
+        player = player_db["name"]
+    else:
+        player_db = identify_player(db, player)
     if player_db is None:
         embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
         embedVar.add_field(name=find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
@@ -252,13 +262,31 @@ def lookup_user(message):
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
-                embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
-                                   Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                   Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
-                                   Games Played: {player_db[f'{mode}games']['total']}\n \
-                                   K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
-                                   Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
-                                   Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
+                if 'aa' not in mode:
+                    embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                       Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                       Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                       Games Played: {player_db[f'{mode}games']['total']}\n \
+                                       K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
+                                       Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
+                                       Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
+                else:
+                    if mode == 'aar':
+                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                           Games Played: {player_db[f'{mode}games']['total']}\n \
+                                           Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                           Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)}",
+                                           inline=False)
+                    else:
+                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                           Games Played: {player_db[f'{mode}games']['total']}\n \
+                                           Avg Kills: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                           Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
+                                           inline=False)
     return embedVar
 
 # WIP
@@ -295,7 +323,12 @@ def add_match(message):
 # print the matches.txt file
 async def print_matches(message):
     with open("matches.txt", "r") as f:
-        await message.channel.send(f.read())
+        content = f.read()
+        try:
+            await message.channel.send(content)
+        except:
+            embedVar = discord.Embed(title="Matches", color=0xff00ff, description=content)
+            await message.channel.send(embed=embedVar)
         f.close()
     return
 
@@ -351,6 +384,9 @@ def team_finder(players, mode, random):
     return f"{', '.join(t1)} vs. {', '.join(t2)}"
 
 
+class OutcomeError(Exception):
+    pass
+
 # update the AN db by running the read_and_update script
 async def updater(message):
     if get(message.author.roles, name="Assassins' Network"):
@@ -361,6 +397,8 @@ async def updater(message):
             #rau.eloupdate.new_matches()
             #rau.historyupdate.update()
             await message.channel.send("Successfully updated the leaderboards!")
+        except OutcomeError as e:
+            await message.channel.send("Error! " + e)
         except:
             await message.channel.send("An error has occurred, please message an administrator.")
     else:
@@ -929,9 +967,8 @@ async def on_message(message):
             await message.channel.send(embed=ladder[0], file=ladder[1])
             return
         
-        ident = "add "
         # add games
-        if message.content.lower().startswith(ident) and message.channel.guild.id == conf.main_server:
+        if message.content.lower().startswith("add "):# and message.channel.guild.id == conf.main_server:
             add_match(message)
             await message.channel.send("Game(s) added!")
             return

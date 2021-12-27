@@ -2,6 +2,9 @@ from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from util import *
 
+class OutcomeError(Exception):
+    pass
+
 def E(R):
     return (1 + 10 ** ((R[1] - R[0]) / 400)) ** -1
 
@@ -10,11 +13,11 @@ def R_1v1(R, S, K=None, N=1):
         K = Kc(N, R[0])
     return R[0] + K * (S - E(R))
 
-def new_R(R, S, E, K=None, N=None, t1=None, t2=None):
+def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
     if N > 10:
         if K is None:
             K = Kc(N, R)
-        return R + K * (S - E) * (1 + score(t1, t2)) + S # trying to inflate by adding 1 to every win
+        return R + K * (S - E) * (1 + score(t1, t2, ref)) + S # trying to inflate by adding 1 to every win
     else:
         if S == 1:
             return R + 50
@@ -34,11 +37,15 @@ def Kc(N, R):
     else: # R > hi
         return 15
 
-def score(t1, t2):
-    try:
-        return abs(t1 - t2) / ((t1 + t2) / 2)
-    except ZeroDivisionError:
-        return 0
+def score(t1, t2, ref=None):
+    if ref is None:
+        try:
+            return abs(t1 - t2) / ((t1 + t2) / 2)
+        except ZeroDivisionError:
+            return 0
+    else:
+        # reference stomp value
+        return (abs(t1 - t2) - 1) / ref
     
 def w_mean(rankings, rankings_o):
     mean = sum(rankings_o) / len(rankings_o)
@@ -114,7 +121,8 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
                         S=S[j],
                         E=Es[j],
                         N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
-                        t1=score_1, t2=score_2
+                        t1=score_1, t2=score_2,
+                        ref=4 if aa else None
                         )))
                     })
             if aa:
@@ -185,6 +193,13 @@ def new_matches():
                 i += 1
             i = 0
 
+        # sanity check
+        if m["outcome"] > 0:
+            if s[m["outcome"] - 1] < s[m["outcome"] % 2]:
+                raise OutcomeError(f"outcome {m['outcome']} contradicts scoreline: Winner: {s[m['outcome'] - 1]}, Loser: {s[m['outcome'] % 2]}")
+        elif s[0] != s[1]:
+            raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
+
         result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault")
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
@@ -231,8 +246,6 @@ def new_matches():
                                 )
 
         elif m["mode"] == "Artifact assault":
-            # we still have to figure out runners and defenders!
-            # otherwise the mode doesn't make sense because we separate stats by role
             mode = check_mode(m["mode"], short=True)
 
             concededs = [sum([p["scored"] for p in m[f"team{team}"]]) for team in [2, 1]]
