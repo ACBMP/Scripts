@@ -155,7 +155,7 @@ AN queue remove```"""
     queue_help = """To print the players currently queued up for a mode, use\n```css
 AN queue [MODE]```"""
     remake_help = """To calculate whether a game should be remade after a disconnect, use\n```css
-AN remake TEAM_1_SCORE TEAM_2_SCORE [MODE] [PLAYERS_PER_TEAM]```"""
+AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
 AN OCR [GAME] [TOTAL_PLAYERS]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work."""
     add_help = """To queue matches for being added to AN, use\n```css
@@ -236,6 +236,21 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
     return embedVar
 
 
+def rank_pic_big(elo):
+    """
+    grabs rank pics, copied from an_flask
+    """
+    if elo < 801:
+        return "badge_1_big.png"
+    if elo < 1000:
+        return "badge_2_big.png"
+    if elo < 1200:
+        return "badge_3_big.png"
+    if elo < 1400:
+        return "badge_4_big.png"
+    return "badge_5_big.png"
+
+
 # command to look up a user on the AN db
 # connect to DB -> look up user -> print user
 def lookup_user(message):
@@ -260,12 +275,15 @@ def lookup_user(message):
         embedVar = discord.Embed(title=f"{player} {flag.flag(player_db['nation'])}", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
         # only add information that is present
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
+        top_elo = 0
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
+                top_elo = max(top_elo, player_db[f'{mode}mmr'])
                 if 'aa' not in mode:
+                    # should do basic fields and add on depending on the mode t b h
                     embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
                                        Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                       Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                       Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
                                        Games Played: {player_db[f'{mode}games']['total']}\n \
                                        K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
                                        Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
@@ -274,7 +292,7 @@ def lookup_user(message):
                     if mode == 'aar':
                         embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
                                            Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                           Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
                                            Games Played: {player_db[f'{mode}games']['total']}\n \
                                            Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
                                            Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)}",
@@ -282,11 +300,12 @@ def lookup_user(message):
                     else:
                         embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
                                            Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                           Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
                                            Games Played: {player_db[f'{mode}games']['total']}\n \
                                            Avg Kills: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} \n \
                                            Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
                                            inline=False)
+        embedVar.set_image(url="https://assassins.network/static/badges/" + rank_pic_big(top_elo))
     return embedVar
 
 # WIP
@@ -771,18 +790,22 @@ async def check_remake(message):
     try:
         if check_mode(mode) == "escort":
             s_diff = escort(time, players)
+            if abs(score_1 - score_2) / max(score_1, score_2) > s_diff:
+                s_diff = round(s_diff)
+                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+            else:
+                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
         else:
             s_diff = manhunt(time, players)
+            if abs(score_1 - score_2) > s_diff:
+                s_diff = round(s_diff)
+                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+            else:
+                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
     except:
         await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + find_insult())
         return
 
-    # check if score diff is under or above threshold
-    s_diff = round(s_diff)
-    if abs(score_1 - score_2) > s_diff:
-        await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
-    else:
-        await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
     return
 
 
