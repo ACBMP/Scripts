@@ -2,6 +2,9 @@ from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from util import *
 
+class OutcomeError(Exception):
+    pass
+
 def E(R):
     return (1 + 10 ** ((R[1] - R[0]) / 400)) ** -1
 
@@ -10,11 +13,11 @@ def R_1v1(R, S, K=None, N=1):
         K = Kc(N, R[0])
     return R[0] + K * (S - E(R))
 
-def new_R(R, S, E, K=None, N=None, t1=None, t2=None):
+def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
     if N > 10:
         if K is None:
             K = Kc(N, R)
-        return R + K * (S - E) * (1 + score(t1, t2)) + S # trying to inflate by adding 1 to every win
+        return R + K * (S - E) * (1 + score(t1, t2, ref)) + S # trying to inflate by adding 1 to every win
     else:
         if S == 1:
             return R + 50
@@ -34,8 +37,15 @@ def Kc(N, R):
     else: # R > hi
         return 15
 
-def score(t1, t2):
-    return abs(t1 - t2) / ((t1 + t2) / 2)
+def score(t1, t2, ref=None):
+    if ref is None:
+        try:
+            return abs(t1 - t2) / ((t1 + t2) / 2)
+        except ZeroDivisionError:
+            return 0
+    else:
+        # reference stomp value
+        return (abs(t1 - t2) - 1) / ref
     
 def w_mean(rankings, rankings_o):
     mean = sum(rankings_o) / len(rankings_o)
@@ -55,7 +65,7 @@ def w_mean(rankings, rankings_o):
     return sum([rankings[_] * weights[_] for _ in range(len(rankings))]) / sum(weights), weights
 
 
-def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
+def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
 
     # team sizes
     l = len(team_1)
@@ -73,18 +83,23 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
         S = [.5, .5]
     else:
         raise ValueError("outcome must be 1 for team_1, 2 for team_2, or 0 for a tie!")
-    
+
     # calculate total rating for each team 
     R_old_1 = []
     R_old_2 = []
-    if match["mode"]=="Escort":
+    # disgusting
+    if aa:
         for i in range(l):
-            R_old_1.append(team_1[i]["emmr"])
-            R_old_2.append(team_2[i]["emmr"])
+            role = match["team1"][i]["role"]
+            R_old_1.append(team_1[i][f"aa{role}mmr"])
+            role = match["team2"][i]["role"]
+            R_old_2.append(team_2[i][f"aa{role}mmr"])
     else:
+        mode = check_mode(match["mode"], short=True)
         for i in range(l):
-            R_old_1.append(team_1[i]["mhmmr"])
-            R_old_2.append(team_2[i]["mhmmr"])
+            R_old_1.append(team_1[i][f"{mode}mmr"])
+            R_old_2.append(team_2[i][f"{mode}mmr"])
+
     
     # calculate expected outcome for each team
     E_1 = E([w_mean(R_old_1, R_old_2)[0], w_mean(R_old_2, R_old_1)[0]])
@@ -92,16 +107,26 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2):
     
     result = []
     # update values in database
-    for i in range(l):
-        if match["mode"]=="Escort":
-            player1={"name":team_1[i]["name"], "mmr":int(round(new_R(R=team_1[i]["emmr"], S=S[0], E=E_1, N=(team_1[i]["egames"]["total"] + 1), t1=score_1, t2=score_2)))}
-            player2={"name":team_2[i]["name"], "mmr":int(round(new_R(R=team_2[i]["emmr"], S=S[1], E=E_2, N=(team_2[i]["egames"]["total"] + 1), t1=score_1, t2=score_2)))}
-        else:
-            player1={"name":team_1[i]["name"], "mmr":int(round(new_R(R=team_1[i]["mhmmr"], S=S[0], E=E_1, N=(team_1[i]["mhgames"]["total"] + 1), t1=score_1, t2=score_2)))}
-            player2={"name":team_2[i]["name"], "mmr":int(round(new_R(R=team_2[i]["mhmmr"], S=S[1], E=E_2, N=(team_2[i]["mhgames"]["total"] + 1), t1=score_1, t2=score_2)))}
-        result.append(player1)
-        result.append(player2)
+    teams = [team_1, team_2]
+    Es = [E_1, E_2]
 
+    # iterate through number of players per team
+    for i in range(l):
+        # iterate through both teams
+        for j in range(2):
+            result.append({
+                    "name": teams[j][i]["name"],
+                    "mmr": int(round(new_R(
+                        R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j + 1}'][i]['role']}mmr"],
+                        S=S[j],
+                        E=Es[j],
+                        N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
+                        t1=score_1, t2=score_2,
+                        ref=4 if aa else None
+                        )))
+                    })
+            if aa:
+                result[-1]["role"] = match[f'team{j + 1}'][i]['role']
 
     return result
 
@@ -121,74 +146,137 @@ def new_matches():
 
     for i in range(len(matches)):
         m = matches[i]
-        t1=[]
-        t2=[]
-        s1 = 0
-        s2 = 0
+        t = [[], []]
+        s = [0, 0]
         i = 0
-        for player in m["team1"]:
-            temp_ = identify_player(db, player["player"])
-            t1.append(temp_)
-            s1 += m["team1"][i]["score"]
-        for player in m["team2"]:
-            temp_ = identify_player(db, player["player"])
-            t2.append(temp_)
-            s2 += m["team2"][i]["score"]
-            i += 1
+        R_team = [0, 0] # team ratings which should be calculated in the loop
+        score_key = "score"
+        if m["mode"] == "Artifact assault":
+            score_key += "d"
 
-        result = team_ratings(match=m, team_1=t1, team_2=t2, outcome=m["outcome"], score_1=s1, score_2=s2)
+            kds = [{}, {}]
+            for team in [1, 2]:
+                # find kd for every player in team
+                for p in m[f"team{team}"]:
+                    try:
+                        kds[team - 1][p["player"]] = p["kills"] / p["deaths"]
+                    except ZeroDivisionError:
+                        kds[team - 1][p["player"]] = 1000 # easier than inf I think
+                # sort the kds, this creates a list of tuples
+                kds[team - 1] = sorted(kds[team - 1].items(), key=lambda x: x[1])
+                # highest kds are defenders
+                role = "r"
+                # go through every player
+                for i in range(len(m[f"team{team}"])):
+                    if i > 1:
+                        role = "d"
+                    # set role value on match 
+                    found = False
+                    j = 0
+                    # go thru players until we find the right player
+                    while not found:
+                        if m[f"team{team}"][j]["player"] == kds[team-1][i][0]:
+                            m[f"team{team}"][j]["role"] = role
+                            found = True
+                        j += 1
+
+        i = 0
+        for team in [1, 2]:
+            for player in m[f"team{team}"]:
+                temp_ = identify_player(db, player["player"])
+                t[team - 1].append(temp_)
+                s[team - 1] += m[f"team{team}"][i][score_key]
+                if m["mode"] in ["Escort", "Manhunt"]:
+                    R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}mmr"]
+                elif m["mode"] == "Artifact assault":
+                    R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}{role}mmr"]
+                i += 1
+            i = 0
+
+        # sanity check
+        if m["outcome"] > 0:
+            if s[m["outcome"] - 1] < s[m["outcome"] % 2]:
+                raise OutcomeError(f"outcome {m['outcome']} contradicts scoreline: Winner: {s[m['outcome'] - 1]}, Loser: {s[m['outcome'] % 2]}")
+        elif s[0] != s[1]:
+            raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
+
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault")
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         
-        team_1_stat=[0,0]
-        team_2_stat=[0,0]
+        team_stat = [[0, 0], [0, 0]]
         if m["outcome"] == 1:
-            team_1_stat=[1,0]
-            team_2_stat=[0,1]
+            team_stat = [[1, 0], [0, 1]]
         elif m["outcome"] == 2:
-            team_1_stat=[0,1]
-            team_2_stat=[1,0]
+            team_stat = [[0, 1], [1, 0]]
+
         #Updating the relevant MMR
-        if m["mode"]=="Escort":
+        if m["mode"] in ["Escort", "Manhunt"]:
+            mode = check_mode(m["mode"], short=True)
             for resultentry in result:
-                db.players.update_one({"name":resultentry["name"]},{"$set":{"emmr":resultentry["mmr"]}})
+                db.players.update_one(
+                        {"name": resultentry["name"]},
+                        {"$set": {
+                            f"{mode}mmr":
+                            resultentry["mmr"]
+                            }}
+                        )
 
-            for player_ in m["team1"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"egames.total":1,"egames.won":team_1_stat[0],"egames.lost":team_1_stat[1], "estats.totalscore":player_["score"],"estats.kills":player_["kills"], "estats.deaths":player_["deaths"]}})
+            for team in [1, 2]:
+                team_x_stat = team_stat[team - 1]
+                for player_ in m[f"team{team}"]:
+                    db.players.update_one(
+                            {"ign": player_["player"]},
+                            {"$inc": {
+                                f"{mode}games.total": 1,
+                                f"{mode}games.won": team_x_stat[0],
+                                f"{mode}games.lost": team_x_stat[1],
+                                f"{mode}stats.totalscore": player_["score"],
+                                f"{mode}stats.kills": player_["kills"],
+                                f"{mode}stats.deaths": player_["deaths"]
+                                }}
+                            )
+    
+                    temp_player = db.players.find_one({"ign": player_["player"]})
+    
+                    if temp_player[f"{mode}stats"]["highscore"] < player_["score"]:
+                        db.players.update_one(
+                                {"ign": player_["player"]},
+                                {"$set": {f"{mode}stats.highscore": player_["score"]}}
+                                )
 
-                temp_player = db.players.find_one({"ign":player_["player"]})
+        elif m["mode"] == "Artifact assault":
+            mode = check_mode(m["mode"], short=True)
 
-                if temp_player["estats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"estats.highscore":player_["score"]}})
+            concededs = [sum([p["scored"] for p in m[f"team{team}"]]) for team in [2, 1]]
+            for team in [1, 2]:
+                team_x_stat = team_stat[team - 1]
+                for player_ in m[f"team{team}"]:
+                    role = player_["role"]
+                    name = identify_player(db, player_["player"])["name"]
+                    db.players.update_one(
+                            {"name": name},
+                            {"$inc": {
+                                f"{mode}{role}games.total": 1,
+                                f"{mode}{role}games.won": team_x_stat[0],
+                                f"{mode}{role}games.lost": team_x_stat[1],
+                                f"{mode}{role}stats.totalscore": player_["score"],
+                                f"{mode}{role}stats.kills": player_["kills"],
+                                f"{mode}{role}stats.deaths": player_["deaths"],
+                                f"{mode}{role}stats.conceded": concededs[team - 1],
+                                f"{mode}{role}stats.scored": player_["scored"]
+                                }}
+                            )
 
-            for player_ in m["team2"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"egames.total":1,"egames.won":team_2_stat[0],"egames.lost":team_2_stat[1], "estats.totalscore":player_["score"],"estats.kills":player_["kills"], "estats.deaths":player_["deaths"]}})
-
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["estats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"estats.highscore":player_["score"]}})
-                
-        else:
             for resultentry in result:
-                db.players.update_one({"name":resultentry["name"]},{"$set":{"mhmmr":resultentry["mmr"]}})
-
-            for player_ in m["team1"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"mhgames.total":1,"mhgames.won":team_1_stat[0],"mhgames.lost":team_1_stat[1], "mhstats.totalscore":player_["score"],"mhstats.kills":player_["kills"], "mhstats.deaths":player_["deaths"]}})
-
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["mhstats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"mhstats.highscore":player_["score"]}})
-
-            for player_ in m["team2"]:
-                db.players.update_one({"ign":player_["player"]},{"$inc":{"mhgames.total":1,"mhgames.won":team_2_stat[0],"mhgames.lost":team_2_stat[1], "mhstats.totalscore":player_["score"],"mhstats.kills":player_["kills"], "mhstats.deaths":player_["deaths"]}})
-                
-                temp_player = db.players.find_one({"ign":player_["player"]})
-
-                if temp_player["mhstats"]["highscore"] < player_["score"]:
-                    db.players.update_one({"ign":player_["player"]},{"$set":{"mhstats.highscore":player_["score"]}})
-        
+                db.players.update_one(
+                        {"name": resultentry["name"]},
+                        {"$set": {
+                            f"{mode}{resultentry['role']}mmr":
+                            resultentry["mmr"]
+                            }}
+                        )
+       
         db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
         print("Match updated successfully!")
 

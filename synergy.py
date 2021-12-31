@@ -86,5 +86,6 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
 
 if __name__ == "__main__":
 #    find_synergy("Tha Fazz", min_games=5, track_teams=False)
-    for x in ["DevelSpirit", "Auditore92", "Jelko", "Tha Fazz", "EternityEzioWolf", "Dellpit"]:
-        find_synergy(x)
+    for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit"]:
+        print("\n\nFinding synergy for:", x)
+        find_synergy(x, "Escort", min_games=5)

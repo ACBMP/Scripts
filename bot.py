@@ -16,7 +16,7 @@ from teams import find_teams
 from util import *
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import partial
 import AC_Score_OCR
 import requests
@@ -36,8 +36,13 @@ async def on_ready():
 scheduler = AsyncIOScheduler()
 scheduler.start()
 
-modes_list = ['e', 'mh']
-modes_dict = {'e' : "Escort", 'mh' : "Manhunt"}
+modes_list = ['e', 'mh', 'aar', 'aad']
+modes_dict = {
+        'e' : "Escort",
+        'mh' : 'Manhunt',
+        'aar' : 'AA Running',
+        'aad' : 'AA Defending'
+        }
 
 # we save the queues here as simple arrays since we don't expect to scale
 # read out the queues from the queues file that saves state for restarts
@@ -150,7 +155,7 @@ AN queue remove```"""
     queue_help = """To print the players currently queued up for a mode, use\n```css
 AN queue [MODE]```"""
     remake_help = """To calculate whether a game should be remade after a disconnect, use\n```css
-AN remake TEAM_1_SCORE TEAM_2_SCORE [MODE] [PLAYERS_PER_TEAM]```"""
+AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
 AN OCR [GAME] [TOTAL_PLAYERS]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work."""
     add_help = """To queue matches for being added to AN, use\n```css
@@ -196,9 +201,7 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
          embedVar.set_footer(text="For more information, use AN help [COMMAND].")
 
     # if the channel name fits we add the AN db/parsing functions
-    # only works on #secualhealing server
-    # this is the same as above honestly
-    if (message.channel.name == "an-help" or message.channel.name == "assassinsnetwork") and message.guild.id == conf.main_server:
+    if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server:
         if msg != "":
             if msg == "ocr":
                 return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
@@ -233,14 +236,36 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
     return embedVar
 
 
+def rank_pic_big(elo):
+    """
+    grabs rank pics, copied from an_flask
+    """
+    if elo < 801:
+        return "badge_1_big.png"
+    if elo < 1000:
+        return "badge_2_big.png"
+    if elo < 1200:
+        return "badge_3_big.png"
+    if elo < 1400:
+        return "badge_4_big.png"
+    return "badge_5_big.png"
+
+
 # command to look up a user on the AN db
 # connect to DB -> look up user -> print user
 def lookup_user(message):
     player = message.content.replace("lookup ", "")
     player = player.replace("  ", " ")
     db = connect()
-    # this only checks according to AN usernames so maybe this should be changed to search for IGNs
-    player_db = identify_player(db, player)
+    if player == "lookup":
+        player_db = db.players.find_one({"discord_id" : str(message.author.id)})
+        player = player_db["name"]
+    elif "@" in player:
+        discord_id = player.replace("@!", "").replace(">", "").replace("<", "")
+        player_db = db.players.find_one({"discord_id" : discord_id})
+        player = player_db["name"]
+    else:
+        player_db = identify_player(db, player)
     if player_db is None:
         embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
         embedVar.add_field(name=find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
@@ -250,15 +275,37 @@ def lookup_user(message):
         embedVar = discord.Embed(title=f"{player} {flag.flag(player_db['nation'])}", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
         # only add information that is present
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
+        top_elo = 0
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
-                embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
-                                   Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                   Winrate: {round(player_db[f'{mode}games']['won'] / player_db[f'{mode}games']['total'] * 100)}% \n \
-                                   Games Played: {player_db[f'{mode}games']['total']}\n \
-                                   K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
-                                   Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
-                                   Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
+                top_elo = max(top_elo, player_db[f'{mode}mmr'])
+                if 'aa' not in mode:
+                    # should do basic fields and add on depending on the mode t b h
+                    embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                       Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                       Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
+                                       Games Played: {player_db[f'{mode}games']['total']}\n \
+                                       K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
+                                       Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
+                                       Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
+                else:
+                    if mode == 'aar':
+                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
+                                           Games Played: {player_db[f'{mode}games']['total']}\n \
+                                           Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                           Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)}",
+                                           inline=False)
+                    else:
+                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
+                                           Games Played: {player_db[f'{mode}games']['total']}\n \
+                                           Avg Kills: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                           Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
+                                           inline=False)
+        embedVar.set_image(url="https://assassins.network/static/badges/" + rank_pic_big(top_elo))
     return embedVar
 
 # WIP
@@ -295,7 +342,12 @@ def add_match(message):
 # print the matches.txt file
 async def print_matches(message):
     with open("matches.txt", "r") as f:
-        await message.channel.send(f.read())
+        content = f.read()
+        try:
+            await message.channel.send(content)
+        except:
+            embedVar = discord.Embed(title="Matches", color=0xff00ff, description=content)
+            await message.channel.send(embed=embedVar)
         f.close()
     return
 
@@ -351,6 +403,9 @@ def team_finder(players, mode, random):
     return f"{', '.join(t1)} vs. {', '.join(t2)}"
 
 
+class OutcomeError(Exception):
+    pass
+
 # update the AN db by running the read_and_update script
 async def updater(message):
     if get(message.author.roles, name="Assassins' Network"):
@@ -361,6 +416,8 @@ async def updater(message):
             #rau.eloupdate.new_matches()
             #rau.historyupdate.update()
             await message.channel.send("Successfully updated the leaderboards!")
+        except OutcomeError as e:
+            await message.channel.send("Error! " + e)
         except:
             await message.channel.send("An error has occurred, please message an administrator.")
     else:
@@ -733,18 +790,22 @@ async def check_remake(message):
     try:
         if check_mode(mode) == "escort":
             s_diff = escort(time, players)
+            if abs(score_1 - score_2) / max(score_1, score_2) > s_diff:
+                s_diff = round(s_diff)
+                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+            else:
+                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
         else:
             s_diff = manhunt(time, players)
+            if abs(score_1 - score_2) > s_diff:
+                s_diff = round(s_diff)
+                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+            else:
+                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
     except:
         await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + find_insult())
         return
 
-    # check if score diff is under or above threshold
-    s_diff = round(s_diff)
-    if abs(score_1 - score_2) > s_diff:
-        await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
-    else:
-        await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
     return
 
 
@@ -773,7 +834,6 @@ async def ocr_screenshot(message):
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
-    print(msg)
     
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
@@ -795,7 +855,11 @@ async def ocr_screenshot(message):
         fname = f"screenshots/{str(datetime.now())}.png"
         with open(fname, "wb") as f:
             f.write(img.content)
-        await message.channel.send(AC_Score_OCR.OCR(fname, game, players))
+        try:
+            result = AC_Score_OCR.OCR(fname, game, players)
+        except:
+            result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
+        await message.channel.send(result)
         return
     else:
         await message.channel.send("Could not find attachment.")
@@ -803,7 +867,7 @@ async def ocr_screenshot(message):
 
 # add users to the db
 async def user_add(message):
-    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id == conf.admin:
+    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
         msg = message.content[9:]
         info = msg.split("; ")
         name = info[0]
@@ -811,10 +875,46 @@ async def user_add(message):
         link = info[2]
         nation = info[3]
         platforms = info[4].split(", ")
-        discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
-        db = connect()
         try:
-            db.players.insert_one({"name":name, "ign":ign, "link":link, "nation":nation, "platforms":platforms, "emmr":int(800), "mhmmr":int(800), "ehistory":{"dates":[], "mmrs":[]}, "mhhistory":{"dates":[], "mmrs":[]}, "egames":{"total":int(0), "won":int(0), "lost":int(0)}, "mhgames":{"total":int(0), "won":int(0), "lost":int(0)}, "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)}, "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)}, "discord_id":discord_id})
+            discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
+        except IndexError:
+            discord_id = ""
+        db = connect()
+        starting_mmr = 800
+        d = date.today().strftime("%y-%m-%d")
+        try:
+            db.players.insert_one({
+                "name":name,
+                "ign":ign,
+                "link":link,
+                "nation":nation,
+                "platforms":platforms,
+                "emmr":starting_mmr,
+                "mhmmr":starting_mmr,
+                "aarmmr":starting_mmr,
+                "aadmmr":starting_mmr,
+                "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "egames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+                "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+                "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+                "erank": 0,
+                "erankchange": 0,
+                "mhrank": 0,
+                "mhrankchange": 0,
+                "aarrank": 0,
+                "aarrankchange": 0,
+                "aadrank": 0,
+                "aadrankchange": 0,
+                "discord_id":discord_id}
+                )
             await message.channel.send("Successfully added user.")
         except:
             await message.channel.send("An error has occured.")
@@ -873,7 +973,10 @@ async def on_message(message):
         message.content = message.content[3:]
         # help message
         if message.content.lower().startswith("help"):
-            await message.channel.send(embed=help_message(message))
+            try:
+                await message.channel.send(embed=help_message(message))
+            except UnboundLocalError:
+                await message.channel.send("Could not find the function you're looking for.")
             return
      
         # lookup
@@ -887,9 +990,8 @@ async def on_message(message):
             await message.channel.send(embed=ladder[0], file=ladder[1])
             return
         
-        ident = "add "
         # add games
-        if message.content.lower().startswith(ident) and message.channel.guild.id == conf.main_server:
+        if message.content.lower().startswith("add "):# and message.channel.guild.id == conf.main_server:
             add_match(message)
             await message.channel.send("Game(s) added!")
             return

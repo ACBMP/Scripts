@@ -4,6 +4,7 @@ import historyupdate
 import ranks
 import tweet
 import botconfig as conf
+from util import *
 
 def read_and_update():
     client = MongoClient('mongodb://localhost:27017/')
@@ -23,9 +24,9 @@ def read_and_update():
             entry_dict["new"]=True
 
             #mode
-            if csv_entry[0] in ["M", "E"]:
+            if csv_entry[0] in ["M", "E", "AA"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
-                modes[check_mode(csv_entry[0], short=True)] = True
+#                modes[check_mode(csv_entry[0], short=True)] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue
@@ -34,30 +35,25 @@ def read_and_update():
         
             #players
             number_of_players = int(csv_entry[1])
-            team1 = []
-            team2 = []
-            for index in range(0,number_of_players):
-                team1.append(csv_entry[3+index])
-            for index in range(0,number_of_players):
-                team2.append(csv_entry[3+number_of_players+index])
-            entry_dict["team1"]=[]
-            entry_dict["team2"]=[]
-            for entry in team1:
-                temp_dict={}
-                temp_list=entry.split(conf.RAU_SECONDARY_TOKEN)
-                temp_dict["player"]=temp_list[0]
-                temp_dict["score"]=int(temp_list[1])
-                temp_dict["kills"]=int(temp_list[2])
-                temp_dict["deaths"]=int(temp_list[3])
-                entry_dict["team1"].append(temp_dict)
-            for entry in team2:
-                temp_dict={}
-                temp_list=entry.split(conf.RAU_SECONDARY_TOKEN)
-                temp_dict["player"]=temp_list[0]
-                temp_dict["score"]=int(temp_list[1])
-                temp_dict["kills"]=int(temp_list[2])
-                temp_dict["deaths"]=int(temp_list[3])
-                entry_dict["team2"].append(temp_dict)
+            teams = [[], []]
+            for index in range(0, number_of_players):
+                teams[0].append(csv_entry[3 + index])
+            for index in range(0, number_of_players):
+                teams[1].append(csv_entry[3 + number_of_players + index])
+
+            for i in range(2):
+                team_n = f"team{i + 1}"
+                entry_dict[team_n] = []
+                for entry in teams[i]:
+                    temp_dict = {}
+                    temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
+                    temp_dict["player"] = temp_list[0]
+                    temp_dict["score"] = int(temp_list[1])
+                    temp_dict["kills"] = int(temp_list[2])
+                    temp_dict["deaths"] = int(temp_list[3])
+                    if csv_entry[0] == "AA":
+                        temp_dict["scored"] = int(temp_list[4])
+                    entry_dict[team_n].append(temp_dict)
             
             #inserting the record into the db
             db.matches.insert_one(entry_dict)
@@ -74,7 +70,7 @@ def main():
     eloupdate.new_matches()
     historyupdate.update()
     ranks.main()
-    tweet.tweet("e")
+#    tweet.tweet("e")
 #    for key in modes.keys():
 #        if modes[key]:
 #            tweet.tweet(key)
