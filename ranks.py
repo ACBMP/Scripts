@@ -1,10 +1,10 @@
-from teams import connect
 import itertools
+from util import *
 
 # I have yet to run this so nobody has a rank yet
 
-def main():
-    for mode in ["mh", "e", "aar", "aad"]:
+def main(modes=["mh", "e", "aar", "aad"]):
+    for mode in modes:
         db = connect()
         players = db.players.find({f"{mode}games.total": {"$gte":10}})
         p_sorted = sorted(players, key=lambda player: player[f"{mode}mmr"], reverse=True)

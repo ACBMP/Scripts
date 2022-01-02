@@ -24,7 +24,7 @@ def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
         elif S == 0:
             return R - 10
         elif S == .5:
-            return R
+            return R + 20
         else:
             raise ValueError("Broken outcome.")
 
@@ -45,7 +45,7 @@ def score(t1, t2, ref=None):
             return 0
     else:
         # reference stomp value
-        return (abs(t1 - t2) - 1) / ref
+        return max(abs(t1 - t2) - 1, 0) / ref
     
 def w_mean(rankings, rankings_o):
     mean = sum(rankings_o) / len(rankings_o)
