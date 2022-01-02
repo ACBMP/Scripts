@@ -9,6 +9,8 @@ os.environ['LC_ALL'] = 'C'
 def OCR(screenshot, game, players):
     players = int(players)
     img = core.ffms2.Source(screenshot)
+    if type(img) == list:
+        img = img[0]
     img = img.resize.Point(format=vs.GRAY8, matrix_s="709")
     if game.lower() == "acb":
         # these are for 6-man lobbies only atm
@@ -19,6 +21,7 @@ def OCR(screenshot, game, players):
         bottom = 420 + (25 * abs(6 - players)) * scale
         binarize = [120, 145] # highlight, rest
         img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
+        blue_v = [255, 0]
         common = {
                 "$S": "$5",
                 "$g": "$9",
@@ -38,13 +41,16 @@ def OCR(screenshot, game, players):
         t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
+        blue_v = [0, 255]
         common = {
                 "piesiol": "piesio1",
                 "piesio[": "piesio1",
-                "$M$": "$11$",
-                "$N$": "$11$",
-                "$n$": "$11$",
-                "IQueazo": "iQueazo"
+                "$M": "$11",
+                "$N": "$11",
+                "$n": "$11",
+                "IQueazo": "iQueazo",
+                "DurandaISword": "DurandalSword",
+                "|DurZa": "DurZa"
                 }
     else:
         return OCR(screenshot, "acb", players)
@@ -69,7 +75,7 @@ def OCR(screenshot, game, players):
     # invert if main player (the one taking the screenshot) and binarize
     def check_invert(n, f, c):
         if f.props.PlaneStatsMin > 75:
-            return c.std.Binarize(binarize[0], v0=255, v1=0)
+            return c.std.Binarize(binarize[0], v0=blue_v[0], v1=blue_v[1])
         else:
             return c.std.Binarize(binarize[1])
     
@@ -92,7 +98,7 @@ def OCR(screenshot, game, players):
         for m in [*common]:
             result = result.replace(m, common[m])
         result_f.append(result)
-        return c.sub.Subtitle(result, style="sans-serif,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1")
+        return c#.sub.Subtitle(result, style="sans-serif,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1")
     
     # prepare list which will store all the results
     result_f = []
