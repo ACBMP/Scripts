@@ -1025,6 +1025,7 @@ async def on_message(message):
 
         if message.content.lower() in ["sanity", "check", "sanity check"]:
             await sanity_check_matches(message)
+            return
     
         # edit matches.txt
         if message.content.lower().startswith("edit "):
@@ -1039,7 +1040,7 @@ async def on_message(message):
         ident = "update"
     
         # update db
-        if message.content.lower().startswith(ident) and message.channel.guild.id == conf.main_server or message.author.id in conf.admin:
+        if message.content.lower().startswith(ident) and (message.channel.guild.id == conf.main_server or message.author.id in conf.admin):
             await updater(message)
             return
     
