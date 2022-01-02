@@ -1,12 +1,3 @@
-# TODO
-# * figure out how to make the player search more intuitive
-# * save all servers posted in so every server is pinged
-# * make AA team comps generator assign roles too
-#   - this needs to take into account that AA will require two separate ratings (running & def)
-#     which we haven't added to the DB yet (it currently has nothing AA-related)
-#   - if somebody decides to tackle this before me just use eg aarmmr and aadmmr
-#     also note that basically everything related to this is done in teams.py
-#   - since we don't have the okay from the AA crew yet not sure how high priority this is
 import botconfig as conf
 import random
 import discord
@@ -25,6 +16,7 @@ import sys
 from tweet import rank_frame
 import glob
 import os
+import sanity
 
 client = discord.Client()
 
@@ -103,6 +95,22 @@ insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than y
 def find_insult():
     return random.choice(insults)
 
+
+async def send_long_message(content, channel):
+    """
+    discord has a 2k char limit which we often hit with eg matches
+    embed has a limit of 4096 so that's not a great way to bypass this is a lot easier
+    """
+    line_split = content.split("\n")
+    line = ""
+    for i in line_split:
+        newline = line + line_split[i]
+        if len(newline) > 2000:
+            await channel.send(line)
+        line = line_split[i]
+    return
+
+
 # change bot presence function
 # it just appends queues if there's someone in one
 # otherwise it shows Wanted 6/9
@@ -172,6 +180,8 @@ AN print```"""
 AN update```Note that improperly formatted matches won't be added. If this occurs, please contact Dell."""
     user_add_help = """If you have the Assassins' Network role, you can add users to the database using\n```css
 AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...]; @USER```"""
+    sanity_help = """To run the sanity checker over the currently added matches, run\n```css
+AN sanity```"""
 
     # if the user asked for help on a specific function the msg isn't empty after parsing
     # so we find out what it is and return an embed with the long description from above
@@ -201,7 +211,7 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
          embedVar.set_footer(text="For more information, use AN help [COMMAND].")
 
     # if the channel name fits we add the AN db/parsing functions
-    if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server:
+    if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server or message.author.id in conf.admin:
         if msg != "":
             if msg == "ocr":
                 return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
@@ -213,6 +223,8 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
                 return discord.Embed(title=":crayon: Replace Match Content", description=replace_help, color=0xff00fe)
             elif msg == "print":
                 return discord.Embed(title=":printer: Print Matches", description=print_help, color=0xff00fe)
+            elif msg == "sanity":
+                return discord.Embed(title=":confused: Sanity Check", description=sanity_help, color=0xff00fe)
             elif msg == "update":
                 return discord.Embed(title=":pager: Update Matches", description=update_help, color=0xff00fe)
             elif msg == "user add":
@@ -221,6 +233,7 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
             embedVar.add_field(name=":camera: Scan Screenshot", value="AN OCR", inline=True)
             embedVar.add_field(name=":memo: Add Matches", value="AN add", inline=True)
             embedVar.add_field(name=":printer: Print Matches", value="AN print", inline=True)
+            embedVar.add_field(name=":confused: Sanity Check", value="AN sanity", inline=True)
             embedVar.add_field(name=":pencil2: Edit Matches", value="AN edit", inline=True)
             embedVar.add_field(name=":crayon: Replace Match Content", value="AN replace", inline=True)
             embedVar.add_field(name=":pager: Update Matches", value="AN update", inline=True)
@@ -339,19 +352,27 @@ def add_match(message):
 async def print_matches(message):
     with open("matches.txt", "r") as f:
         content = f.read()
-        try:
-            await message.channel.send(content)
-        except:
-            embedVar = discord.Embed(title="Matches", color=0xff00ff, description=content)
-            await message.channel.send(embed=embedVar)
+        send_long_message(content, message.channel)
+#        try:
+#            await message.channel.send(content)
+#        except:
+#            embedVar = discord.Embed(title="Matches", color=0xff00ff, description=content)
+#            await message.channel.send(embed=embedVar)
         f.close()
     return
+
+
+async def sanity_check_matches(message):
+    """
+    sanity check matches for errors
+    """
+    await message.channel.send(sanity.main())
 
 
 # edit matches.txt file
 # this overwrites the whole thing
 async def edit_matches(message):
-    if get(message.author.roles, name="Assassins' Network"):
+    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         msg = message.content.replace("edit ", "").replace("edit ", "")
         with open("matches.txt", "w") as f:
             f.write(msg)
@@ -365,7 +386,7 @@ async def edit_matches(message):
 
 # edit matches.txt file by replacing content from the file
 async def replace_matches(message):
-    if get(message.author.roles, name="Assassins' Network"):
+    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         msg = message.content.replace("replace ", "").replace("replace ", "")
         msg = msg.split(" with ")
         # we specifically want to truncate
@@ -404,7 +425,7 @@ class OutcomeError(Exception):
 
 # update the AN db by running the read_and_update script
 async def updater(message):
-    if get(message.author.roles, name="Assassins' Network"):
+    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         try:
             import read_and_update as rau
             rau.main()
@@ -1001,6 +1022,9 @@ async def on_message(message):
         if message.content.lower() == "print":
             await print_matches(message)
             return
+
+        if message.content.lower() in ["sanity", "check", "sanity check"]:
+            await sanity_check_matches(message)
     
         # edit matches.txt
         if message.content.lower().startswith("edit "):
@@ -1015,7 +1039,7 @@ async def on_message(message):
         ident = "update"
     
         # update db
-        if message.content.lower().startswith(ident) and message.channel.guild.id == conf.main_server:
+        if message.content.lower().startswith(ident) and message.channel.guild.id == conf.main_server or message.author.id in conf.admin:
             await updater(message)
             return
     

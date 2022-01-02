@@ -19,10 +19,10 @@ def identify_player(db, name):
     case insensitive
     """
     import re
-    name = re.compile(name, re.IGNORECASE)
-    player = db.players.find_one({"name" : name})
+    rename = re.compile(name, re.IGNORECASE)
+    player = db.players.find_one({"name" : rename})
     if player is None:
-        player = db.players.find_one({"ign": name})
+        player = db.players.find_one({"ign": rename})
     if player is None:
         raise ValueError(f"identify_player: player {name} not found")
     return player
