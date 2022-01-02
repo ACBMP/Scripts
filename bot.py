@@ -101,13 +101,20 @@ async def send_long_message(content, channel):
     discord has a 2k char limit which we often hit with eg matches
     embed has a limit of 4096 so that's not a great way to bypass this is a lot easier
     """
+    if content[-1] == "\n":
+        content = content[:-1]
+    elif len(content) < 2000:
+        await channel.send(content)
+        return
     line_split = content.split("\n")
     line = ""
-    for i in line_split:
-        newline = line + line_split[i]
+    for i in range(len(line_split)):
+        newline = line + "\n" + line_split[i]
         if len(newline) > 2000:
             await channel.send(line)
-        line = line_split[i]
+            line = ""
+        line += "\n" + line_split[i]
+    await channel.send(line)
     return
 
 
@@ -352,7 +359,7 @@ def add_match(message):
 async def print_matches(message):
     with open("matches.txt", "r") as f:
         content = f.read()
-        send_long_message(content, message.channel)
+        await send_long_message(content, message.channel)
 #        try:
 #            await message.channel.send(content)
 #        except:
@@ -591,9 +598,10 @@ async def play_command(msg, user, channel, gid):
                 return
             player = player_db["name"]
         else:
-            player_db = identify_player(db, player)
-            if player_db is None:
-                await channel.send("Did not recognize username. Please check that it's the same as on https://assassins.network/players. " + find_insult())
+            try:
+                player_db = identify_player(db, player)
+            except ValueError as e:
+                await channel.send(e)
                 return
 
     if mode == "artifact assault":
@@ -716,9 +724,10 @@ async def queue_rm_command(msg, user, channel):
                 await channel.send("I don't know you. " + find_insult())
                 return
         else:
-            player_db = identify_player(db, msg)
-            if player_db is None:
-                await channel.send("Did not recognize username. Please check that it's the same as on https://assassins.network/players. " + find_insult())
+            try:
+                player_db = identify_player(db, player)
+            except ValueError as e:
+                await channel.send(e)
                 return
 
         player = player_db["name"]
@@ -998,7 +1007,10 @@ async def on_message(message):
      
         # lookup
         if message.content.lower().startswith("lookup"):
-            await message.channel.send(embed=lookup_user(message))
+            try:
+                await message.channel.send(embed=lookup_user(message))
+            except ValueError as e:
+                await message.channel.send(e)
             return
     
         # ladder
