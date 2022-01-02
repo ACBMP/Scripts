@@ -279,32 +279,28 @@ def lookup_user(message):
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
                 top_elo = max(top_elo, player_db[f'{mode}mmr'])
+                user_stats = f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                               Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
+                               Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
+                               Games Played: {player_db[f'{mode}games']['total']}\n"
+
                 if 'aa' not in mode:
-                    # should do basic fields and add on depending on the mode t b h
-                    embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
-                                       Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                       Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
-                                       Games Played: {player_db[f'{mode}games']['total']}\n \
-                                       K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
-                                       Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
-                                       Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
+                    embedVar.add_field(name=modes_dict[mode], value=user_stats +
+                    f"K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
+                     Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
+                     Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
                 else:
                     if mode == 'aar':
-                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
-                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
-                                           Games Played: {player_db[f'{mode}games']['total']}\n \
-                                           Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
-                                           Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)}",
-                                           inline=False)
+                        embedVar.add_field(name=modes_dict[mode], value=user_stats +
+                                f"Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                 Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)} \n \
+                                 Rat Index: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 3)}",
+                                 inline=False)
                     else:
-                        embedVar.add_field(name=modes_dict[mode], value=f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
-                                           Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                                           Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
-                                           Games Played: {player_db[f'{mode}games']['total']}\n \
-                                           Avg Kills: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} \n \
-                                           Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
-                                           inline=False)
+                        embedVar.add_field(name=modes_dict[mode], value=user_stats +
+                                f"Avg Kills: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} \n \
+                                 Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
+                                 inline=False)
         embedVar.set_image(url="https://assassins.network/static/badges/" + rank_pic_big(top_elo))
     return embedVar
 
@@ -759,7 +755,7 @@ async def check_remake(message):
     Assassinate not implemented currently.
     """
     # function called by "AN remake" so skip first two entries
-    msg = message.content.split(" ")[2:]
+    msg = message.content.split(" ")[1:]
     # check that the message includes only the scores time left and players
     if len(msg) > 6:
         await message.channel.send("I did not understand that. " + find_insult())
