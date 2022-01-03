@@ -24,6 +24,8 @@ def identify_player(db, name):
     if player is None:
         player = db.players.find_one({"ign": rename})
     if player is None:
+        player = db.players.find_one({"discord_id": name.replace("@!", "").replace(">", "").replace("<", "")})
+    if player is None:
         raise ValueError(f"identify_player: player {name} not found")
     return player
 
