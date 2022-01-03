@@ -351,6 +351,8 @@ async def lookup_synergy(message):
     if player == "":
         player = db.players.find_one({"discord_id" : str(message.author.id)})
         player = player["name"]
+    else:
+        player = identify_player(db, player)["name"]
     # this is so primitive I'm sorry
     min_games = 5
     track_teams = False
@@ -367,9 +369,9 @@ async def lookup_synergy(message):
     if "Artifact" in mode:
         mode = "Artifact assault"
     synergies = synergy.find_synergy(player, mode, min_games, track_teams)
-    embedVar = discord.Embed(title=f"{player}'s {mode} Synergies", color=0xff00ff)
+    embedVar = discord.Embed(title=f"{player}'s {mode.replace('ass', 'Ass')} Synergies", color=0xff00ff)
     embedVar.add_field(name="Top Teammates", value=synergies[0])
-    embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[0])
+    embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
     await message.channel.send(embed=embedVar)
 
 
