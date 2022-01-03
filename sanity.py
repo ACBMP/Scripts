@@ -49,7 +49,7 @@ def sanity_check(data):
             try:
                 identify_player(db, player[0])
             except ValueError as e:
-                return e
+                return str(e).replace("insert_player: p", "P") + ":\n" + game
 
             # sum score
             if mode != "AA":

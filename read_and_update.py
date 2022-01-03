@@ -11,7 +11,7 @@ def read_and_update():
     db = client.public
     f = open(conf.RAU_FILE_PATH + conf.RAU_FILE_NAME,'r')
     # keep track of whether a mode was played
-    modes = {"mh": False, "e": False}
+    modes = {"mh": False, "e": False, "aa": False}
     for line in f:
         if line=="#":
             print("No new data to be added")
@@ -26,7 +26,7 @@ def read_and_update():
             #mode
             if csv_entry[0] in ["M", "E", "AA"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
-#                modes[check_mode(csv_entry[0], short=True)] = True
+                modes[csv_entry[0].lower()] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue
@@ -71,9 +71,13 @@ def main():
     historyupdate.update()
     ranks.main()
 #    tweet.tweet("e")
-#    for key in modes.keys():
-#        if modes[key]:
-#            tweet.tweet(key)
+    for key in modes.keys():
+        if modes[key]:
+            if modes[key] == "aa":
+                tweet.tweet("aar")
+                tweet.tweet("aad")
+            else:
+                tweet.tweet(key)
 
 if __name__=="__main__":
     main()
