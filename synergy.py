@@ -2,7 +2,7 @@ from util import *
 import re
 
 def find_games(db, name, mode):
-    data = db.players.find_one({"name": name})
+    data = identify_player(db, name)
     # load and search for all igns plus name so we don't get empty match histories
     igns = data["ign"]
     if type(igns) == str:
@@ -66,26 +66,26 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
     return sorted_dicts
 
 
-def dict_print(d):
-    print("Player: Winrate (Games Won / Games Played)")
+def dict_string(d):
+    val = ""
     for item in d:
-        print(f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]})")
-    return
+        val += f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]})\n"
+    return val
 
 
 def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
     db = connect()
     games, igns = find_games(db, name, mode)
     results = parse_matches(db, games, igns, min_games, track_teams)
-    print("Top Teammates:")
-    dict_print(results[1])
-    print()
-    print("Top Opponents (Opponent's Winrate):")
-    dict_print(results[0])
-    return
+    return dict_string(results[1]), dict_string(results[0])
 
 if __name__ == "__main__":
 #    find_synergy("Tha Fazz", min_games=5, track_teams=False)
+    print("Player: Winrate (Games Won / Games Played)")
     for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit"]:
-        print("\n\nFinding synergy for:", x)
-        find_synergy(x, "Escort", min_games=5)
+        print("Finding synergy for:", x)
+        synergies = find_synergy(x, "Escort", min_games=5)
+        print("Top teammates:")
+        print(synergies[0])
+        print("Top opponents:")
+        print(synergies[1])

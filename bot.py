@@ -17,6 +17,7 @@ from tweet import rank_frame
 import glob
 import os
 import sanity
+import synergy
 
 client = discord.Client()
 
@@ -163,8 +164,10 @@ def help_message(message):
 AN team comps [PLAYER_0, PLAYER_2, PLAYER_3...] [mode MODE] [random FACTOR]```""" + "\nNot specifying players uses the queue from the specified mode.\nPlayer names must be Assassins' Network names."
     lfg_help = """\nTo queue up for a game, type\n```css
 AN play [PLAYER] [mode MODE] [in START_TIME] [for LENGTH_TIME]```\nIf PLAYER is unspecified, the bot attempts to match your Discord account to a player. Otherwise, these must be AN usernames.\nTimes must be given in hours. Default `LENGTH_TIME` is 3 hours, default mode is defined by the server the command is sent in.\nNote that you can only queue up for one mode at a time."""
-    lookup_help = """To look up a user's stats on an, type\n```css
+    lookup_help = """To look up a user's stats on AN, type\n```css
 AN lookup [PLAYER]```"""
+    synergy_help = """To look up a user's synergies, type\n```css
+AN synergy [PLAYER] [MODE] [MIN_GAMES] [TRACK_TEAMS]```"""
     queue_rm_help = """To remove yourself from the queue you are currently in, use\n```css
 AN queue remove```"""
     queue_help = """To print the players currently queued up for a mode, use\n```css
@@ -174,13 +177,13 @@ AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby 
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
 AN OCR [GAME] [TOTAL_PLAYERS]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work."""
     add_help = """To queue matches for being added to AN, use\n```css
-AN add [FORMATTED_MATCH]```with the match data formatted in the AN format pinned in #an-help on the #secualhealing server, e.g.:\n```css
+AN add FORMATTED_MATCH```with the match data formatted in the AN format pinned in #an-help on the #secualhealing server, e.g.:\n```css
 M, 3, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```"""
     edit_help = """To edit ALL the matches to be added to the database, use\n```css
-AN edit [UPDATED_MATCHES]```Please note that you should first print all matches with ```css
+AN edit UPDATED_MATCHES```Please note that you should first print all matches with ```css
 AN print``` and edit those results, then feed ALL the matches to this in one single command. Otherwise, all unmentioned matches will be removed."""
     replace_help = """To replace certain content in the matches to be queued to the database, use\n```css
-AN replace [ORIGINAL] with [REPLACEMENT]```"""
+AN replace ORIGINAL with REPLACEMENT```"""
     print_help = """To print the matches currently queued to be added to the database, use\n```css
 AN print```"""
     update_help = """If you have the Assassins' Network role, you can update the matches in the database using\n```css
@@ -203,6 +206,8 @@ AN sanity```"""
             return discord.Embed(title=":printer: Print Queue", description=queue_help, color=0xff00fe)
         elif msg == "lookup":
             return discord.Embed(title=":mag: User Lookup", description=lookup_help, color=0xff00fe)
+        elif msg == "synergy":
+            return discord.Embed(title=":handshake: Lookup Synergies", description=synergy_help, color=0xff00fe)
         elif msg == "remake":
             return discord.Embed(title=":judge: Remake Calculator", description=remake_help, color=0xff00fe)
     # otherwise we do one giant embed and keep adding fields with functions
@@ -214,6 +219,7 @@ AN sanity```"""
          embedVar.add_field(name=":printer: Print Queue", value="AN queue", inline=True)
          embedVar.add_field(name=":elevator: Team Generator", value="AN team comps", inline=True)
          embedVar.add_field(name=":mag: User Lookup", value="AN lookup", inline=True)
+         embedVar.add_field(name=":handshake: Lookup Synergies", value="AN synergy", inline=True)
          embedVar.add_field(name=":judge: Remake Calculator", value="AN remake", inline=True)
          embedVar.set_footer(text="For more information, use AN help [COMMAND].")
 
@@ -334,6 +340,37 @@ def lookup_ladder(message):
             url=f"https://assassins.network/{mode}", color=0xff00ff)
     embedVar.set_image(url="attachment://table.png")
     return embedVar, table
+
+
+async def lookup_synergy(message):
+    db = connect()
+    content = message.content
+    content = content[8:]
+    content = content.split(" ")
+    player = content[0]
+    if player == "":
+        player = db.players.find_one({"discord_id" : str(message.author.id)})
+        player = player["name"]
+    # this is so primitive I'm sorry
+    min_games = 5
+    track_teams = False
+    if len(content) > 1:
+        mode = content[1]
+        if len(content) > 2:
+            min_games = content[2]
+            if len(content) == 4:
+                track_teams = content[3]
+    else:
+        mode = None
+    mode = check_mode(mode, message.guild.id, short=False).capitalize()
+    # since there are two modes that are grouped together to AA
+    if "Artifact" in mode:
+        mode = "Artifact assault"
+    synergies = synergy.find_synergy(player, mode, min_games, track_teams)
+    embedVar = discord.Embed(title=f"{player}'s {mode} Synergies", color=0xff00ff)
+    embedVar.add_field(name="Top Teammates", value=synergies[0])
+    embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[0])
+    await message.channel.send(embed=embedVar)
 
 
 # add a match to the matches.txt file
@@ -1017,6 +1054,15 @@ async def on_message(message):
         if message.content.lower().startswith("ladder"):
             ladder = lookup_ladder(message)
             await message.channel.send(embed=ladder[0], file=ladder[1])
+            return
+
+        # synergy
+        if message.content.lower().startswith("synergy"):
+            try:
+                await lookup_synergy(message)
+            except discord.errors.HTTPException as e:
+                print(e)
+                await message.channel.send("An error has occurred, you might not have enough games. " + find_insult())
             return
         
         # add games
