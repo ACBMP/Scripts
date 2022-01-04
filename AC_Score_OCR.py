@@ -30,6 +30,8 @@ def OCR(screenshot, game, players):
                 "DevelSpnt": "DevelSpirit",
                 "DaokO": "Daok0",
                 "piesiol": "piesio1",
+                "Mrtirox": "MrEirox",
+                "MtEirox": "MrEirox"
                 }
     elif game.lower() == "acr":
         scale = img.width / 1280
@@ -50,7 +52,15 @@ def OCR(screenshot, game, players):
                 "$n": "$11",
                 "IQueazo": "iQueazo",
                 "DurandaISword": "DurandalSword",
-                "|DurZa": "DurZa"
+                "|DurZa": "DurZa",
+                "O0": "0",
+                "0O": "0",
+                "TneAngryRiver": "TheAngryRiver",
+                "|IDurZa", "DurZa",
+                "iiDurZa", "DurZa",
+                "piesio]", "piesio1",
+                "TneAngrwaer", "TheAngryRiver",
+                "iiQueazo": "iQueazo"
                 }
     else:
         return OCR(screenshot, "acb", players)

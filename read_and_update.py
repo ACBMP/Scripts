@@ -69,13 +69,14 @@ def main():
     modes = read_and_update()
     eloupdate.new_matches()
     historyupdate.update()
-    ranks.main()
+    ranks.main(modes.keys())
 #    tweet.tweet("e")
     for key in modes.keys():
         if modes[key]:
             if modes[key] == "aa":
-                tweet.tweet("aar")
-                tweet.tweet("aad")
+                pass
+                #tweet.tweet("aar")
+                #tweet.tweet("aad")
             else:
                 tweet.tweet(key)
 
