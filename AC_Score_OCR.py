@@ -56,10 +56,10 @@ def OCR(screenshot, game, players):
                 "O0": "0",
                 "0O": "0",
                 "TneAngryRiver": "TheAngryRiver",
-                "|IDurZa", "DurZa",
-                "iiDurZa", "DurZa",
-                "piesio]", "piesio1",
-                "TneAngrwaer", "TheAngryRiver",
+                "|IDurZa": "DurZa",
+                "iiDurZa": "DurZa",
+                "piesio]": "piesio1",
+                "TneAngrwaer": "TheAngryRiver",
                 "iiQueazo": "iQueazo"
                 }
     else:

@@ -33,8 +33,7 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
                     d = 1
             if track_teams:
                 players = ", ".join(sorted(players))
-            if track_teams:
-                if i == 1:
+                if i == m["outcome"]:
                     try:
                         dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1] + 1]
                     except:
@@ -46,7 +45,7 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
                         dicts[d][players] = [1, 0]
             else:
                 for j in range(len(players)):
-                    if i == 1:
+                    if i == m["outcome"]:
                         try:
                             dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1]
                         except:
@@ -60,7 +59,7 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
     for d in range(len(dicts)):
         for player in dicts[d]:
             # make sure min games played
-            if dicts[d][player][1] >= min_games:
+            if dicts[d][player][0] >= min_games:
                 sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1]]
         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
     return sorted_dicts
