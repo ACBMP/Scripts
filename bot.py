@@ -19,6 +19,10 @@ import os
 import sanity
 import synergy
 import elostats
+import subprocess
+import telegram_bot
+
+subprocess.Popen(["python3", "telegram_bot.py"])
 
 client = discord.Client()
 
@@ -53,10 +57,10 @@ with open("queues.txt", "r") as f:
         if old_queues[i] == [""]:
             old_queues[i] = []
         i += 1
-    queues["e"] = old_queues[0]
-    queues["mh"] = old_queues[1]
-    queues_users["e"] = old_queues[2]
-    queues_users["mh"] = old_queues[3]
+    queues["e"] = old_queues[0] if old_queues[0] != " " else []
+    queues_users["e"] = old_queues[1] if old_queues[1] != " " else []
+    queues["mh"] = old_queues[2] if old_queues[2] != " " else []
+    queues_users["mh"] = old_queues[3] if old_queues[3] != " " else []
     f.close()
 
 abilities = ["Normal Disguise","Long Lasting Disguise", "Strong Disguise",
@@ -529,8 +533,9 @@ async def play_command(msg, user, channel, gid):
     # only support hours for simplicity's sake
     if " for " in msg:
         length = re.findall(".* for (.*)", msg)[0]
-        msg = msg.replace(" for " + length, "")
         length = length.replace(" h", "").replace("h", "")
+        length = length.split(" ")[0]
+        msg = msg.replace(" for " + length, "")
         try:
             length = float(length)
         except:
@@ -540,8 +545,9 @@ async def play_command(msg, user, channel, gid):
         length = 3 # hours
     if " in " in msg:
         start = re.findall(".* in (.*)", msg)[0]
-        msg = msg.replace(" in " + start, "")
         start = start.replace(" h", "").replace("h", "")
+        start = start.split(" ")[0]
+        msg = msg.replace(" in " + start, "")
         try:
             start = float(start)
         except:
@@ -552,6 +558,7 @@ async def play_command(msg, user, channel, gid):
     # determine mode
     if " mode " in msg:
         mode = re.findall(".* mode (.*)", msg)[0]
+        mode = mode.split(" ")[0]
         msg = msg.replace(" mode " + mode, "")
         mode = check_mode(mode, short=True)
     # if mode is empty use guild ID to auto determine mode
@@ -590,7 +597,7 @@ async def play_command(msg, user, channel, gid):
         await channel.send(f"{player} is already in the {modes_dict[mode]} queue.")
         return
     for i in scheduler.get_jobs():
-        if player + "_start" == i.id:
+        if player + f"_{mode}_start" == i.id:
             await channel.send(f"{player} is already scheduled to queue up.")
 
     # the part where people are added to the queue
@@ -600,7 +607,12 @@ async def play_command(msg, user, channel, gid):
         await update_presence()
         if len(queues[mode]) == queues_lengths[mode]:
             matchup = team_finder(queues[mode], mode=mode, random=0)
-            await channel.send(", ".join(queues[mode]_users) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup)
+            await channel.send(", ".join(queues_users[mode]) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup)
+            for p in queues[mode]:
+                try:
+                    telegram_bot.notify_player(p, modes_dict[mode])
+                except:
+                    pass
         elif len(queues[mode]) < queues_lengths[mode]:
             await channel.send(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
         else:
@@ -612,7 +624,7 @@ async def play_command(msg, user, channel, gid):
     if start > 0:
         try:
             end_time_add = datetime.isoformat(datetime.now() + timedelta(seconds = 1, hours = start))
-            scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + "_start")
+            scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + f"_{mode}_start")
             await channel.send(f"Will add {player} to the queue in {start} hour(s).")
         except:
             await channel.send(f"Did not recognize given start time or user already in queue.")
@@ -622,7 +634,7 @@ async def play_command(msg, user, channel, gid):
 
     # this adds queue removal
     end_time_rm = datetime.isoformat(datetime.now() + timedelta(hours=start + length, seconds = 1))
-    scheduler.add_job(partial(queue_rm, mode=mode, user=user, player=player, channel=channel), 'interval', hours=length + start, end_date=end_time_rm, id=(player if player else user.name) + "_remove")
+    scheduler.add_job(partial(queue_rm, mode=mode, user=user, player=player, channel=channel), 'interval', hours=length + start, end_date=end_time_rm, id=(player if player else user.name) + f"_{mode}_remove")
     return
 
 # queue removal command
@@ -654,17 +666,21 @@ async def queue_rm_command(msg, user, channel):
         player = player_db["name"]
 
         try:
-            scheduler.remove_job(player + "_start")
-            await channel.send(f"Successfully removed {player} from the queue.")
+            for mode in queues.keys():
+                scheduler.remove_job(player + f"_{mode}_start")
+                await channel.send(f"Successfully removed {player} from the {modes_dict[mode]} queue.")
         except:
-            # no else ifs because we want to remove from every queue at once
             for i in queues.keys():
-                await queue_rm(i, user, player, channel)
+                try:
+                    await queue_rm(i, user, player, channel)
+                except:
+                    pass
             return
 
         # end queue job removal
         try:
-            scheduler.remove_job(player + "_remove")
+            for mode in queues.keys():
+                scheduler.remove_job(player + f"_{mode}_remove")
         except:
             pass
     return
@@ -678,7 +694,7 @@ async def print_queue(message):
     msg = msg.replace("queue ", "")
     msg = msg.replace("queue", "")
     mode = check_mode(msg, message.guild.id, short=True)
-    await message.channel.send(f"{modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode])}")
+    await message.channel.send(f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode]])}")
     return
 
 
@@ -1077,6 +1093,7 @@ def stop_func(sig, frame):
     queues_joined = []
     for q in queues:
         queues_joined.append(", ".join(queues[q]))
+        queues_joined.append(", ".join(queues_users[q]))
     with open("queues.txt", "w") as f:
         f.write("; ".join(queues_joined))
         f.close()
