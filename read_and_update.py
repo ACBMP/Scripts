@@ -69,16 +69,19 @@ def main():
     modes = read_and_update()
     eloupdate.new_matches()
     historyupdate.update()
-    rmodes = modes.keys()
-    if "aa" in rmodes:
-        rmodes.remove("aa")
-        rmodes.append("aar")
-        rmodes.append("aad")
-    ranks.main(modes.keys())
-#    tweet.tweet("e")
-    for key in modes.keys():
+    rmodes = []
+    mkeys = list(modes.keys())
+    for m in mkeys:
+        if modes[m]:
+            if m == "aa":
+                rmodes.append("aar")
+                rmodes.append("aad")
+            else:
+                rmodes.append(m)
+    ranks.main(rmodes)
+    for key in mkeys:
         if modes[key]:
-            if modes[key] == "aa":
+            if key == "aa":
                 pass
                 #tweet.tweet("aar")
                 #tweet.tweet("aad")

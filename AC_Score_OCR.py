@@ -60,7 +60,9 @@ def OCR(screenshot, game, players):
                 "iiDurZa": "DurZa",
                 "piesio]": "piesio1",
                 "TneAngrwaer": "TheAngryRiver",
-                "iiQueazo": "iQueazo"
+                "iiQueazo": "iQueazo",
+                "iQueazol": "iQueazo",
+                "nyxies": "Onyxies"
                 }
     else:
         return OCR(screenshot, "acb", players)

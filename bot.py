@@ -18,6 +18,7 @@ import glob
 import os
 import sanity
 import synergy
+import elostats
 
 client = discord.Client()
 
@@ -34,7 +35,8 @@ modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
         'aar' : 'AA Running',
-        'aad' : 'AA Defending'
+        'aad' : 'AA Defending',
+        'aa' : 'Artifact Assault'
         }
 
 # we save the queues here as simple arrays since we don't expect to scale
@@ -77,24 +79,13 @@ Kill_Streak = ["+100", "+300", "+250", "+750"]
 Loss_Streak = ["Extra Precision", "Reset Cooldowns", "Score X2", "Boost Cooldowns"]
 
 #Command which generates random ability sets for a set number of players
+@command_dec
 async def ability_randomizer(message):
     aset = ", ".join(random.sample(abilities, k=2))
     aset += "\n" + ", ".join(random.sample(Perks, k=2))
     aset += "\n" + random.choice(Kill_Streak)
     await message.channel.send(aset + "\n" + random.choice(Loss_Streak))
     return
-
-
-# some fun ACB insults to use as error messages
-insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than you.",
-        "I bet you'd choose sex over escort.", "Go back to wanted.", "You played on Xbox, didn't you?",
-        "I'd choose Fazz over you.", "Even Fazz kills less civis than you.", "Dell runs less than you.",
-        "Are you from AC4?", "Speed gets fewer deaths than you.", "tdas gay", "ultro is trans", "What the fuck is that?",
-        "Let's not do that again.", "I just want to punch myself in the fucking face.", "Really fucking hilarious.",
-        "Dude, I'ma slaughter your entire family if you ever do that again.", "Oh man, I hate you.", "u r getting scummy"]
-
-def find_insult():
-    return random.choice(insults)
 
 
 async def send_long_message(content, channel):
@@ -342,6 +333,7 @@ def lookup_ladder(message):
     return embedVar, table
 
 
+@command_dec
 async def lookup_synergy(message):
     db = connect()
     content = message.content
@@ -395,6 +387,7 @@ def add_match(message):
 
 
 # print the matches.txt file
+@command_dec
 async def print_matches(message):
     with open("matches.txt", "r") as f:
         content = f.read()
@@ -408,6 +401,7 @@ async def print_matches(message):
     return
 
 
+@command_dec
 async def sanity_check_matches(message):
     """
     sanity check matches for errors
@@ -417,6 +411,7 @@ async def sanity_check_matches(message):
 
 # edit matches.txt file
 # this overwrites the whole thing
+@command_dec
 async def edit_matches(message):
     if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         msg = message.content.replace("edit ", "").replace("edit ", "")
@@ -431,6 +426,7 @@ async def edit_matches(message):
 
 
 # edit matches.txt file by replacing content from the file
+@command_dec
 async def replace_matches(message):
     if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         msg = message.content.replace("replace ", "").replace("replace ", "")
@@ -470,6 +466,7 @@ class OutcomeError(Exception):
     pass
 
 # update the AN db by running the read_and_update script
+@command_dec
 async def updater(message):
     if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
         try:
@@ -489,6 +486,7 @@ async def updater(message):
 
 
 # team comps generator
+@command_dec
 async def team_comps(message, ident):
     # message parsing
     channel = message.channel
@@ -573,16 +571,14 @@ async def queue_rm(mode, user, player, channel):
 
 # add player to play queue command
 # this is the most poorly written function in here honestly
+@command_dec
 async def play_command(msg, user, channel, gid):
     # parse the message for times
     # only support hours for simplicity's sake
     if " for " in msg:
         length = re.findall(".* for (.*)", msg)[0]
         msg = msg.replace(" for " + length, "")
-        if " h" in length:
-            length = length.replace(" h", "")
-        elif "h" in length:
-            length = length.replace("h", "")
+        length = length.replace(" h", "").replace("h", "")
         try:
             length = float(length)
         except:
@@ -593,10 +589,7 @@ async def play_command(msg, user, channel, gid):
     if " in " in msg:
         start = re.findall(".* in (.*)", msg)[0]
         msg = msg.replace(" in " + start, "")
-        if " h" in start:
-            start = start.replace(" h", "")
-        elif "h" in start:
-            start = start.replace("h", "")
+        start = start.replace(" h", "").replace("h", "")
         try:
             start = float(start)
         except:
@@ -740,6 +733,7 @@ async def play_command(msg, user, channel, gid):
     return
 
 # queue removal command
+@command_dec
 async def queue_rm_command(msg, user, channel): 
     # remove trailing and leading spaces
     if msg:
@@ -797,6 +791,7 @@ async def queue_rm_command(msg, user, channel):
 
 # command to print the whole queue for a mode
 # very simple
+@command_dec
 async def print_queue(message):
     msg = message.content.lower()
     msg = msg.replace("queue ", "")
@@ -813,11 +808,13 @@ async def print_queue(message):
     elif mode == "among us":
         await message.channel.send(f"Among Us {len(au_queue)}/8: {', '.join([p for p in au_queue])}")
     else:
-        await message.channel.send("Could not identify mode. " + find_insult())
+        raise ValueError(f"Mode {mode} unknown. {find_insult()}")
+        #await message.channel.send("Could not identify mode. " + find_insult())
     return
 
 
 # command to calculate whether a remake is necessary according to https://rulebook.assassins.network
+@command_dec
 async def check_remake(message):
     """
     Check whether a remake is necessary according to rulebook.
@@ -875,6 +872,7 @@ async def check_remake(message):
 
 
 # the OCR function
+@command_dec
 async def ocr_screenshot(message):
 
     # function to grab params from guild IDs
@@ -931,6 +929,7 @@ async def ocr_screenshot(message):
         return
 
 # add users to the db
+@command_dec
 async def user_add(message):
     if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
         msg = message.content[9:]
@@ -1028,6 +1027,36 @@ async def sync_channels(message):
                 await channel.send(content)
     return 
  
+
+@command_dec
+async def compare_users(message):
+    db = connect()
+    content = message.content[8:]
+    if " mode " in content:
+        content, mode = content.split(" mode ")
+    else:
+        mode = None
+    teams_str = content.split(" vs ")
+    if len(teams_str) < 2:
+        await message.channel.send("Missing a second team. " + find_insult())
+        return
+    teams = [[], []]
+    for i in range(2):
+        players = teams_str[i].split(", ")
+        for j in range(len(players)):
+            try:
+                players[j] = identify_player(db, players[j])
+            except ValueError:
+                await message.channel.send(f"I've never heard of {players[j]}. {find_insult()}")
+                return
+        teams[i] = players
+    mode = check_mode(mode, message.guild.id, short=True)
+    chance = elostats.compare_players(teams[0], teams[1], mode, verbose=True)
+    chance_p = round(chance[0] * 100, 2)
+    teams = [[p["name"] for p in team] for team in teams]
+    await message.channel.send(f"The chance of {', '.join(teams[0])} ({round(chance[1][0])} MMR) beating {', '.join(teams[1])} ({round(chance[1][1])} MMR) in {modes_dict[mode]} is {chance_p}%.")
+    return
+
                                    
 @client.event
 async def on_message(message):
@@ -1153,6 +1182,10 @@ async def on_message(message):
 
         if message.content.lower().startswith("user add"):
             await user_add(message)
+            return
+
+        if message.content.lower().startswith("compare"):
+            await compare_users(message)
             return
      
     elif message.content == "Y":

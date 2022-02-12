@@ -75,3 +75,31 @@ def att_to_file(message, n=0):
         att = discord.File(f, filename="image.png")
     return att
 
+
+def command_dec(func):
+    """
+    command decorator with proper error handling
+    """
+    async def exceptionhandler(*arg):
+        try:
+            await func(*arg)
+        except Exception as e:
+            print(e)
+            await arg[0].channel.send(str(e) + " " + find_insult())
+    return exceptionhandler
+
+
+# some fun ACB insults to use as error messages
+insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than you.",
+        "I bet you'd choose sex over escort.", "Go back to wanted.", "You played on Xbox, didn't you?",
+        "I'd choose Fazz over you.", "Even Fazz kills less civis than you.", "Dell runs less than you.",
+        "Are you from AC4?", "Speed gets fewer deaths than you.", "tdas gay", "ultro is trans", "What the fuck is that?",
+        "Let's not do that again.", "I just want to punch myself in the fucking face.", "Really fucking hilarious.",
+        "Dude, I'ma slaughter your entire family if you ever do that again.", "Oh man, I hate you.", "u r getting scummy",
+        "If only you could fuck up the escort never.", "Welcome to TCG.", "You turbotrolled more than Omse.",
+        "Do your fucking job I can't do mine.", "You go in, I'm not even there, and then you wonder waroi waroi."]
+
+def find_insult():
+    return random.choice(insults)
+
+

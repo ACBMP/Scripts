@@ -33,34 +33,44 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
                     d = 1
             if track_teams:
                 players = ", ".join(sorted(players))
-                if i == m["outcome"]:
+                if m["outcome"] == 0:
                     try:
-                        dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1] + 1]
+                        dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1], dicts[d][players][2] + 1]
                     except:
-                        dicts[d][players] = [1, 1]
+                        dicts[d][players] = [1, 0, 1]
+                elif i == m["outcome"]:
+                    try:
+                        dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1] + 1, dicts[d][players][2]]
+                    except:
+                        dicts[d][players] = [1, 1, 0]
                 else:
                     try:
-                        dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1]]
+                        dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1], dicts[d][players][2]]
                     except:
-                        dicts[d][players] = [1, 0]
+                        dicts[d][players] = [1, 0, 0]
             else:
                 for j in range(len(players)):
-                    if i == m["outcome"]:
+                    if m["outcome"] == 0:
                         try:
-                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1]
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2] + 1]
                         except:
-                            dicts[d][players[j]] = [1, 1]
+                            dicts[d][players[j]] = [1, 0, 1]
+                    elif i == m["outcome"]:
+                        try:
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1, dicts[d][players[j]][2]]
+                        except:
+                            dicts[d][players[j]] = [1, 1, 0]
                     else:
                         try:
-                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1]]
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2]]
                         except:
-                            dicts[d][players[j]] = [1, 0]
+                            dicts[d][players[j]] = [1, 0, 0]
     sorted_dicts = [{}, {}]
     for d in range(len(dicts)):
         for player in dicts[d]:
             # make sure min games played
             if dicts[d][player][0] >= min_games:
-                sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1]]
+                sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1], dicts[d][player][2]]
         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
     return sorted_dicts
 
@@ -68,7 +78,7 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
 def dict_string(d):
     val = ""
     for item in d:
-        val += f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]})\n"
+        val += f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]} | {d[item][3]} ties)\n"
     return val
 
 
@@ -80,7 +90,7 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
 
 if __name__ == "__main__":
 #    find_synergy("Tha Fazz", min_games=5, track_teams=False)
-    print("Player: Winrate (Games Won / Games Played)")
+    print("Player: Winrate (Games Won / Tied / Played)")
     for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit"]:
         print("Finding synergy for:", x)
         synergies = find_synergy(x, "Escort", min_games=5)
