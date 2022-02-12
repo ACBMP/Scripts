@@ -12,6 +12,7 @@ sync_roles = {main_server : [],
              : []} #ints everywhere
 twitter_authhandler = ["", ""]
 twitter_access_token = ["", ""]
+telegram_token = ""
 
 # read and update
 RAU_FILE_PATH=""
