@@ -73,7 +73,7 @@ def sanity_check(data):
         for i in range(2):
             # mildly retarded
             if kills[i] != deaths[(i + 1) % 2]:
-                return f"Incorrect kill ({i})/death ({i + 1 % 2}) count detected in:\n{game}"
+                return f"Incorrect kill ({i + 1})/death ({i + 1 % 2 + 1}) count detected in:\n{game}"
         
         # sanity check score and outcome
         if outcome > 0:
