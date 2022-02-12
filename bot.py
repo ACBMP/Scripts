@@ -42,23 +42,21 @@ modes_dict = {
 # we save the queues here as simple arrays since we don't expect to scale
 # read out the queues from the queues file that saves state for restarts
 with open("queues.txt", "r") as f:
-    queues = f.read()
-    queues = queues.split("; ")
+    queues = {}
+    queues_users = {}
+    queues_lengths = {"e": 4, "mh": 6}
+    old_queues = f.read()
+    old_queues = old_queues.split("; ")
     i = 0
-    for q in queues:
-        queues[i] = queues[i].split(", ")
-        if queues[i] == [""]:
-            queues[i] = []
+    for q in old_queues:
+        old_queues[i] = old_queues[i].split(", ")
+        if old_queues[i] == [""]:
+            old_queues[i] = []
         i += 1
-    aa_queue = queues[0]
-    dm_queue = queues[1]
-    e_queue = queues[2]
-    mh_queue = queues[3]
-    aa_queue_users = queues[4]
-    dm_queue_users = queues[5]
-    e_queue_users = queues[6]
-    mh_queue_users = queues[7]
-    au_queue = queues[8]
+    queues["e"] = old_queues[0]
+    queues["mh"] = old_queues[1]
+    queues_users["e"] = old_queues[2]
+    queues_users["mh"] = old_queues[3]
     f.close()
 
 abilities = ["Normal Disguise","Long Lasting Disguise", "Strong Disguise",
@@ -114,30 +112,16 @@ async def send_long_message(content, channel):
 # it just appends queues if there's someone in one
 # otherwise it shows Wanted 6/9
 async def update_presence():
-    presence = 0
-    if len(e_queue):
-        presence = f"E: {len(e_queue)}/4"
-    if len(mh_queue):
-        tmp = f"MH: {len(mh_queue)}/6"
-        if presence:
-            presence += f", {tmp}"
-        else:
-            presence = tmp
-    if len(aa_queue_users):
-        tmp = f"AA: {len(aa_queue_users)}/8"
-        if presence:
-            presence += f", {tmp}"
-        else:
-            presence = tmp
-    if len(dm_queue):
-        tmp = f"DM: {len(dm_queue)}/6"
-        if presence:
-            presence += f", {tmp}"
-        else:
-            presence = tmp
+    presence = ""
+    for mode in ["e", "mh"]:
+        if len(queues[mode]):
+            if presence:
+                presence += ", "
+            presence += f"{mode.upper()}: {len(queues[mode])}/{queues_lengths[mode]}"
 
     if not presence:
         presence = "Wanted 6/9"
+
     await client.change_presence(activity=discord.Game(name=presence + " | AN help"))
     return
 
@@ -506,9 +490,9 @@ async def team_comps(message, ident):
         mode = re.findall(".* mode (.*)", players[-1])
         players[-1] = players[-1].replace(" mode " + mode[0], "")
         mode = str(mode[0])
-        mode = check_mode(mode)
+        mode = check_mode(mode, short=True)
     else:
-        mode = check_mode(0, message.guild.id)
+        mode = check_mode(0, message.guild.id, short=True)
 
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
@@ -520,20 +504,7 @@ async def team_comps(message, ident):
     # otherwise we try to grab the mode's queue and use that
     else:
         try:
-            if mode == "escort":
-                queue = e_queue
-            elif mode == "artifact assault":
-                # AA currently works differently so we just randomly shuffle the queue and return that with role assignments
-                queue = aa_queue
-                random.shuffle(queue)
-                queue = f"Team 1:\nDefenders: {', '.join(queue[0:2])}\nRunners: {', '.join(queue[2:4])}\nTeam 2:\nDefenders: {', '.join(queue[4:6])}\nRunners: {', '.join(queue[6:8])}"
-                await channel.send(queue)
-                return
-            elif mode == "deathmatch":
-                queue = dm_queue
-            else:
-                mode = "manhunt"
-            matchup = team_finder(queue, mode, r_factor)
+            matchup = team_finder(queues[mode], mode, r_factor)
             await channel.send(matchup)
         except:
             await channel.send("That didn't work, idiot. " + find_insult())
@@ -543,29 +514,10 @@ async def team_comps(message, ident):
 # queue removal command
 # super straightforward
 async def queue_rm(mode, user, player, channel):
-    if mode == "escort" or mode == "e":
-        e_queue.remove(player)
-        e_queue_users.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. Escort: {len(e_queue)}/4")
-        await update_presence()
-    elif mode == "among us":
-        au_queue.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. Among Us: {len(au_queue)}/4")
-    elif mode == "deathmatch":
-        dm_queue.remove(player)
-        dm_queue_users.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. Deathmatch: {len(dm_queue)}/6")
-        await update_presence()
-    elif mode == "artifact assault":
-        aa_queue.remove(player)
-        aa_queue_users.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. Artifact Assault: {len(aa_queue_users)}/8")
-        await update_presence()
-    else:
-        mh_queue.remove(player)
-        mh_queue_users.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. Manhunt: {len(mh_queue)}/6")
-        await update_presence()
+    queues[mode].remove(player)
+    queues_users[mode].remove(user.mention)
+    await channel.send(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
+    await update_presence()
     return
 
 
@@ -601,10 +553,10 @@ async def play_command(msg, user, channel, gid):
     if " mode " in msg:
         mode = re.findall(".* mode (.*)", msg)[0]
         msg = msg.replace(" mode " + mode, "")
-        mode = check_mode(mode)
+        mode = check_mode(mode, short=True)
     # if mode is empty use guild ID to auto determine mode
     else:
-        mode = check_mode(0, gid)
+        mode = check_mode(0, gid, short=True)
     
     # now that the rest of the message has been parsed only the player name should be left
     player = msg
@@ -616,101 +568,43 @@ async def play_command(msg, user, channel, gid):
         elif player[0] == " ":
             player = player[1:]
     
-    # since among us and aa don't have players in the AN db we can't use standard queues
-    # instead for AA we use player = nickname and for AU we only use one queue
-    if mode not in ["among us", "artifact assault"]:
-        # this is where we try to find the player according to their Discord ID if no player is specified
-        # otherwise we try to match the given player to an AN user
-        db = connect()
+    # this is where we try to find the player according to their Discord ID if no player is specified
+    # otherwise we try to match the given player to an AN user
+    db = connect()
 
-        if not player:
-            player_db = db.players.find_one({"discord_id" : str(user.id)})
-            if not player_db:
-                await channel.send("I don't know you. " + find_insult())
-                return
-            player = player_db["name"]
-        else:
-            try:
-                player_db = identify_player(db, player)
-            except ValueError as e:
-                await channel.send(e)
-                return
-
-    if mode == "artifact assault":
-        player = user.name
-
-    # make it impossible to add the same user twice
-    # could maybe allow being in two modes
-    if player in [*e_queue, *mh_queue, *dm_queue]:
-        await channel.send(f"{player} is already in a queue.")
-        return
+    if not player:
+        player_db = db.players.find_one({"discord_id" : str(user.id)})
+        if not player_db:
+            await channel.send("I don't know you. " + find_insult())
+            return
+        player = player_db["name"]
     else:
-        if user in au_queue:
-            await channel.send(f"{user.name} is already in the Among Us queue.")
+        try:
+            player_db = identify_player(db, player)
+        except ValueError as e:
+            await channel.send(e)
             return
 
+    # make it impossible to add the same user twice to the same queue
+    if player in queues[mode]:
+        await channel.send(f"{player} is already in the {modes_dict[mode]} queue.")
+        return
+    for i in scheduler.get_jobs():
+        if player + "_start" == i.id:
+            await channel.send(f"{player} is already scheduled to queue up.")
+
     # the part where people are added to the queue
-    # most of this is copy-pasted with minor adjustments like queue names and team sizes
     async def queue():
-        if mode == "escort":
-            e_queue.append(player)
-            e_queue_users.append(user.mention)
-            await update_presence()
-            if len(e_queue) == 4:
-                matchup = team_finder(e_queue, mode="escort", random=0)
-                await channel.send(", ".join(e_queue_users) + ": Escort 4/4, get on!\nMy suggested teams: " + matchup)
-            elif len(e_queue) < 4:
-                await channel.send(f"Added {player} to the queue for {length} hour(s). Escort: {len(e_queue)}/4")
-            else:
-                await channel.send("We're already enough for escort.")
-        # AA is an exception in that we don't have users in the DB currently so we have to do the aforementioned BS to get around it
-        # additionally in AA we want to assign users random roles
-        elif mode == "artifact assault":
-            aa_queue.append(player)
-            aa_queue_users.append(user.mention)
-            await update_presence()
-            if len(aa_queue) == 8:
-                # temp until AA is added to team_finder
-#                matchup = team_finder(aa_queue, mode="artifact assault", random=0)
-                matchup = aa_queue
-                random.shuffle(matchup)
-                matchup = f"\nTeam 1:\nDefenders: {', '.join(matchup[0:2])}\nRunners: {', '.join(matchup[2:4])}\nTeam 2:\nDefenders: {', '.join(matchup[4:6])}\nRunners: {', '.join(matchup[6:8])}"
-                await channel.send(", ".join(aa_queue_users) + ": Artifact Assault 8/8, get on!\nMy suggested teams: " + matchup)
-#                await channel.send(", ".join(aa_queue_users) + ": Artifact Assault 8/8, get on!")
-            elif len(aa_queue) < 8:
-                # this is user.nick not play because of the AA queue
-                await channel.send(f"Added {player} to the queue for {length} hour(s). Artifact Assault: {len(aa_queue)}/8")
-            else:
-                await channel.send("We're already enough for artifact assault.")
-        elif mode == "deathmatch":
-            dm_queue.append(player)
-            dm_queue_users.append(user.mention)
-            await update_presence()
-            if len(dm_queue) == 6:
-                await channel.send(", ".join(dm_queue_users) + ": Deathmatch 6/6, get on!")
-            elif len(dm_queue) < 6:
-                await channel.send(f"Added {player} to the queue for {length} hour(s). Deathmatch: {len(dm_queue)}/6")
-            else:
-                await channel.send("We're already enough for deathmatch.")
-        elif mode == "among us":
-            au_queue.append(user.mention)
-            if len(au_queue) == 4:
-                await channel.send(", ".join(au_queue) + ": Among Us 4/4, get on!")
-            elif len(au_queue) < 4:
-                await channel.send(f"Added {user.name} to the queue for {length} hour(s). Among Us: {len(au_queue)}/4")
-            else:
-                await channel.send(f"Among Us already started, currently {len(au_queue)}/10.")
+        queues[mode].append(player)
+        queues_users[mode].append(user.mention)
+        await update_presence()
+        if len(queues[mode]) == queues_lengths[mode]:
+            matchup = team_finder(queues[mode], mode=mode, random=0)
+            await channel.send(", ".join(queues[mode]_users) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup)
+        elif len(queues[mode]) < queues_lengths[mode]:
+            await channel.send(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
         else:
-            mh_queue.append(player)
-            mh_queue_users.append(user.mention)
-            await update_presence()
-            if len(mh_queue) == 6:
-                matchup = team_finder(mh_queue, mode="manhunt", random=0)
-                await channel.send(", ".join(mh_queue_users) + ": Manhunt 6/6, get on!\nMy suggested teams: " + matchup)
-            elif len(mh_queue) < 6:
-                await channel.send(f"Added {player} to the queue for {length} hour(s). Manhunt: {len(mh_queue)}/6")
-            else:
-                await channel.send("We're already enough for manhunt. :cry:")
+            await channel.send(f"We're already enough for {modes_dict[mode]}.")
         return
 
     # if a start time was specified we add a job to the scheduler
@@ -718,8 +612,7 @@ async def play_command(msg, user, channel, gid):
     if start > 0:
         try:
             end_time_add = datetime.isoformat(datetime.now() + timedelta(seconds = 1, hours = start))
-            # the if is there for among us bc no player is grabbed from AN
-            scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=(player if player else user.name) + "_start")
+            scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + "_start")
             await channel.send(f"Will add {player} to the queue in {start} hour(s).")
         except:
             await channel.send(f"Did not recognize given start time or user already in queue.")
@@ -742,11 +635,6 @@ async def queue_rm_command(msg, user, channel):
         elif msg[0] == " ":
             msg = msg[1:]
 
-    # AU queue is very simple
-    if user.mention in au_queue:
-        au_queue.remove(user.mention)
-        await channel.send(f"Removed {user.name} from the Among Us queue.")
-        return
     # in other cases we have to grab players from the DB again
     else:
         db = connect()
@@ -770,15 +658,8 @@ async def queue_rm_command(msg, user, channel):
             await channel.send(f"Successfully removed {player} from the queue.")
         except:
             # no else ifs because we want to remove from every queue at once
-            if user.mention in e_queue_users:
-                await queue_rm("escort", user, player, channel)
-            if user.mention in mh_queue_users:
-                await queue_rm("manhunt", user, player, channel)
-            if user.mention in dm_queue_users:
-                await queue_rm("deathmatch", user, player, channel)
-            if user.mention in aa_queue_users:
-                # for AA we have to feed it user.nick instead of player currently
-                await queue_rm("artifact assault", user, user.name, channel)
+            for i in queues.keys():
+                await queue_rm(i, user, player, channel)
             return
 
         # end queue job removal
@@ -796,20 +677,8 @@ async def print_queue(message):
     msg = message.content.lower()
     msg = msg.replace("queue ", "")
     msg = msg.replace("queue", "")
-    mode = check_mode(msg, message.guild.id)
-    if mode == "escort":
-        await message.channel.send(f"Escort {len(e_queue)}/4: {', '.join([p for p in e_queue])}")
-    elif mode == "manhunt":
-        await message.channel.send(f"Manhunt {len(mh_queue)}/6: {', '.join([p for p in mh_queue])}")
-    elif mode == "artifact assault":
-        await message.channel.send(f"Artifact Assault {len(aa_queue)}/8: {', '.join([p for p in aa_queue])}")
-    elif mode == "deathmatch":
-        await message.channel.send(f"Deathmatch {len(dm_queue)}/8: {', '.join([p for p in dm_queue])}")
-    elif mode == "among us":
-        await message.channel.send(f"Among Us {len(au_queue)}/8: {', '.join([p for p in au_queue])}")
-    else:
-        raise ValueError(f"Mode {mode} unknown. {find_insult()}")
-        #await message.channel.send("Could not identify mode. " + find_insult())
+    mode = check_mode(msg, message.guild.id, short=True)
+    await message.channel.send(f"{modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode])}")
     return
 
 
@@ -1205,11 +1074,11 @@ client.run(conf.discord_id)
 def stop_func(sig, frame):
     print("Stopping.")
     # these just join all the values in the different queues
-    queues = []
-    for q in [aa_queue, dm_queue, e_queue, mh_queue, aa_queue_users, dm_queue_users, e_queue_users, mh_queue_users, au_queue]:
-        queues.append(", ".join(q))
+    queues_joined = []
+    for q in queues:
+        queues_joined.append(", ".join(queues[q]))
     with open("queues.txt", "w") as f:
-        f.write("; ".join(queues))
+        f.write("; ".join(queues_joined))
         f.close()
 
     sys.exit(0)
