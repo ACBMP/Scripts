@@ -1,6 +1,7 @@
 import botconfig as conf
 import datetime
 import discord
+import random
 
 def connect():
     """
@@ -76,19 +77,6 @@ def att_to_file(message, n=0):
     return att
 
 
-def command_dec(func):
-    """
-    command decorator with proper error handling
-    """
-    async def exceptionhandler(*arg):
-        try:
-            await func(*arg)
-        except Exception as e:
-            print(e)
-            await arg[0].channel.send(str(e) + " " + find_insult())
-    return exceptionhandler
-
-
 # some fun ACB insults to use as error messages
 insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than you.",
         "I bet you'd choose sex over escort.", "Go back to wanted.", "You played on Xbox, didn't you?",
@@ -101,5 +89,20 @@ insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than y
 
 def find_insult():
     return random.choice(insults)
+
+
+def command_dec(func):
+    """
+    command decorator with proper error handling
+    this doesn't seem to work yet and I genuinely have NO idea how to get it working lol
+    """
+    async def exceptionhandler(*arg):
+        try:
+            await func(*arg)
+        except Exception as e:
+            print(e)
+            client = discord.Client()
+            await client.fetch_channel(arg[2].id).send(str(e) + " " + find_insult())
+    return exceptionhandler
 
 
