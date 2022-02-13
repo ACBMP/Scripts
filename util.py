@@ -47,7 +47,7 @@ def check_mode(mode, server=None, short=False):
             return "manhunt"
     mode = mode.lower()
     # if server wasn't specified use abbreviations
-    if mode in ["mh", "manhunt"]:
+    if mode in ["m", "mh", "manhunt"]:
         return "mh" if short else "manhunt"
     elif mode in ["e", "escort"]:
         return "e" if short else "escort"

@@ -22,7 +22,7 @@ def notify_player(player, mode):
 def main():
     def start(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=update.effective_chat.id,
-                text="Welcome to the Assassins' Network bot. To tie your account to your AN username, type /username.")
+                text="Welcome to the Assassins' Network bot. To tie your account to your AN username, type /username [YOUR USERNAME HERE].")
         return
     
     
@@ -34,12 +34,16 @@ def main():
     
     def username(update: Update, context: CallbackContext):
         player = " ".join(context.args)
-        try:
-            player = identify_player(db, player)["name"]
-        except:
+        if player:
+            try:
+                player = identify_player(db, player)["name"]
+            except:
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                        text=f"Could not identify player {player}. Please check that it matches the username on https://assassins.network/profiles.")
+                return
+        else:
             context.bot.send_message(chat_id=update.effective_chat.id,
-                    text=f"Could not identify player {player}. Please check that it matches the username on https://assassins.network/profiles.")
-            return
+                    text=f"No username specified. Please try again.")
         db.players.update_one({"name": player}, {"$set": {"telegram_id": update.message.chat_id}})
         context.bot.send_message(chat_id=update.effective_chat.id,
                 text=f"Successfully tied chat to AN account: {player}.")
