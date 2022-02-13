@@ -26,7 +26,8 @@ def read_and_update():
             #mode
             if csv_entry[0] in ["M", "E", "AA"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
-                modes[csv_entry[0].lower()] = True
+                # the replace is a bit stupid because we use both M and MH for manhunt
+                modes[csv_entry[0].lower().replace("m", "mh")] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue
