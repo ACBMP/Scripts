@@ -31,7 +31,23 @@ def OCR(screenshot, game, players):
                 "DaokO": "Daok0",
                 "piesiol": "piesio1",
                 "Mrtirox": "MrEirox",
-                "MtEirox": "MrEirox"
+                "MtEirox": "MrEirox",
+                "DevelSpnt": "DevelSpirit",
+                "Dnft": "Drift",
+                "Dnift": "Drift",
+                "Delipit": "Dellpit",
+                "Deilpit": "Dellpit",
+                "Etemity": "Eternity",
+                "ThaF$azz": "Tha Fazz",
+                "Fox92": "Auditore92",
+                "F_o_x$92": "Auditore92",
+                "Fox9_2": "Auditore92",
+                "Fox_9_2": "Auditore92",
+                "F_ox_92": "Auditore92",
+                "F_ox9_2": "Auditore92",
+                "F$ox9$2": "Auditore92",
+                "Fo$x9$2": "Auditore92",
+                "F$o$x9$2": "Auditore92",
                 }
     elif game.lower() == "acr":
         scale = img.width / 1280

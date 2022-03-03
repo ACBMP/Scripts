@@ -14,8 +14,6 @@ def notify_player(player, mode):
     bot = telegram.Bot(token=telegram_token)
     bot.sendMessage(chat_id=identify_player(db, player)["telegram_id"],
             text=f"{mode} time!")
-#    updater.bot.send_message(chat_id=identify_player(db, player)["telegram_id"],
-#            text=f"{mode} time!")
     return
 
 
@@ -44,6 +42,7 @@ def main():
         else:
             context.bot.send_message(chat_id=update.effective_chat.id,
                     text=f"No username specified. Please try again.")
+            return
         db.players.update_one({"name": player}, {"$set": {"telegram_id": update.message.chat_id}})
         context.bot.send_message(chat_id=update.effective_chat.id,
                 text=f"Successfully tied chat to AN account: {player}.")
