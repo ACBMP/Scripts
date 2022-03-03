@@ -4,11 +4,13 @@ import historyupdate
 import ranks
 import tweet
 import botconfig as conf
+from datetime import date
 from util import *
 
 def read_and_update():
     client = MongoClient('mongodb://localhost:27017/')
     db = client.public
+    today = date.today().strftime("%Y-%m-%d")
     f = open(conf.RAU_FILE_PATH + conf.RAU_FILE_NAME,'r')
     # keep track of whether a mode was played
     modes = {"mh": False, "e": False, "aa": False}
@@ -56,6 +58,9 @@ def read_and_update():
                         temp_dict["scored"] = int(temp_list[4])
                     entry_dict[team_n].append(temp_dict)
             
+            # add current date
+            entry_dict["date"] = today
+
             #inserting the record into the db
             db.matches.insert_one(entry_dict)
             print("Match entry added!")
