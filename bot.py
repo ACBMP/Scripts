@@ -142,12 +142,12 @@ def help_message(message):
     team_help = "To generate random teams, send:\n" +"""```css
 AN team comps [PLAYER_0, PLAYER_2, PLAYER_3...] [mode MODE] [random FACTOR]```""" + "\nNot specifying players uses the queue from the specified mode.\nPlayer names must be Assassins' Network names."
     lfg_help = """\nTo queue up for a game, type\n```css
-AN play [PLAYER] [mode MODE] [in START_TIME] [for LENGTH_TIME]```\nIf PLAYER is unspecified, the bot attempts to match your Discord account to a player. Otherwise, these must be AN usernames.\nTimes must be given in hours. Default `LENGTH_TIME` is 3 hours, default mode is defined by the server the command is sent in.\nNote that you can only queue up for one mode at a time."""
+AN play [PLAYER] [mode MODE] [in START_TIME] [for LENGTH_TIME]```\nIf PLAYER is unspecified, the bot attempts to match your Discord account to a player. Otherwise, these must be AN usernames.\nTimes must be given in hours. Default `LENGTH_TIME` is 3 hours, default mode is defined by the server the command is sent in."""
     lookup_help = """To look up a user's stats on AN, type\n```css
 AN lookup [PLAYER]```"""
     synergy_help = """To look up a user's synergies, type\n```css
 AN synergy [PLAYER] [MODE] [MIN_GAMES] [TRACK_TEAMS]```"""
-    queue_rm_help = """To remove yourself from the queue you are currently in, use\n```css
+    queue_rm_help = """To remove yourself from all queues you are currently in, use\n```css
 AN queue remove```"""
     queue_help = """To print the players currently queued up for a mode, use\n```css
 AN queue [MODE]```"""
@@ -518,10 +518,13 @@ async def team_comps(message, ident):
 # queue removal command
 # super straightforward
 async def queue_rm(mode, user, player, channel):
-    queues[mode].remove(player)
-    queues_users[mode].remove(user.mention)
-    await channel.send(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
-    await update_presence()
+    try:
+        queues[mode].remove(player)
+        queues_users[mode].remove(user.mention)
+        await channel.send(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
+        await update_presence()
+    except:
+        pass
     return
 
 
@@ -592,13 +595,16 @@ async def play_command(msg, user, channel, gid):
             await channel.send(e)
             return
 
-    # make it impossible to add the same user twice to the same queue
+    # remove from queue before re-adding
     if player in queues[mode]:
-        await channel.send(f"{player} is already in the {modes_dict[mode]} queue.")
-        return
+        await queue_rm(mode, user, player, channel)
     for i in scheduler.get_jobs():
         if player + f"_{mode}_start" == i.id:
-            await channel.send(f"{player} is already scheduled to queue up.")
+            scheduler.remove_job(player + f"_{mode}_start")
+        elif player + f"_{mode}_remove" == i.id:
+            scheduler.remove_job(player + f"_{mode}_remove")
+            # this is only necessary for the remove command because it will always be included
+            await channel.send(f"{player} has been re-scheduled to queue up.")
 
     # the part where people are added to the queue
     async def queue():
@@ -647,42 +653,40 @@ async def queue_rm_command(msg, user, channel):
         elif msg[0] == " ":
             msg = msg[1:]
 
-    # in other cases we have to grab players from the DB again
+    db = connect()
+
+    if not msg:
+        player_db = db.players.find_one({"discord_id" : str(user.id)})
+        if not player_db:
+            await channel.send("I don't know you. " + find_insult())
+            return
     else:
-        db = connect()
-
-        if not msg:
-            player_db = db.players.find_one({"discord_id" : str(user.id)})
-            if not player_db:
-                await channel.send("I don't know you. " + find_insult())
-                return
-        else:
-            try:
-                player_db = identify_player(db, player)
-            except ValueError as e:
-                await channel.send(e)
-                return
-
-        player = player_db["name"]
-
         try:
-            for mode in queues.keys():
-                scheduler.remove_job(player + f"_{mode}_start")
-                await channel.send(f"Successfully removed {player} from the {modes_dict[mode]} queue.")
-        except:
-            for i in queues.keys():
-                try:
-                    await queue_rm(i, user, player, channel)
-                except:
-                    pass
+            player_db = identify_player(db, player)
+        except ValueError as e:
+            await channel.send(e)
             return
 
-        # end queue job removal
-        try:
-            for mode in queues.keys():
-                scheduler.remove_job(player + f"_{mode}_remove")
-        except:
-            pass
+    player = player_db["name"]
+
+    try:
+        for mode in queues.keys():
+            scheduler.remove_job(player + f"_{mode}_start")
+            await channel.send(f"Successfully removed {player} from the {modes_dict[mode]} queue.")
+    except:
+        for i in queues.keys():
+            try:
+                await queue_rm(i, user, player, channel)
+            except:
+                pass
+        return
+
+    # end queue job removal
+    try:
+        for mode in queues.keys():
+            scheduler.remove_job(player + f"_{mode}_remove")
+    except:
+        pass
     return
 
 
