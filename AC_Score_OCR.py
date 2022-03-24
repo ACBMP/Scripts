@@ -48,6 +48,8 @@ def OCR(screenshot, game, players):
                 "F$ox9$2": "Auditore92",
                 "Fo$x9$2": "Auditore92",
                 "F$o$x9$2": "Auditore92",
+                "F_o$x$92": "Auditore92",
+                "F_ox92": "Auditore92",
                 }
     elif game.lower() == "acr":
         scale = img.width / 1280
@@ -146,6 +148,28 @@ def OCR(screenshot, game, players):
     
     # remove n from earlier and join
     return ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
+
+
+def correct_score(match, correction, team):
+    # we only have int corrections
+    correction = int(correction)
+    team = int(team) - 1
+    # extract teams and players
+    players = match.split(", ")
+    isfloat = correction % (len(players) / 2)
+    correction /= len(players) / 2
+    if not isfloat:
+        correction = int(correction)
+    middle = int(len(players) / 2)
+    teams = [players[:middle], players[middle:]]
+    affected_split = [player.split("$") for player in teams[team]]
+    for i in range(len(affected_split)):
+        affected_split[i][1] = str(int(affected_split[i][1]) + correction)
+    # combine it all
+    combine = ["$".join(player) for player in affected_split]
+    teams[team] = combine
+    teams = [", ".join(team) for team in teams]
+    return ", ".join(teams)
 
 
 if __name__ == "__main__":
