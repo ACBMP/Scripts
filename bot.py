@@ -154,7 +154,7 @@ AN queue [MODE]```"""
     remake_help = """To calculate whether a game should be remade after a disconnect, use\n```css
 AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
-AN OCR [GAME] [TOTAL_PLAYERS]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work."""
+AN OCR [GAME] [TOTAL_PLAYERS] [+CORRECTION TEAM]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work.\nTo correct for e.g. one dodge on team 1, append +750 1."""
     add_help = """To queue matches for being added to AN, use\n```css
 AN add FORMATTED_MATCH```with the match data formatted in the AN format pinned in #an-help on the #secualhealing server, e.g.:\n```css
 M, 3, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```"""
@@ -786,6 +786,11 @@ async def ocr_screenshot(message):
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
+
+    correction = False
+    if "+" in message.content:
+        correction = msg[-2:]
+        msg = msg[:-2]
     
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
@@ -800,7 +805,6 @@ async def ocr_screenshot(message):
             players = guild_params()[1]
     else:
         game, players = guild_params()
-    print(game, players)
     # download the image and save to folder then send the results of the OCR script
     if message.attachments:
         img = requests.get(message.attachments[0].url)
@@ -811,6 +815,8 @@ async def ocr_screenshot(message):
             result = AC_Score_OCR.OCR(fname, game, players)
         except:
             result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
+        if correction:
+            result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
         await message.channel.send(result)
         return
     else:
