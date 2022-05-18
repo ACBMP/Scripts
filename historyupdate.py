@@ -4,6 +4,9 @@ from datetime import date
 
 
 def update():
+    """
+    Update all players' MMRs if they differ from their previous MMR.
+    """
     # establishing a connection to the db
     client = MongoClient('mongodb://localhost:27017/')
     db = client.public
@@ -31,6 +34,14 @@ def update():
 
 
 def mmr_update(d, db, p, mode):
+    """
+    Helper to update history.
+
+    :param d: current date
+    :param db: database
+    :param p: player
+    :param mode: gamemode
+    """
     if mode not in ["e", "mh", "aar", "aad"]:
         raise ValueError("mmr_update: Unrecognized mode!")
 

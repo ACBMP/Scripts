@@ -8,6 +8,14 @@ from datetime import date
 from util import *
 
 def read_and_update():
+    """
+    Read and update the new matches file defined in botconfig.
+
+    Matches must be formatted as follows:
+    MODE, PLAYERS PER TEAM, WINNING TEAM, PLAYER NAME$SCORE$KILLS$DEATHS, ...
+
+    With one line per match.
+    """
     client = MongoClient('mongodb://localhost:27017/')
     db = client.public
     today = date.today().strftime("%Y-%m-%d")
@@ -72,6 +80,9 @@ def read_and_update():
     return modes
 
 def main():
+    """
+    Run all scripts necessary for fully adding a new match.
+    """
     modes = read_and_update()
     eloupdate.new_matches()
     historyupdate.update()
