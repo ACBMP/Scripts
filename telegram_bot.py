@@ -11,6 +11,12 @@ from util import *
 db = connect()
 
 def notify_player(player, mode):
+    """
+    Notify a player it's game time.
+
+    :param player: player to notify
+    :param mode: mode to play
+    """
     bot = telegram.Bot(token=telegram_token)
     bot.sendMessage(chat_id=identify_player(db, player)["telegram_id"],
             text=f"{mode} time!")
@@ -43,6 +49,7 @@ def main():
             context.bot.send_message(chat_id=update.effective_chat.id,
                     text=f"No username specified. Please try again.")
             return
+        # we have no way of verifying users but luckily we're small enough it doesn't matter
         db.players.update_one({"name": player}, {"$set": {"telegram_id": update.message.chat_id}})
         context.bot.send_message(chat_id=update.effective_chat.id,
                 text=f"Successfully tied chat to AN account: {player}.")

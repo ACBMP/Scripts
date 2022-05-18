@@ -6,7 +6,15 @@ import os
 
 os.environ['LC_ALL'] = 'C'
 
-def OCR(screenshot, game, players):
+def OCR(screenshot: str, game: str, players: int):
+    """
+    Screenshot OCR function using VapourSynth and Tesseract.
+
+    :param screenshot: path to screenshot file
+    :param game: game initials to change settings
+    :param players: total number of players in the match
+    :return: OCRed match data string formatted for eloupdate
+    """
     players = int(players)
     img = core.ffms2.Source(screenshot)
     if type(img) == list:
@@ -150,7 +158,15 @@ def OCR(screenshot, game, players):
     return ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
 
 
-def correct_score(match, correction, team):
+def correct_score(match: str, correction: int, team: int):
+    """
+    Score correction script to evenly add points to a team.
+
+    :param match: match as eloupdate formatted string
+    :param correction: points to add
+    :param team: team to add points to
+    :return: match with adjusted points
+    """
     # we only have int corrections
     correction = int(correction)
     team = int(team) - 1

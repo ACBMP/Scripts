@@ -18,6 +18,10 @@ def identify_player(db, name):
     """
     identify a player by trying the name first then igns
     case insensitive
+
+    :param db: database
+    :param name: name to search for
+    :return: player mongodb object
     """
     import re
     rename = re.compile(name, re.IGNORECASE)
@@ -33,6 +37,15 @@ def identify_player(db, name):
 
 # mode checker
 def check_mode(mode, server=None, short=False):
+    """
+    Identify the mode referred to by parsing the mode string and falling back
+    to discord server IDs.
+
+    :param mode: mode string to parse
+    :param server: discord server ID
+    :param short: switch between abbreviations and full names
+    :return: identified mode
+    """
     # default modes for servers
     if server and not mode:
         if server in conf.e_servers:
@@ -66,6 +79,13 @@ def check_mode(mode, server=None, short=False):
 
 
 def att_to_file(message, n=0):
+    """
+    Convert discord attachment to file.
+
+    :param message: message object including attachment
+    :param n: attachment number
+    :return: attachment as file
+    """
     # I was having issues getting this working without saving separately
     import requests
     _att = requests.get(message.attachments[n].url)
@@ -78,23 +98,28 @@ def att_to_file(message, n=0):
 
 
 # some fun ACB insults to use as error messages
-insults = ["You suck.", "ur mam gay", "Even fouadix speaks English better than you.",
+insults = ["You suck.", "Even fouadix speaks English better than you.",
         "I bet you'd choose sex over escort.", "Go back to wanted.", "You played on Xbox, didn't you?",
         "I'd choose Fazz over you.", "Even Fazz kills less civis than you.", "Dell runs less than you.",
-        "Are you from AC4?", "Speed gets fewer deaths than you.", "tdas gay", "ultro is trans", "What the fuck is that?",
+        "Are you from AC4?", "Speed gets fewer deaths than you.", "What the fuck is that?",
         "Let's not do that again.", "I just want to punch myself in the fucking face.", "Really fucking hilarious.",
         "Dude, I'ma slaughter your entire family if you ever do that again.", "Oh man, I hate you.", "u r getting scummy",
         "If only you could fuck up the escort never.", "Welcome to TCG.", "You turbotrolled more than Omse.",
         "Do your fucking job I can't do mine.", "You go in, I'm not even there, and then you wonder waroi waroi."]
 
 def find_insult():
+    """
+    Find a fun ACMP theme insult from list of insults.
+
+    :return: random insult
+    """
     return random.choice(insults)
 
 
 def command_dec(func):
     """
     command decorator with proper error handling
-    this doesn't seem to work yet and I genuinely have NO idea how to get it working lol
+    prints the error and informs the user of the error while insulting them
     """
     async def exceptionhandler(*arg):
         try:
