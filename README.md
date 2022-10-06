@@ -13,13 +13,17 @@ Some housekeeping things to do before you're able to use this bot completely. Ma
 - [AWarpSharp2 plugin for VapourSynth](https://github.com/dubhater/vapoursynth-awarpsharp2)
 - [DiscordPy](https://pypi.org/project/discord.py/)
 - [Apscheduler](https://apscheduler.readthedocs.io/en/stable/)
+- [Telegram](https://python-telegram-bot.org/)
+- [Tweepy](https://pypi.org/project/tweepy)
+- [Pandas](https://pandas.pydata.org)
+- [NumPy](https://numpy.org)
 
 ## Installation
-- `git clone https://github.com/ACBMP/Match_Update.git`
+- `git clone https://github.com/ACBMP/Scripts.git`
 - Open a text editor and follow these steps `File -> New -> Import Module`
 - [Making a Discord bot](https://discord.com/developers/docs/intro)
 
-## Getting Started
+## Uploading Matches
 - In order to upload match data to the DB, please input relevant information according to the format available on GitHub.
 - **Do not return** ("Enter" button) after entering the last line. 
 - Each entry should be treated as a line of text.
@@ -30,6 +34,12 @@ Some housekeeping things to do before you're able to use this bot completely. Ma
 - A file with entries **SHOULD NOT** contain the #.
 - The `read_and_update.py` script will update the Elo ratings as well.
 - Run the script using [Python 3.X](https://www.python.org/downloads/).
+
+## Bots
+
+### Discord
+
+The Discord bot can be used for general maintenance, such as adding matches, updating leaderboards, inserting players, organizing lobbies etc.
 
 # Authors
 - [zawsze-razem](https://github.com/zawsze-razem)
