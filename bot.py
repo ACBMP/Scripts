@@ -835,7 +835,7 @@ async def user_add(message):
         nation = info[3]
         platforms = info[4].split(", ")
         try:
-            discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "")
+            discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
         except IndexError:
             discord_id = ""
         db = connect()

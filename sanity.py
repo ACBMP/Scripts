@@ -53,17 +53,29 @@ def sanity_check(data):
 
             # sum score
             if mode != "AA":
-                score[i] += int(player[1])
+                try:
+                    score[i] += int(player[1])
+                except ValueError:
+                    return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
             else:
-                score[i] += int(player[4])
+                try:
+                    score[i] += int(player[4])
+                except ValueError:
+                    return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
 
             # check if score is reasonable
             if int(player[1]) > 20000:
                 return f"Unusually high score detected in:\n{game.replace(player[1], f'**{player[1]}**')}" 
 
             # sum k/d
-            kills[i] += int(player[2])
-            deaths[i] += int(player[3])
+            try:
+                kills[i] += int(player[2])
+            except ValueError:
+                return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
+            try:
+                deaths[i] += int(player[3])
+            except ValueError:
+                return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
 
             # switch to next team
             if j == num_players - 1:
@@ -86,7 +98,10 @@ def sanity_check(data):
 
 
 def main():
-    return sanity_check(read_file("matches.txt"))
+    try:
+        return sanity_check(read_file("matches.txt"))
+    except:
+        return "Something must be very messed up in your input, sanity failed."
 
 
 if __name__ == "__main__":
