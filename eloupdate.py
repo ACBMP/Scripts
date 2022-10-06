@@ -6,14 +6,29 @@ class OutcomeError(Exception):
     pass
 
 def E(R):
+    """
+    Expected win chance based on MMRs.
+
+    :param R: list or tuple containing the two MMRs to compare
+    :return: win chance for first MMR in R
+    """
     return (1 + 10 ** ((R[1] - R[0]) / 400)) ** -1
 
-def R_1v1(R, S, K=None, N=1):
-    if K is None:
-        K = Kc(N, R[0])
-    return R[0] + K * (S - E(R))
-
 def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
+    """
+    Function to calculate new MMR.
+
+    :param R: current MMR
+    :param S: outcome; 0 for loss, 1 for win, 0.5 for tie
+    :param E: expected win chance
+    :param K: max MMR change
+              this won't be the actual max change if t1 and t2 are used
+    :param N: total number of games played
+    :param t1: player's score
+    :param t2: opponent's score
+    :param ref: reference "stomp" score
+    :return: adjusted MMR
+    """
     if N > 10:
         if K is None:
             K = Kc(N, R)
@@ -29,6 +44,13 @@ def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
             raise ValueError("Broken outcome.")
 
 def Kc(N, R):
+    """
+    Calculate max MMR change.
+
+    :param N: total number of games played
+    :param R: current MMR
+    :return: max MMR change
+    """
     hi = 1200
     if N < 30 and R < hi:
         return 40
@@ -38,6 +60,21 @@ def Kc(N, R):
         return 15
 
 def score(t1, t2, ref=None):
+    """
+    Score difference MMR boost.
+    This is used to make sure closer games count less than stomps.
+
+    If no reference score is passed, this will be calculated according to the
+    total score of the two teams.
+
+    With a reference score, this is based on the how close to a standard "stomp"
+    the score is.
+
+    :param t1: team 1 score
+    :param t2: team 2 score
+    :param ref: reference score
+    :return: boost amount
+    """
     if ref is None:
         try:
             return abs(t1 - t2) / ((t1 + t2) / 2)
@@ -47,10 +84,19 @@ def score(t1, t2, ref=None):
         # reference stomp value
         return max(abs(t1 - t2) - 1, 0) / ref
     
-def w_mean(rankings, rankings_o):
-    mean = sum(rankings_o) / len(rankings_o)
+def w_mean(ratings, ratings_o):
+    """
+    Weighted arithmetic mean.
+    Weights are calculated based on players' MMRs compared to the opposing
+    team's.
+
+    :param ratings: team ratings to be weighted
+    :param ratings_o: opposing team's ratings
+    :return: weighted mean of ratings, weights used
+    """
+    mean = sum(ratings_o) / len(ratings_o)
     diffs = []
-    for r in rankings:
+    for r in ratings:
         diffs.append(abs(r - mean))
     weights = []
     for d in diffs:
@@ -60,12 +106,24 @@ def w_mean(rankings, rankings_o):
             weights.append(0)
     w_sum = sum(weights)
     if w_sum == 0:
-        w_sum = len(rankings)
-        weights = [1] * len(rankings)
-    return sum([rankings[_] * weights[_] for _ in range(len(rankings))]) / sum(weights), weights
+        w_sum = len(ratings)
+        weights = [1] * len(ratings)
+    return sum([ratings[_] * weights[_] for _ in range(len(ratings))]) / sum(weights), weights
 
 
 def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
+    """
+    Calculate new ratings for all players in a match.
+
+    :param match: match as a dict as given by readandupdate
+    :param team_1: list of player dicts for team 1
+    :param team_2: list of player dicts for team 2
+    :param outcome: match outcome, 0 for team 1 winning, 1 for team 2, 0.5 tie
+    :param score_1: team 1's score
+    :param score_2: team 2's score
+    :param aa: artifact assault switch
+    :return: list of dicts containing names and new MMRs
+    """
 
     # team sizes
     l = len(team_1)
@@ -132,6 +190,9 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
 
 
 def new_matches():
+    """
+    Parse new matches in the database and update MMRs accordingly.
+    """
     #Establishing a connectiong to the db
     client = MongoClient('mongodb://localhost:27017/')
     db = client.public

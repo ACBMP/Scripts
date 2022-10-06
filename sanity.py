@@ -1,6 +1,12 @@
 from util import *
 
 def read_file(fname="matches.txt"):
+    """
+    File reading wrapper.
+    
+    :param fname: file name
+    :return: contents of fname
+    """
     with open(fname, "r") as f:
         data = f.read()
         f.close()
@@ -8,6 +14,16 @@ def read_file(fname="matches.txt"):
 
 
 def sanity_check(data):
+    """
+    Sanity check for data to e.g. prevent a losing team from being marked as
+    having won a match.
+
+    The function will output only the first error detected, hence it's
+    recommended to run multiple times.
+
+    :param data: data to parse
+    :return: first error detected
+    """
     games = data.split("\n")
     db = connect()
     for game in games:

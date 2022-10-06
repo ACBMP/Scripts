@@ -2,6 +2,14 @@ from util import *
 import re
 
 def find_games(db, name, mode):
+    """
+    Find all games by a player in a given mode.
+
+    :param db: database
+    :param name: player name
+    :param mode: mode to search for games in
+    :return: matches and teammates' IGNs
+    """
     data = identify_player(db, name)
     # load and search for all igns plus name so we don't get empty match histories
     igns = data["ign"]
@@ -16,6 +24,16 @@ def find_games(db, name, mode):
 
 
 def parse_matches(db, matches, name, min_games, track_teams=False):
+    """
+    Parse given matches for a player to find synergies.
+
+    :param db: database
+    :param matches: all won matches by a player
+    :param name: player name
+    :param min_games: minimum number of games played together
+    :param track_teams: track teams or individual teammates
+    :return: dict of players/teams and their games won, lost
+    """
     # dict with [games played, wins] for [opponents, teammates]
     dicts = [{}, {}]
     for m in matches:
@@ -76,6 +94,12 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
 
 
 def dict_string(d):
+    """
+    Convert a dictionary to a properly formatted string for printing.
+
+    :param d: dictionary to convert
+    :return: d as formatted string
+    """
     val = ""
     for item in d:
         val += f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]} | {d[item][3]} ties)\n"
@@ -83,6 +107,16 @@ def dict_string(d):
 
 
 def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find synergies for
+    a given player in a given mode.
+
+    :param name: player name
+    :param mode: mode to search for games of
+    :param min_games: minimum number of games played with a team(mate)
+    :param track_teams: switch between individual teammates or full teams
+    :return: string of synergies
+    """
     db = connect()
     games, igns = find_games(db, name, mode)
     results = parse_matches(db, games, igns, min_games, track_teams)
