@@ -34,13 +34,14 @@ async def on_ready():
 scheduler = AsyncIOScheduler()
 scheduler.start()
 
-modes_list = ['e', 'mh', 'aar', 'aad']
+modes_list = ['e', 'mh', 'aar', 'aad', 'do']
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
         'aar' : 'AA Running',
         'aad' : 'AA Defending',
-        'aa' : 'Artifact Assault'
+        'aa' : 'Artifact Assault',
+        'do' : 'Domination'
         }
 
 # we save the queues here as simple arrays since we don't expect to scale
@@ -48,7 +49,7 @@ modes_dict = {
 with open("queues.txt", "r") as f:
     queues = {}
     queues_users = {}
-    queues_lengths = {"e": 4, "mh": 6}
+    queues_lengths = {"e": 4, "mh": 6, "do": 6}
     old_queues = f.read()
     old_queues = old_queues.split("; ")
     i = 0
@@ -61,6 +62,8 @@ with open("queues.txt", "r") as f:
     queues_users["e"] = old_queues[1] if old_queues[1] != " " else []
     queues["mh"] = old_queues[2] if old_queues[2] != " " else []
     queues_users["mh"] = old_queues[3] if old_queues[3] != " " else []
+    queues["do"] = old_queues[4] if old_queues[4] != " " else []
+    queues_users["do"] = old_queues[5] if old_queues[5] != " " else []
     f.close()
 
 abilities = ["Normal Disguise","Long Lasting Disguise", "Strong Disguise",
@@ -775,7 +778,7 @@ async def ocr_screenshot(message):
         elif message.guild.id in conf.aa_servers:
             game = "acr"
             players = 8
-        elif message.guild.id in conf.dm_servers:
+        elif message.guild.id in conf.do_servers:
             game = "ac4"
             players = 8
         else:
@@ -852,18 +855,22 @@ async def user_add(message):
                 "mhmmr":starting_mmr,
                 "aarmmr":starting_mmr,
                 "aadmmr":starting_mmr,
+                "dommr":starting_mmr,
                 "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
                 "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
                 "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
                 "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
+                "dohistory":{"dates":[d], "mmrs":[starting_mmr]},
                 "egames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
+                "dogames":{"total":int(0), "won":int(0), "lost":int(0)},
                 "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
                 "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
                 "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
                 "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+                "dostats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
                 "erank": 0,
                 "erankchange": 0,
                 "mhrank": 0,
@@ -872,6 +879,7 @@ async def user_add(message):
                 "aarrankchange": 0,
                 "aadrank": 0,
                 "aadrankchange": 0,
+                "dorankchange": 0,
                 "discord_id":discord_id}
                 )
             await message.channel.send("Successfully added user.")

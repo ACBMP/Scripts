@@ -72,7 +72,7 @@ def score(t1, t2, ref=None):
 
     :param t1: team 1 score
     :param t2: team 2 score
-    :param ref: reference score
+    :param ref: reference score, 0 to return 0
     :return: boost amount
     """
     if ref is None:
@@ -82,7 +82,11 @@ def score(t1, t2, ref=None):
             return 0
     else:
         # reference stomp value
-        return max(abs(t1 - t2) - 1, 0) / ref
+        try:
+            return max(abs(t1 - t2) - 1, 0) / ref
+        # bad way to implement no score ref
+        except ZeroDivisionError:
+            return 0
     
 def w_mean(ratings, ratings_o):
     """
@@ -111,7 +115,7 @@ def w_mean(ratings, ratings_o):
     return sum([ratings[_] * weights[_] for _ in range(len(ratings))]) / sum(weights), weights
 
 
-def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
+def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref=None):
     """
     Calculate new ratings for all players in a match.
 
@@ -122,6 +126,7 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
     :param score_1: team 1's score
     :param score_2: team 2's score
     :param aa: artifact assault switch
+    :param ref: set reference stomp value
     :return: list of dicts containing names and new MMRs
     """
 
@@ -180,7 +185,7 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False):
                         E=Es[j],
                         N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
                         t1=score_1, t2=score_2,
-                        ref=4 if aa else None
+                        ref=4 if aa else ref
                         )))
                     })
             if aa:
@@ -261,7 +266,13 @@ def new_matches():
         elif s[0] != s[1]:
             raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
 
-        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault")
+        # disable reference stomp for domination since points don't matter there and we don't currently check the bar
+        if m["mode"] == "Domination":
+            ref = 0
+        else:
+            ref = None
+
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault", ref=ref)
         
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
         

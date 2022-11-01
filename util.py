@@ -56,6 +56,8 @@ def check_mode(mode, server=None, short=False):
             return "dm" if short else "deathmatch"
         elif server in conf.aa_servers:
             return "aa" if short else "artifact assault"
+        elif server in conf.do_servers:
+            return "do" if short else "domination"
         else:
             return "manhunt"
     mode = mode.lower()
@@ -74,6 +76,8 @@ def check_mode(mode, server=None, short=False):
         return "aar" if short else "artifact assault running"
     elif mode in ["aad", "artifact assault defending"]:
         return "aad" if short else "artifact assault defending"
+    elif mode in ["do", "domination"]:
+        return "do" if short else "domination"
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 
