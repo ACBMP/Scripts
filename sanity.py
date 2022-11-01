@@ -35,7 +35,7 @@ def sanity_check(data):
         mode = players[0]
 
         # sanity check mode
-        if mode not in ["M", "E", "AA"]:
+        if mode not in ["M", "E", "AA", "DO"]:
             return f"Unknown mode {mode} detected in:\n{game}"
 
         num_players = int(players[1])
@@ -104,12 +104,13 @@ def sanity_check(data):
                 return f"Incorrect kill ({i + 1})/death ({i + 1 % 2 + 1}) count detected in:\n{game}"
         
         # sanity check score and outcome
-        if outcome > 0:
-            if max(score) != score[outcome - 1]:
-                return f"Incorrect score/outcome detected in:\n{game}"
-        else:
-            if score[0] != score[1]:
-                return f"Incorrect score/outcome detected in:\n{game}"
+        if mode != "DO":
+            if outcome > 0:
+                if max(score) != score[outcome - 1]:
+                    return f"Incorrect score/outcome detected in:\n{game}"
+            else:
+                if score[0] != score[1]:
+                    return f"Incorrect score/outcome detected in:\n{game}"
     return "No errors detected"
 
 

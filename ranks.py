@@ -3,7 +3,7 @@ from util import *
 
 # I have yet to run this so nobody has a rank yet
 
-def main(modes=["mh", "e", "aar", "aad"]):
+def main(modes=["mh", "e", "aar", "aad", "do"]):
     """
     Update ranks for all players with >= 10 games in given modes.
 

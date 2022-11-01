@@ -42,7 +42,7 @@ def mmr_update(d, db, p, mode):
     :param p: player
     :param mode: gamemode
     """
-    if mode not in ["e", "mh", "aar", "aad"]:
+    if mode not in ["e", "mh", "aar", "aad", "do"]:
         raise ValueError("mmr_update: Unrecognized mode!")
 
     dates = p[f"{mode}history"]["dates"]

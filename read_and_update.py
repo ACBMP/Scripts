@@ -21,7 +21,7 @@ def read_and_update():
     today = date.today().strftime("%Y-%m-%d")
     f = open(conf.RAU_FILE_PATH + conf.RAU_FILE_NAME,'r')
     # keep track of whether a mode was played
-    modes = {"mh": False, "e": False, "aa": False}
+    modes = {"mh": False, "e": False, "aa": False, "do": False}
     for line in f:
         if line=="#":
             print("No new data to be added")
@@ -34,7 +34,7 @@ def read_and_update():
             entry_dict["new"]=True
 
             #mode
-            if csv_entry[0] in ["M", "E", "AA"]:
+            if csv_entry[0] in ["M", "E", "AA", "DO"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
                 # the replace is a bit stupid because we use both M and MH for manhunt
                 modes[csv_entry[0].lower().replace("m", "mh")] = True
