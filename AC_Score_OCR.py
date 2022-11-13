@@ -6,13 +6,14 @@ import os
 
 os.environ['LC_ALL'] = 'C'
 
-def OCR(screenshot: str, game: str, players: int):
+def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     """
     Screenshot OCR function using VapourSynth and Tesseract.
 
     :param screenshot: path to screenshot file
     :param game: game initials to change settings
     :param players: total number of players in the match
+    :param post_game: switch to post_game screenshotting style (currently only AC4)
     :return: OCRed match data string formatted for eloupdate
     """
     players = int(players)
@@ -91,6 +92,25 @@ def OCR(screenshot: str, game: str, players: int):
                 "iQueazol": "iQueazo",
                 "nyxies": "Onyxies"
                 }
+    elif game.lower() == "ac4":
+        scale = img.width / 1920
+        if not post_game:
+            left = 650 * scale
+            top = [660 * scale, 890 * scale]
+            right = 486 * scale
+            bottom = [267 * scale, 39 * scale]
+            binarize = [140, 90]
+        else:
+            left = 906 * scale
+            top = [526 * scale, 755 * scale]
+            right = 196 * scale
+            bottom = [402 * scale, 174 * scale]
+            binarize = [150, 130]
+        t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
+        b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
+        img = core.std.StackVertical([t, b])
+        blue_v = [0, 255]
+        common = {}
     else:
         return OCR(screenshot, "acb", players)
    
@@ -105,12 +125,12 @@ def OCR(screenshot: str, game: str, players: int):
     img_arr = []
     m = players
     for i in range(1, m + 1):
-        img_arr.append(img.std.Crop(bottom=img.height / m * (m - i), top=img.height / m * (i - 1)))
+        img_arr.append(img.std.CropAbs(top=img.height / m * (i - 1), width=img.width, height=img.height / players))
     
     img = img_arr[0]
     for i in img_arr[1:]:
         img += i
-    
+        
     # invert if main player (the one taking the screenshot) and binarize
     def check_invert(n, f, c):
         if f.props.PlaneStatsMin > 75:
@@ -124,7 +144,7 @@ def OCR(screenshot: str, game: str, players: int):
     img = img.warp.AWarpSharp2()
     # alternatively (this is less than ideal)
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
-     
+
     # the actual OCR
     img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
     
@@ -191,3 +211,4 @@ def correct_score(match: str, correction: int, team: int):
 
 if __name__ == "__main__":
     print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
+
