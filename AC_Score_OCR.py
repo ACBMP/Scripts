@@ -3,6 +3,7 @@ core = vs.core
 core.max_cache_size=64
 from functools import partial
 import os
+import re
 
 os.environ['LC_ALL'] = 'C'
 
@@ -176,7 +177,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         processed.output(f, progress_update=__vs_out_updated)
     
     # remove n from earlier and join
-    return ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
+    out = ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
+    return re.sub("[\[].*?[\]]", "", out)
 
 
 def correct_score(match: str, correction: int, team: int):

@@ -789,6 +789,15 @@ async def ocr_screenshot(message):
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
+    
+    # check if post game (for AC4)
+    if "post" in msg:
+        post = True
+        msg.remove("post")
+        if msg == []:
+            msg = [""]
+    else:
+        post = False
 
     correction = False
     if "+" in message.content:
@@ -815,8 +824,9 @@ async def ocr_screenshot(message):
         with open(fname, "wb") as f:
             f.write(img.content)
         try:
-            result = AC_Score_OCR.OCR(fname, game, players)
-        except:
+            result = AC_Score_OCR.OCR(fname, game, players, post)
+        except Exception as e:
+            print(e)
             result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
         if correction:
             result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
