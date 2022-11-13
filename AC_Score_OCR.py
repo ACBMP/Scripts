@@ -3,6 +3,9 @@ core = vs.core
 core.max_cache_size=64
 from functools import partial
 import os
+import pytesseract as tess
+import numpy as np
+from PIL import Image
 
 os.environ['LC_ALL'] = 'C'
 
@@ -110,7 +113,13 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
         blue_v = [0, 255]
-        common = {}
+        common = {
+                "$[": "[",
+                "The$S": "The_S",
+                "She$Who": "She_Who",
+                "Who$Knows": "Who_Knows",
+                "El$Pigeone": "El_Pigeone"
+                }
     else:
         return OCR(screenshot, "acb", players)
    
@@ -146,37 +155,17 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
 
     # the actual OCR
-    img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
-    
-    # print OCR results onto frame
-    def print_subs(n, f, c, result_f):
-        # prepare AN format for each player
-        # store n so we can sort and don't have to do this single-threaded
-        result = str(n) + str(f.props.OCRString).replace("b'", "").replace("'", "").replace(" ", "$").replace("\\n", ", ")
-        # common mistakes
-        for m in [*common]:
-            result = result.replace(m, common[m])
-        result_f.append(result)
-        return c#.sub.Subtitle(result, style="sans-serif,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1")
-    
-    # prepare list which will store all the results
-    result_f = []
-    
-    # progress update
-    def __vs_out_updated(c, t):
-        if c == t:
-            print("Frame: {}/{}".format(c, t), end="\n")
-        else:
-            print("Frame: {}/{}".format(c, t), end="\r")
-    
-    
-    # run script
-    with open(os.devnull, 'wb') as f:
-        processed = img.std.FrameEval(partial(print_subs, c=img, result_f=result_f), img)
-        processed.output(f, progress_update=__vs_out_updated)
-    
-    # remove n from earlier and join
-    return ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
+    text = ""
+    for i in range(len(img)):
+        print(f"Frame: {i}/{len(img)}")
+        img_arr = np.array(img.get_frame(i))
+        img_gray = Image.frombytes('L', img_arr.shape[1:][::-1], img_arr, 'raw')
+        text += ", " + tess.image_to_string(img_gray)
+    text = text.replace("'", "").replace(" ", "$").replace("\\n", ", ").replace("\n", "$").replace("$$", "$").replace("$,", ", ").replace(",$", ", ")
+    for m in [*common]:
+        text = text.replace(m, common[m])
+
+    return text
 
 
 def correct_score(match: str, correction: int, team: int):
@@ -210,5 +199,6 @@ def correct_score(match: str, correction: int, team: int):
 
 
 if __name__ == "__main__":
-    print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
+    #print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
+    print(OCR("edi1.png", "ac4", 8))
 
