@@ -95,6 +95,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 }
     elif game.lower() == "ac4":
         scale = img.width / 1920
+        # although supported post-game screenshots tend to perform worse
         if not post_game:
             left = 650 * scale
             top = [660 * scale, 890 * scale]
@@ -111,7 +112,19 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
         blue_v = [0, 255]
-        common = {}
+        common = {
+                "She$Who": "She_Who",
+                "Who$Knows": "Who_Knows",
+                "El$Pig": "El_Pig",
+                "EI$Pig": "El_Pig",
+                "E|$Pig": "El_Pig",
+                "The$Shmush": "The_Shmush",
+                "Iltoxic": "iltoxic",
+                "iItoxic": "iltoxic",
+                "i|toxic": "iltoxic",
+                "Lunaire$.-": "Lunaire.-",
+                "Arunl991": "Arun1991"
+                }
     else:
         return OCR(screenshot, "acb", players)
    
