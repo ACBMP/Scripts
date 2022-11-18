@@ -160,7 +160,6 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
 
     # the actual OCR
-<<<<<<< HEAD
     img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
     
     # print OCR results onto frame
