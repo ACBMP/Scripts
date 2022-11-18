@@ -160,6 +160,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
 
     # the actual OCR
+<<<<<<< HEAD
     img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
     
     # print OCR results onto frame
@@ -225,5 +226,6 @@ def correct_score(match: str, correction: int, team: int):
 
 
 if __name__ == "__main__":
-    print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
+    #print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
+    print(OCR("edi1.png", "ac4", 8))
 
