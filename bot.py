@@ -173,7 +173,7 @@ AN update```Note that improperly formatted matches won't be added. If this occur
     user_add_help = """If you have the Assassins' Network role, you can add users to the database using\n```css
 AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...]; @USER```"""
     user_edit_help = """If you have the Assassins' Network role, you can edit users in the database using\n```css
-AN user edit NAME: KEY: VALUE```Please note that e.g. lists need to be formatted like Python code."""
+AN user edit NAME: KEY: VALUE```Please note that new values need to be formatted like Python code, e.g. instead of nation: US, run nation: \"US\"."""
     sanity_help = """To run the sanity checker over the currently added matches, run\n```css
 AN sanity```"""
     compare_help = """To find the likelihood of one player beating another, run\n```css
