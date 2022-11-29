@@ -923,11 +923,15 @@ async def user_edit(message):
     msg = message.content[10:]
     info = msg.split(": ")
     name = info[0]
-    key = info[1]
-    # kinda iffy to do this but there's a reason why it's permission locked
-    value = eval(info[2])
     db = connect()
     player = identify_player(db, name)
+    all_keys = player.keys()
+    key = info[1]
+    if key not in all_keys:
+        await message.channel.send(f"Improper key specified! Possible keys are: {', '.join(all_keys)}.")
+        return
+    # kinda iffy to do this but there's a reason why it's permission locked
+    value = eval(info[2])
     db.players.update_one({"_id": player["_id"]}, {"$set": {key: value}})
     await message.channel.send(f"Successfully edited {player['name']}.")
     return
