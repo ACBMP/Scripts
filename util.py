@@ -66,8 +66,6 @@ def check_mode(mode, server=None, short=False):
         return "mh" if short else "manhunt"
     elif mode in ["e", "escort"]:
         return "e" if short else "escort"
-    elif mode in ["au", "among", "among us"]:
-        return "au" if short else "among us"
     elif mode in ["dm", "deathmatch", "dmatch"]:
         return "dm" if short else "deathmatch"
     elif mode in ["aa", "artifact assault"]:
@@ -131,7 +129,20 @@ def command_dec(func):
         except Exception as e:
             print(e)
             client = discord.Client()
-            await client.fetch_channel(arg[2].id).send(str(e) + " " + find_insult())
+            await client.fetch_channel(arg[0].id).send(str(e) + " " + find_insult())
     return exceptionhandler
 
+
+def permission_locked(func):
+    """
+    Locks a command behind the Assassins' Network role or admin accounts.
+    """
+    from discord.utils import get
+    async def permission_checker(*args):
+        message = args[0]
+        if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
+            await func(*args)
+        else:
+            await message.channel.send("You do not have the required permissions! Please contact an admin.")
+    return permission_checker
 

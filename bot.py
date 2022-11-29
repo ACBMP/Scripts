@@ -172,8 +172,14 @@ AN print```"""
 AN update```Note that improperly formatted matches won't be added. If this occurs, please contact Dell."""
     user_add_help = """If you have the Assassins' Network role, you can add users to the database using\n```css
 AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...]; @USER```"""
+    user_edit_help = """If you have the Assassins' Network role, you can edit users in the database using\n```css
+AN user edit NAME: KEY: VALUE```Please note that e.g. lists need to be formatted like Python code."""
     sanity_help = """To run the sanity checker over the currently added matches, run\n```css
 AN sanity```"""
+    compare_help = """To find the likelihood of one player beating another, run\n```css
+AN compare PLAYER_A vs PLAYER_B```"""
+    ladder_help = """To view the leaderboard for a mode, run\n```css
+AN ladder [MODE]```"""
 
     # if the user asked for help on a specific function the msg isn't empty after parsing
     # so we find out what it is and return an embed with the long description from above
@@ -185,54 +191,63 @@ AN sanity```"""
         elif msg == "queue remove":
             return discord.Embed(title=":no_mobile_phones: Remove from Queue", description=queue_rm_help, color=0xff00fe)
         elif msg == "queue":
-            return discord.Embed(title=":printer: Print Queue", description=queue_help, color=0xff00fe)
+            return discord.Embed(title=":flag_gb: Print Queue", description=queue_help, color=0xff00fe)
         elif msg == "lookup":
             return discord.Embed(title=":mag: User Lookup", description=lookup_help, color=0xff00fe)
         elif msg == "synergy":
             return discord.Embed(title=":handshake: Lookup Synergies", description=synergy_help, color=0xff00fe)
         elif msg == "remake":
             return discord.Embed(title=":judge: Remake Calculator", description=remake_help, color=0xff00fe)
+        elif msg == "compare":
+            return discord.Embed(title=":wrestlers: Compare Users", description=compare_help, color=0xff00fe)
+        elif msg == "ocr":
+            return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
+        elif msg == "sanity":
+            return discord.Embed(title=":confused: Sanity Check", description=sanity_help, color=0xff00fe)
+        elif msg == "add":
+            return discord.Embed(title=":memo: Add Matches", description=add_help, color=0xff00fe)
+        elif msg == "replace":
+            return discord.Embed(title=":crayon: Replace Match Content", description=replace_help, color=0xff00fe)
+        elif msg == "print":
+            return discord.Embed(title=":printer: Print Matches", description=print_help, color=0xff00fe)
+        elif msg == "ladder":
+            return discord.Embed(title=":ladder: View Leaderboard", description=ladder_help, color=0xff00fe)
     # otherwise we do one giant embed and keep adding fields with functions
     else:
          embedVar = discord.Embed(title="Assassins' Network Help", url = "https://assassins.network/", color = 0xffa8e8)
          embedVar.set_thumbnail(url="https://assassins.network/static/an_logo_white.png")
          embedVar.add_field(name=":vibration_mode: Add to Queue", value="AN play", inline=True)
          embedVar.add_field(name=":no_mobile_phones: Remove from Queue", value="AN queue remove", inline=True)
-         embedVar.add_field(name=":printer: Print Queue", value="AN queue", inline=True)
+         embedVar.add_field(name=":flag_gb: Print Queue", value="AN queue", inline=True)
          embedVar.add_field(name=":elevator: Team Generator", value="AN team comps", inline=True)
          embedVar.add_field(name=":mag: User Lookup", value="AN lookup", inline=True)
          embedVar.add_field(name=":handshake: Lookup Synergies", value="AN synergy", inline=True)
          embedVar.add_field(name=":judge: Remake Calculator", value="AN remake", inline=True)
-         embedVar.set_footer(text="For more information, use AN help [COMMAND].")
+         embedVar.add_field(name=":wrestlers: Compare Users", value="AN compare", inline=True)
+         embedVar.add_field(name=":camera: Scan Screenshot", value="AN OCR", inline=True)
+         embedVar.add_field(name=":memo: Add Matches", value="AN add", inline=True)
+         embedVar.add_field(name=":printer: Print Matches", value="AN print", inline=True)
+         embedVar.add_field(name=":confused: Sanity Check", value="AN sanity", inline=True)
+         embedVar.add_field(name=":crayon: Replace Match Content", value="AN replace", inline=True)
+         embedVar.add_field(name=":ladder: View Leaderboard", value="AN ladder", inline=True)
+         embedVar.set_footer(text="For more information, use AN help COMMAND.")
 
     # if the channel name fits we add the AN db/parsing functions
     if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server or message.author.id in conf.admin:
         if msg != "":
-            if msg == "ocr":
-                return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
-            elif msg == "add":
-                return discord.Embed(title=":memo: Add Matches", description=add_help, color=0xff00fe)
-            elif msg == "edit":
+            if msg == "edit":
                 return discord.Embed(title=":pencil2: Edit Matches", description=edit_help, color=0xff00fe)
-            elif msg == "replace":
-                return discord.Embed(title=":crayon: Replace Match Content", description=replace_help, color=0xff00fe)
-            elif msg == "print":
-                return discord.Embed(title=":printer: Print Matches", description=print_help, color=0xff00fe)
-            elif msg == "sanity":
-                return discord.Embed(title=":confused: Sanity Check", description=sanity_help, color=0xff00fe)
             elif msg == "update":
                 return discord.Embed(title=":pager: Update Matches", description=update_help, color=0xff00fe)
             elif msg == "user add":
                 return discord.Embed(title=":chess_pawn: Add Users", description=user_add_help, color=0xff00fe)
+            elif msg == "user edit":
+                return discord.Embed(title=":performing_arts: Edit Users", description=user_edit_help, color=0xff00fe)
         else:
-            embedVar.add_field(name=":camera: Scan Screenshot", value="AN OCR", inline=True)
-            embedVar.add_field(name=":memo: Add Matches", value="AN add", inline=True)
-            embedVar.add_field(name=":printer: Print Matches", value="AN print", inline=True)
-            embedVar.add_field(name=":confused: Sanity Check", value="AN sanity", inline=True)
             embedVar.add_field(name=":pencil2: Edit Matches", value="AN edit", inline=True)
-            embedVar.add_field(name=":crayon: Replace Match Content", value="AN replace", inline=True)
             embedVar.add_field(name=":pager: Update Matches", value="AN update", inline=True)
             embedVar.add_field(name=":chess_pawn: Add Users", value="AN user add", inline=True)
+            embedVar.add_field(name=":performing_arts: Edit Users", value="AN user edit", inline=True)
         # note sure what these were for honestly
 #        match_help="""To add a match, use\n```css
 #an add```\n followed by a match in the an format, for example:```M, 2, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```"""
@@ -313,15 +328,26 @@ def lookup_user(message):
     return embedVar
 
 # WIP
-def lookup_ladder(message):
+async def lookup_ladder(message):
+    """
+    Look up and print the leaderboard ladder for a mode.
+    """
     mode = message.content.replace("ladder", "").split(" ")[-1]
     mode = check_mode(mode, server=message.guild.id, short=True)
-    rank_frame(mode, "table.png")
-    table = discord.File("table.png", filename="table.png")
+    # try to deal with proper url linking
+    mode_link = check_mode(mode, short=False)
+    mode_link = mode_link.split(" ")[-1]
+    # deal with empty leaderboard error
+    fname = "table.png"
+    try:
+        rank_frame(mode, fname)
+    except IndexError:
+        fname = "TimDaddy.png"
+    table = discord.File(fname, filename=fname)
     embedVar = discord.Embed(title=check_mode(mode).title() + " Leaderboard",
-            url=f"https://assassins.network/{mode}", color=0xff00ff)
-    embedVar.set_image(url="attachment://table.png")
-    return embedVar, table
+            url=f"https://assassins.network/{mode_link}", color=0xff00ff)
+    embedVar.set_image(url=f"attachment://{fname}")
+    await message.channel.send(embed=embedVar, file=table)
 
 
 @command_dec
@@ -404,38 +430,30 @@ async def sanity_check_matches(message):
 # this overwrites the whole thing
 @command_dec
 async def edit_matches(message):
-    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
-        msg = message.content.replace("edit ", "").replace("edit ", "")
-        with open("matches.txt", "w") as f:
-            f.write(msg)
-            f.close()
-        await message.channel.send("Game(s) edited!")
-        return
-    else:
-        await message.channel.send("You do not have access to this command, please contact a System Administrator. " + find_insult())
-        return
+    msg = message.content.replace("edit ", "").replace("edit ", "")
+    with open("matches.txt", "w") as f:
+        f.write(msg)
+        f.close()
+    await message.channel.send("Game(s) edited!")
+    return
 
 
 # edit matches.txt file by replacing content from the file
 @command_dec
 async def replace_matches(message):
-    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
-        msg = message.content.replace("replace ", "").replace("replace ", "")
-        msg = msg.split(" with ")
-        # we specifically want to truncate
-        with open("matches.txt", "r") as f:
-            c = f.read()
-            c = c.replace(msg[0], msg[1])
-            f.close()
-        # which means we need to open the file again yay
-        with open("matches.txt", "w") as f:
-            f.write(c)
-            f.close()
-        await message.channel.send(f"Replaced every instance of {msg[0]} with {msg[1]}!")
-        return
-    else:
-        await message.channel.send("You do not have access to this command, please contact a System Administrator. " + find_insult())
-        return
+    msg = message.content.replace("replace ", "").replace("replace ", "")
+    msg = msg.split(" with ")
+    # we specifically want to truncate
+    with open("matches.txt", "r") as f:
+        c = f.read()
+        c = c.replace(msg[0], msg[1])
+        f.close()
+    # which means we need to open the file again yay
+    with open("matches.txt", "w") as f:
+        f.write(c)
+        f.close()
+    await message.channel.send(f"Replaced every instance of {msg[0]} with {msg[1]}!")
+    return
 
 
 # team comp finder
@@ -457,23 +475,22 @@ class OutcomeError(Exception):
     pass
 
 # update the AN db by running the read_and_update script
+@permission_locked
 @command_dec
 async def updater(message):
-    if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
-        try:
-            import read_and_update as rau
-            rau.main()
-            #rau.read_and_update()
-            #rau.eloupdate.new_matches()
-            #rau.historyupdate.update()
-            await message.channel.send("Successfully updated the leaderboards!")
-        except OutcomeError as e:
-            await message.channel.send("Error! " + e)
-        except:
-            await message.channel.send("An error has occurred, please message an administrator.")
-    else:
-        await message.channel.send("You do not have access to this command, please contact a System Administrator. " + find_insult())
+    await message.channel.send("k")
     return
+    try:
+        import read_and_update as rau
+        rau.main()
+        #rau.read_and_update()
+        #rau.eloupdate.new_matches()
+        #rau.historyupdate.update()
+        await message.channel.send("Successfully updated the leaderboards!")
+    except OutcomeError as e:
+        await message.channel.send("Error! " + e)
+    except:
+        await message.channel.send("An error has occurred, please message an administrator.")
 
 
 # team comps generator
@@ -837,66 +854,83 @@ async def ocr_screenshot(message):
         return
 
 # add users to the db
+@permission_locked
 @command_dec
 async def user_add(message):
-    if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
-        msg = message.content[9:]
-        info = msg.split("; ")
-        name = info[0]
-        ign = info[1].split(", ")
-        link = info[2]
-        nation = info[3]
-        platforms = info[4].split(", ")
-        try:
-            discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
-        except IndexError:
-            discord_id = ""
-        db = connect()
-        starting_mmr = 800
-        d = date.today().strftime("%y-%m-%d")
-        try:
-            db.players.insert_one({
-                "name":name,
-                "ign":ign,
-                "link":link,
-                "nation":nation,
-                "platforms":platforms,
-                "emmr":starting_mmr,
-                "mhmmr":starting_mmr,
-                "aarmmr":starting_mmr,
-                "aadmmr":starting_mmr,
-                "dommr":starting_mmr,
-                "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
-                "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
-                "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
-                "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
-                "dohistory":{"dates":[d], "mmrs":[starting_mmr]},
-                "egames":{"total":int(0), "won":int(0), "lost":int(0)},
-                "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
-                "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
-                "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
-                "dogames":{"total":int(0), "won":int(0), "lost":int(0)},
-                "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
-                "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
-                "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
-                "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
-                "dostats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
-                "erank": 0,
-                "erankchange": 0,
-                "mhrank": 0,
-                "mhrankchange": 0,
-                "aarrank": 0,
-                "aarrankchange": 0,
-                "aadrank": 0,
-                "aadrankchange": 0,
-                "dorankchange": 0,
-                "discord_id":discord_id}
-                )
-            await message.channel.send("Successfully added user.")
-        except:
-            await message.channel.send("An error has occured.")
-    else:
-        await message.channel.send("You do not have the required permissions")
+    msg = message.content[9:]
+    info = msg.split("; ")
+    name = info[0]
+    ign = info[1].split(", ")
+    link = info[2]
+    nation = info[3]
+    platforms = info[4].split(", ")
+    try:
+        discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
+    except IndexError:
+        discord_id = ""
+    db = connect()
+    starting_mmr = 800
+    d = date.today().strftime("%y-%m-%d")
+    try:
+        db.players.insert_one({
+            "name":name,
+            "ign":ign,
+            "link":link,
+            "nation":nation,
+            "platforms":platforms,
+            "emmr":starting_mmr,
+            "mhmmr":starting_mmr,
+            "aarmmr":starting_mmr,
+            "aadmmr":starting_mmr,
+            "dommr":starting_mmr,
+            "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "dohistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "egames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "dogames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+            "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+            "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+            "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+            "dostats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+            "erank": 0,
+            "erankchange": 0,
+            "mhrank": 0,
+            "mhrankchange": 0,
+            "aarrank": 0,
+            "aarrankchange": 0,
+            "aadrank": 0,
+            "aadrankchange": 0,
+            "dorankchange": 0,
+            "discord_id":discord_id}
+            )
+        await message.channel.send("Successfully added user.")
+    except:
+        await message.channel.send("An error has occured.")
+
+
+@permission_locked
+@command_dec
+async def user_edit(message):
+    """
+    User editing function.
+    """
+    msg = message.content[10:]
+    info = msg.split(": ")
+    name = info[0]
+    key = info[1]
+    # kinda iffy to do this but there's a reason why it's permission locked
+    value = eval(info[2])
+    db = connect()
+    player = identify_player(db, name)
+    db.players.update_one({"_id": player["_id"]}, {"$set": {key: value}})
+    await message.channel.send(f"Successfully edited {player['name']}.")
+    return
 
 
 async def sync_channels(message):
@@ -996,8 +1030,7 @@ async def on_message(message):
     
         # ladder
         if message.content.lower().startswith("ladder"):
-            ladder = lookup_ladder(message)
-            await message.channel.send(embed=ladder[0], file=ladder[1])
+            await lookup_ladder(message)
             return
 
         # synergy
@@ -1010,7 +1043,7 @@ async def on_message(message):
             return
         
         # add games
-        if message.content.lower().startswith("add "):# and message.channel.guild.id == conf.main_server:
+        if message.content.lower().startswith("add "):
             add_match(message)
             await message.channel.send("Game(s) added!")
             return
@@ -1039,10 +1072,8 @@ async def on_message(message):
             await replace_matches(message)
             return
     
-        ident = "update"
-    
         # update db
-        if message.content.lower().startswith(ident) and (message.channel.guild.id == conf.main_server or message.author.id in conf.admin):
+        if message.content.lower().startswith("updater"):
             await updater(message)
             return
     
@@ -1095,6 +1126,10 @@ async def on_message(message):
 
         if message.content.lower().startswith("user add"):
             await user_add(message)
+            return
+
+        if message.content.lower().startswith("user edit"):
+            await user_edit(message)
             return
 
         if message.content.lower().startswith("compare"):
