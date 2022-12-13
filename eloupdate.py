@@ -260,11 +260,12 @@ def new_matches():
             i = 0
 
         # sanity check
-        if m["outcome"] > 0:
-            if s[m["outcome"] - 1] < s[m["outcome"] % 2]:
-                raise OutcomeError(f"outcome {m['outcome']} contradicts scoreline: Winner: {s[m['outcome'] - 1]}, Loser: {s[m['outcome'] % 2]}")
-        elif s[0] != s[1]:
-            raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
+        if m["mode"] != "Domination":
+            if m["outcome"] > 0:
+                if s[m["outcome"] - 1] < s[m["outcome"] % 2]:
+                    raise OutcomeError(f"outcome {m['outcome']} contradicts scoreline: Winner: {s[m['outcome'] - 1]}, Loser: {s[m['outcome'] % 2]}")
+            elif s[0] != s[1]:
+                raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
 
         # disable reference stomp for domination since points don't matter there and we don't currently check the bar
         if m["mode"] == "Domination":
@@ -283,7 +284,7 @@ def new_matches():
             team_stat = [[0, 1], [1, 0]]
 
         #Updating the relevant MMR
-        if m["mode"] in ["Escort", "Manhunt"]:
+        if m["mode"] in ["Escort", "Manhunt", "Domination"]:
             mode = check_mode(m["mode"], short=True)
             for resultentry in result:
                 db.players.update_one(
@@ -297,8 +298,9 @@ def new_matches():
             for team in [1, 2]:
                 team_x_stat = team_stat[team - 1]
                 for player_ in m[f"team{team}"]:
+                    player_db = identify_player(db, player_["player"])
                     db.players.update_one(
-                            {"ign": player_["player"]},
+                            {"_id": player_db["_id"]},
                             {"$inc": {
                                 f"{mode}games.total": 1,
                                 f"{mode}games.won": team_x_stat[0],
@@ -309,13 +311,20 @@ def new_matches():
                                 }}
                             )
     
-                    temp_player = db.players.find_one({"ign": player_["player"]})
     
-                    if temp_player[f"{mode}stats"]["highscore"] < player_["score"]:
+                    # hack please remove
+                    try:
+                        if player_db[f"{mode}stats"]["highscore"] < player_["score"]:
+                            db.players.update_one(
+                                    {"_id": player_db["_id"]},
+                                    {"$set": {f"{mode}stats.highscore": player_["score"]}}
+                                    )
+                    except:
                         db.players.update_one(
-                                {"ign": player_["player"]},
+                                {"_id": player_db["_id"]},
                                 {"$set": {f"{mode}stats.highscore": player_["score"]}}
                                 )
+
 
         elif m["mode"] == "Artifact assault":
             mode = check_mode(m["mode"], short=True)

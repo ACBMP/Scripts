@@ -1,0 +1,28 @@
+E, 2, 1, Tha_Fazz$3650$6$4, J3lko$3300$4$6, Daok0$3575$5$5, Dellpit$3075$5$5
+E, 2, 1, J3lko$4675$10$4, Dellpit$2775$2$6, Tha_Fazz$3825$5$5, Daok0$2775$5$7
+E, 2, 1, J3lko$3575$8$5, Daok0$3175$3$4, Dellpit$4000$5$5, Tha_Fazz$2300$4$6
+E, 2, 1, J3lko$4950$8$5, Dellpit$4300$6$5, Tha_Fazz$4825$5$7, Daok0$2325$5$7
+E, 2, 1, Tha_Fazz$4625$6$6, J3lko$4025$6$7, Daok0$4100$5$6, Dellpit$3500$8$6
+E, 2, 1, J3lko$5400$5$6, Tha_Fazz$2350$3$6, Daok0$3900$4$4, Dellpit$3650$8$4
+E, 2, 1, Daok0$4500$3$7, Tha_Fazz$3250$10$8, J3lko$3725$7$7, Dellpit$3375$8$6
+E, 2, 1, J3lko$5075$7$6, Daok0$3975$6$6, Tha_Fazz$3975$6$6, Dellpit$3325$6$7
+E, 2, 1, Dellpit$4400$9$7, Daok0$4200$5$5, J3lko$4000$7$7, Tha_Fazz$2600$5$7
+E, 2, 1, Tha_Fazz$4300$7$7, Dellpit$4000$5$5, Daok0$3375$6$6, J3lko$3225$6$6
+E, 2, 1, Dellpit$4600$8$5, Daok0$4250$6$5, Tha Fazz$3875$4$7, J3lko$2925$6$7
+E, 2, 1, Tha_Fazz$4275$7$4, Daok0$2575$5$7, Dellpit$3350$8$6, J3lko$2950$3$6
+E, 2, 2, Dellpit$4150$4$6, Tha_Fazz$2700$7$4, J3lko$3975$8$6, Daok0$2925$2$5
+E, 2, 1, Daok0$4025$3$5, Tha_Fazz$3575$8$5, Dellpit$3500$6$5, J3lko$3500$4$6
+E, 2, 1, Daok0$4725$6$4, J3lko$4525$6$5, Tha_Fazz$3400$4$5, Dellpit$2850$5$7
+E, 2, 1, Daok0$3825$4$5, Dellpit$3725$8$7, J3lko$3550$6$6, Tha_Fazz$2800$6$6
+E, 2, 1, Daok0$4200$4$6, Tha_Fazz$3300$9$5, J3lko$2625$4$7, Dellpit$2375$7$6
+E, 2, 1, Dellpit$4875$6$4, Tha_Fazz$3725$6$6, J3lko$3925$6$7, Daok0$2525$4$5
+E, 2, 1, J3lko$3575$6$4, Dellpit$3025$5$5, Daok0$3550$5$5, Tha Fazz$2800$4$6
+E, 2, 1, J3lko$5200$8$6, Tha_Fazz$4100$6$7, Dellpit$3025$6$7, Daok0$3025$7$7
+E, 2, 1, Daok0$5350$7$5, Tha_Fazz$3100$8$6, Dellpit$2900$5$8, J3lko$2800$6$7
+E, 2, 1, Tha_Fazz$5350$6$4, Dellpit$5150$5$5, Daok0$3400$3$6, J3lko$2450$6$5
+E, 2, 1, Daok0$4775$7$5, Tha_Fazz$3975$7$6, J3lko$4675$6$7, Dellpit$2826$5$7
+E, 2, 1, Dellpit$4675$4$6, Daok0$3725$7$5, J3lko$4025$7$6, MrEirox123$2075$4$5
+E, 2, 1, Daok0$3575$4$4, J3lko$2675$6$7, MrEirox123$3475$7$5, Dellpit$2225$4$5
+E, 2, 1, J3lko$4625$4$5, Dellpit$2375$6$7, Daok0$3575$6$6, MrEirox123$3375$6$4
+E, 2, 1, J3lko$4575$6$6, Dellpit$2825$5$4, MrEirox123$3575$7$5, Daok0$1775$3$6
+E, 2, 1, Daok0$4000$8$5, J3lko$3000$5$7, Dellpit$2925$5$7, MrEirox123$2825$7$6
