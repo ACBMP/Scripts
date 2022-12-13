@@ -102,131 +102,21 @@ def extract_players(players):
     return p
 
 
-def find_lobbies(players, mode="Domination", lobby_size=8):
-    """
-    Split a group of players into lobbies of a given size. Doesn't support multiple sizes.
-
-    Splits according to MMR with consideration for placements.
-    
-    :param players: List of players.
-    :param mode: Game mode.
-    :param lobby_size: Size of lobbies.
-    :return: List of lobbies with players.
-    """
-    # supporting varying lobby sizes seems annoying
-    if len(players) % lobby_size != 0:
-        raise ValueError("Could not evenly divide players into lobbies.")
-    num_lobbies = len(players) / lobby_size
-    import numpy as np
-    db = connect()
-    mode = check_mode(mode, short=True)
-    players = [identify_player(db, p) for p in players]
-    players_split = [[], []]
-    # run through players and check for whether they've finished placements
-    for p in players:
-        if p[f"{mode}games"]["total"] < 10:
-            players_split[1].append(p)
-        else:
-            players_split[0].append(p)
-    # sort players by mmr
-    for i in range(2):
-        players_split[i].sort(key=lambda p: p[f"{mode}mmr"])
-    # split into lobbies
-    lobbies = np.array_split(players_split[0], num_lobbies)
-    # fill up lobbies with any remaining placement players
-    if len(players_split[1]) > 0:
-        for p in players_split[1]:
-            free = True
-            i = 0
-            while free:
-                if len(lobbies[i]) < lobby_size:
-                    lobbies[i] = np.append(lobbies[i], p)
-                    free = False
-                i += 1
-    # only need the names
-    for i in range(len(lobbies)):
-        lobbies[i] = [p["name"] for p in lobbies[i]]
-    return lobbies
-
-
-def find_lobbies_groups(players, mode="Domination", lobby_size=8):
-    """
-    Split a group of players into lobbies of a given size. Doesn't support multiple sizes.
-
-    Splits according to MMR with consideration for placements.
-    
-    :param players: List of players.
-    :param mode: Game mode.
-    :param lobby_size: Size of lobbies.
-    :return: List of lobbies with players.
-    """
-    groups = []
-    if isinstance(players, str):
-        players = players.split(", ")
-        for p in players:
-            if "+" in p:
-                groups.append(p.split("+"))
-        
-    # supporting varying lobby sizes seems annoying
-    if len(players) % lobby_size != 0:
-        raise ValueError("Could not evenly divide players into lobbies.")
-    num_lobbies = len(players) / lobby_size
-    import numpy as np
-    db = connect()
-    mode = check_mode(mode, short=True)
-
-    players = [identify_player(db, p) for p in players]
-    players_split = [[], []]
-    # run through players and check for whether they've finished placements
-    for p in players:
-        if p[f"{mode}games"]["total"] < 10:
-            players_split[1].append(p)
-        else:
-            players_split[0].append(p)
-    # sort players by mmr
-    for i in range(2):
-        players_split[i].sort(key=lambda p: p[f"{mode}mmr"])
-    # split into lobbies
-    lobbies = np.array_split(players_split[0], num_lobbies)
-    # fill up lobbies with any remaining placement players
-    if len(players_split[1]) > 0:
-        for p in players_split[1]:
-            free = True
-            i = 0
-            while free:
-                if len(lobbies[i]) < lobby_size:
-                    lobbies[i] = np.append(lobbies[i], p)
-                    free = False
-                i += 1
-    # only need the names
-    for i in range(len(lobbies)):
-        lobbies[i] = [p["name"] for p in lobbies[i]]
-    return lobbies
-
-
 def test(n):
     """
     Test function.
 
     :param n: number of tests to run
     """
-    players = ["Sugarfree", "Edi", "Arun", "TDCANDHP", "Cota", "Xanthex"]#["Dellpit", "Tha Fazz", "Auditore92", "EsquimoJo", "Crispi Kreme", "EternityEzioWolf"]
+    players = ["Dellpit", "Tha Fazz", "Auditore92", "EsquimoJo", "Crispi Kreme", "EternityEzioWolf"]
     for x in range(n):
-        res = find_teams(players, "Domination", 25)
+        res = find_teams(players, "Manhunt", 25)
         for i in [1, 2]:
             print(f"Team {i}")
             for player in res[i - 1]:
                 print(player["name"])
     return
 
-
-def test_lobbies(n, **kwargs):
-    for i in range(n):
-        print(find_lobbies(**kwargs))
-    return
-
 if __name__ == "__main__":
-    #test(1)
-#    test_lobbies(1, players=["Sugarfree", "Edi", "Arun", "TDCANDHP", "Cota", "Xanthex"], lobby_size=2)
-    test_lobbies(1, players="Sugarfree., iqueazo, piesio1, luc_link5, durza, rorce, scorpius, camiikase, Shmush, Vlad, Lunaire.-, ShadowX, Xanthex, FynnC, Arun, Lars".split(", "), lobby_size=8)
+    test(1)
 

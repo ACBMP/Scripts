@@ -61,13 +61,6 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "F_o$x$92": "Auditore92",
                 "F_ox92": "Auditore92",
                 "Tha$_Fazz": "Tha_Fazz",
-                "95On": "95on",
-                "950n": "95on",
-                "Crispi$Kreme": "Crispi Kreme",
-                "Leviathan$B": "Levi",
-                "F$ox92": "Auditore92",
-                "Fox$92": "Auditore92",
-                "F_ox$92": "Auditore92",
                 }
     elif game.lower() == "acr":
         scale = img.width / 1280
@@ -98,10 +91,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "TneAngrwaer": "TheAngryRiver",
                 "iiQueazo": "iQueazo",
                 "iQueazol": "iQueazo",
-                "nyxies": "Onyxies",
-                "OOnyxies": "Onyxies",
-                "Sugarfree$": "Sugarfree.$",
-                "iQueazo4": "iQueazo24"
+                "nyxies": "Onyxies"
                 }
     elif game.lower() == "ac4":
         scale = img.width / 1920
