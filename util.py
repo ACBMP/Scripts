@@ -52,8 +52,6 @@ def check_mode(mode, server=None, short=False):
             return "e" if short else "escort"
         elif server in conf.mh_servers:
             return "mh" if short else "manhunt"
-        elif server in conf.dm_servers:
-            return "dm" if short else "deathmatch"
         elif server in conf.aa_servers:
             return "aa" if short else "artifact assault"
         elif server in conf.do_servers:
@@ -66,8 +64,6 @@ def check_mode(mode, server=None, short=False):
         return "mh" if short else "manhunt"
     elif mode in ["e", "escort"]:
         return "e" if short else "escort"
-    elif mode in ["dm", "deathmatch", "dmatch"]:
-        return "dm" if short else "deathmatch"
     elif mode in ["aa", "artifact assault"]:
         return "aa" if short else "artifact assault"
     elif mode in ["aar", "artifact assault running"]:
@@ -129,7 +125,8 @@ def command_dec(func):
         except Exception as e:
             print(e)
             client = discord.Client()
-            await client.fetch_channel(arg[0].id).send(str(e) + " " + find_insult())
+            channel = await client.fetch_channel(arg[0].id)
+            await channel.send(str(e) + " " + find_insult())
     return exceptionhandler
 
 
@@ -140,7 +137,7 @@ def permission_locked(func):
     from discord.utils import get
     async def permission_checker(*args):
         message = args[0]
-        if (get(message.author.roles, name="Assassins' Network") and message.channel.guild.id == conf.main_server) or message.author.id in conf.admin:
+        if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
             await func(*args)
         else:
             await message.channel.send("You do not have the required permissions! Please contact an admin.")
