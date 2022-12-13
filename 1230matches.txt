@@ -1,0 +1,25 @@
+AA, 4, 1, iQueazo24$6350$1$10$3, DurZa$4800$13$1$0, dreamkiller2000$3800$0$8$2, Onyxies$2250$9$3$0, mariyaban$4100$0$8$3, Camiikase$3800$2$10$1, TheAngryRiver$3450$10$2$0, GamerPrince98$3300$10$3$0
+AA, 4, 1, mariyaban$5650$0$11$3, Onyxies$5100$14$1$0, iQueazo24$4700$17$3$0, dreamkiller2000$4250$0$11$2, TheAngryRiver$4500$15$3$0, Camiikase$3850$2$14$1, GamerPrince98$3300$9$2$0, DurZa$2400$0$12$1
+AA, 4, 0, iQueazo24$6750$18$2$0, DurZa$4300$12$1$0, Camiikase$4250$0$11$1, mariyaban$3500$1$13$1, dreamkiller2000$5250$4$14$1, Onyxies$4300$15$3$0, GamerPrince98$3350$7$2$0, TheAngryRiver$2700$1$12$1
+AA, 4, 0, DurZa$3300$13$2$0, Camiikase$3050$0$11$1, mariyaban$2700$0$10$1, TheAngryRiver$2600$10$2$0, iQueazo24$5100$2$8$2, Onyxies$3000$12$1$0, GamerPrince98$2950$11$2$0, dreamkiller2000$2250$0$12$0
+AA, 4, 1, mariyaban$6100$1$12$2, iQueazo24$4250$13$1$0, dreamkiller2000$3550$2$12$1, GamerPrince98$3450$10$1$0, Onyxies$5000$13$2$0, Camiikase$3250$0$11$1, TheAngryRiver$2250$1$10$0, DurZa$2700$12$3$0
+AA, 4, 1, mariyaban$4650$0$9$2, TheAngryRiver$4550$13$0$0, iQueazo24$3650$14$2$0, dreamkiller2000$3500$0$13$0, DurZa$3700$12$1$0, GamerPrince98$3200$11$1$0, Camiikase$2550$1$12$1, Onyxies$1250$0$13$0
+AA, 4, 1, mariyaban$6150$2$15$2, iQueazo24$5700$18$2$0, Onyxies$4400$12$3$0, dreamkiller2000$4050$3$12$1, Camiikase$5550$1$15$1, TheAngryRiver$5500$2$14$1, GamerPrince98$4750$15$2$0, DurZa$4150$14$4$0
+AA, 4, 1, iQueazo24$5450$20$1$0, Onyxies$4700$15$10, TheAngryRiver$4450$1$8$2, dreamkiller2000$4150$1$9$2, mariyaban$3600$0$14$1, GamerPrince98$2350$11$1$0, Camiikase$2250$8$S$0, DurZa$1300$0$17$0
+AA, 4, 1, Onyxies$6000$18$2$0, TheAngryRiver$5600$0$10$3, iQueazo24$4800$15$1$0, DurZa$4100$1$13$0, GamerPrince98$4150$12$3$0, mariyaban$4050$0$15$2, Camiikase$4000$13$3$0, dreamkiller2000$3100$1$13$0
+AA, 4, 1, dreamkiller2000$6050$2$10$4, TheAngryRiver$5750$3$10$2, Onyxies$4800$14$3$0, DurZa$3150$12$3$0, iQueazo24$5000$0$11$1, mariyaban$4600$0$13$2, GamerPrince98$4250$14$3$0, Camiikase$3400$12$4$0
+AA, 4, 1, dreamkiller2000$3850$0$7$3, DurZa$3800$13$1$0, TheAngryRiver$2350$2$11$0, Onyxies$1850$10$1$0, iQueazo24$3850$13$1$0, GamerPrince98$2900$0$10$0, Camiikase$2150$7$1$0, mariyaban$2100$0$13$1
+AA, 4, 1, dreamkiller2000$5850$0$10$4, Edi$5400$20$3$0, DurZa$5150$2$14$1, Onyxies$4900$11$1$0, GamerPrince98$9300$0$13$2, TheAngryRiver$5300$11$3$0, mariyaban$5100$16$2$0, Camiikase$4200$1$15$0
+AA, 4, 1, iQueazo24$4150$13$2$0, mariyaban$3650$0$13$1, dreamkiller2000$3550$0$10$2, Onyxies$3050$8$2$1, DurZa$5600$13$0$0, GamerPrince98$4750$1$8$2, Camiikase$4650$10$3$0, TheAngryRiver$4500$3$10$1
+AA, 4, 1, GamerPrince98$6600$0$11$3, iQueazo24$5050$16$4$0, dreamkiller2000$5050$0$10$3, piesio1$4450$17$2$0, TheAngryRiver$4200$0$12$2, mariyaban$3100$14$3$0, Onyxies$3100$13$4$0, DurZa$2900$0$14$1
+AA, 4, 0, DurZa$3900$11$2$0, mariyaban$3750$0$16$1, GamerPrince98$2850$1$11$0, TheAngryRiver$2500$10$1$0, piesio1$4550$12$0$0, Onyxies$4200$3$9$1, iQueazo24$4100$14$1$0, dreamkiller2000$3650$1$12$0
+AA, 4, 1, Onyxies$7350$0$10$1, piesio1$6850$15$1$0, iQueazo24$4350$13$1$0, dreamkiller2000$4250$0$10$3, mariyaban$5250$1$11$1, GamerPrince98$3300$9$2$0, TheAngryRiver$3150$11$3$0, DurZa$2650$1$12$0
+AA, 4, 1, GamerPrince98$5000$16$1$0, DurandalSword$4550$1$10$3, piesio1$3600$12$2$0, Onyxies$2300$0$11$0, iQueazo24$3850$12$1$0, TheAngryRiver$3450$0$11$1, mariyaban$3200$1$17$0,DurZa$3050$11$0$0
+AA, 4, 0, TheAngryRiver$6250$17$1$0, DurZa$2450$0$12$1, Onyxies$2150$0$10$1, mariyaban$1950$7$3$0, piesio1$5050$12$2$0, DurandalSword$4350$1$11$2, iQueazo24$4000$12$1$0, GamerPrince98$3350$1$10$0
+AA, 4, 1, Onyxies$5950$17$4$0, DurandalSword$3600$1$10$1, DurZa$3300$8$0$0, piesio1$3250$1$11$2, GamerPrince98$4750$3$11$0, iQueazo24$4700$12$3$0, mariyaban$4650$1$10$2, TheAngryRiver$2300$9$3$0
+AA, 4, 0, iQueazo24$4650$13$1$0, DurandalSword$3000$1$10$1, Onyxies$2900$9$1$0, DurZa$1550$1$11$0, GamerPrince98$4600$12$1$0, TheAngryRiver$3400$11$1$0, piesio1$3100$0$11$0, mariyaban$2950$0$11$1
+AA, 4, 1, iQueazo24$6650$1$9$4, TheAngryRiver$5050$2$10$1, piesio1$3550$14$0$0, Onyxies$3300$13$1$0, DurZa$3650$11$2$0, GamerPrince98$3200$1$12$0, mariyaban$2700$8$4$0, DurandalSword$2400$0$12$0
+AA, 4, 1, DurandalSword$5650$1$12$2, TheAngryRiver$4600$1$10$3, Onyxies$3450$11$4$0, iQueazo24$3250$14$3$0, DurZa$5500$15$0$0, GamerPrince98$3400$3$10$1, mariyaban$3150$0$15$0, piesio1$2800$11$2$0
+AA, 4, 1, iQueazo24$6200$1$11$3, DurZa$6100$21$2$0, GamerPrince98$5850$3$10$3, DurandalSword$4400$11$1$0, TheAngryRiver$8350$2$10$3, mariyaban$5150$1$16$2, piesio1$3800$12$6$0, Onyxies$3750$9$4$0
+AA, 4, 1, GamerPrince98$5750$15$1$0, TheAngryRiver$5200$3$11$2, Onyxies$4850$1$11$2, DurandalSword$4450$15$1$0, mariyaban$5200$3$13$1, piesio1$4950$0$11$1, DurZa$4500$11$2$0, iQueazo24$4000$10$8$0
+AA, 4, 1, piesio1$6450$0$10$1, mariyaban$4900$3$11$1, DurZa$3750$12$0$0, GamerPrince98$3350$12$1$0, iQueazo24$3500$11$2$0, Onyxies$3250$0$11$0, DurandalSword$2800$11$2$0, TheAngryRiver$2250$0$12$1
