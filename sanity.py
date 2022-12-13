@@ -97,13 +97,11 @@ def sanity_check(data):
             if j == num_players - 1:
                 i = 1
         
-        # k/d check unfortunately doesn't work for console escort
-        if mode != "E":
-            # sanity check k/d
-            for i in range(2):
-                # mildly retarded
-                if kills[i] != deaths[(i + 1) % 2]:
-                    return f"Incorrect kill ({i + 1})/death ({i + 1 % 2 + 1}) count detected in:\n{game}"
+        # sanity check k/d
+        for i in range(2):
+            # mildly retarded
+            if kills[i] != deaths[(i + 1) % 2]:
+                return f"Incorrect kill ({i + 1})/death ({i + 1 % 2 + 1}) count detected in:\n{game}"
         
         # sanity check score and outcome
         if mode != "DO":
