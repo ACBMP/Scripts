@@ -21,6 +21,7 @@ import synergy
 import elostats
 import subprocess
 import telegram_bot
+from add_badges import readable_badges
 
 subprocess.Popen(["python3", "telegram_bot.py"])
 
@@ -49,7 +50,7 @@ modes_dict = {
 with open("queues.txt", "r") as f:
     queues = {}
     queues_users = {}
-    queues_lengths = {"e": 4, "mh": 6, "do": 6}
+    queues_lengths = {"e": 4, "mh": 6, "do": 8}
     old_queues = f.read()
     old_queues = old_queues.split("; ")
     i = 0
@@ -120,7 +121,7 @@ async def send_long_message(content, channel):
 # otherwise it shows Wanted 6/9
 async def update_presence():
     presence = ""
-    for mode in ["e", "mh"]:
+    for mode in ["e", "mh", "do"]:
         if len(queues[mode]):
             if presence:
                 presence += ", "
@@ -180,6 +181,8 @@ AN sanity```"""
 AN compare PLAYER_A vs PLAYER_B```"""
     ladder_help = """To view the leaderboard for a mode, run\n```css
 AN ladder [MODE]```"""
+    reload_help = """To reload all the bot's imported modules, run\n```css
+AN reload```"""
 
     # if the user asked for help on a specific function the msg isn't empty after parsing
     # so we find out what it is and return an embed with the long description from above
@@ -233,7 +236,7 @@ AN ladder [MODE]```"""
          embedVar.set_footer(text="For more information, use AN help COMMAND.")
 
     # if the channel name fits we add the AN db/parsing functions
-    if message.channel.name in ["an-help", "assassinsnetwork"] and message.guild.id == conf.main_server or message.author.id in conf.admin:
+    if message.channel.name in ["an-help", "assassinsnetwork"] or message.author.id in conf.admin:
         if msg != "":
             if msg == "edit":
                 return discord.Embed(title=":pencil2: Edit Matches", description=edit_help, color=0xff00fe)
@@ -243,18 +246,14 @@ AN ladder [MODE]```"""
                 return discord.Embed(title=":chess_pawn: Add Users", description=user_add_help, color=0xff00fe)
             elif msg == "user edit":
                 return discord.Embed(title=":performing_arts: Edit Users", description=user_edit_help, color=0xff00fe)
+            elif msg == "reload":
+                return discord.Embed(title=":arrows_clockwise: Reload Modules", description=reload_help, color=0xff00fe)
         else:
             embedVar.add_field(name=":pencil2: Edit Matches", value="AN edit", inline=True)
             embedVar.add_field(name=":pager: Update Matches", value="AN update", inline=True)
             embedVar.add_field(name=":chess_pawn: Add Users", value="AN user add", inline=True)
             embedVar.add_field(name=":performing_arts: Edit Users", value="AN user edit", inline=True)
-        # note sure what these were for honestly
-#        match_help="""To add a match, use\n```css
-#an add```\n followed by a match in the an format, for example:```M, 2, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```"""
-#        if get(message.author.roles, name="Assassins' Network"):
-#            match_help += """\nTo update the leaderboards, use```css
-#AN update```"""
-       # embedVar.add_field(name="Match Management", value=match_help, inline = False)
+            embedVar.add_field(name=":arrows_clockwise: Reload Modules", value="AN reload", inline=True)
     
     return embedVar
 
@@ -284,7 +283,7 @@ def lookup_user(message):
         player_db = db.players.find_one({"discord_id" : str(message.author.id)})
         player = player_db["name"]
     elif "@" in player:
-        discord_id = player.replace("@!", "").replace(">", "").replace("<", "")
+        discord_id = player.replace("@!", "").replace("@", "").replace(">", "").replace("<", "")
         player_db = db.players.find_one({"discord_id" : discord_id})
         player = player_db["name"]
     else:
@@ -295,9 +294,15 @@ def lookup_user(message):
     else:
         # embed title is player name and their country flag as an emoji
         import flag
-        embedVar = discord.Embed(title=f"{player} {flag.flag(player_db['nation'])}", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
+        if player_db["nation"] != "_unknown":
+            embedVar = discord.Embed(title=f"{player} {flag.flag(player_db['nation'])}", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
+        else:
+            embedVar = discord.Embed(title=f"{player} :clown:", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
         # only add information that is present
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
+        badges = readable_badges(player_db["name"])
+        if len(badges) > 0:
+            embedVar.add_field(name="Achievements", value=badges, inline=False)
         top_elo = 0
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
@@ -368,7 +373,7 @@ async def lookup_synergy(message):
     if len(content) > 1:
         mode = content[1]
         if len(content) > 2:
-            min_games = content[2]
+            min_games = int(content[2])
             if len(content) == 4:
                 track_teams = content[3]
     else:
@@ -478,8 +483,8 @@ class OutcomeError(Exception):
 @permission_locked
 @command_dec
 async def updater(message):
-    await message.channel.send("k")
-    return
+    # database backup
+    os.system(f"mongodump -d public -o dump/dump_{str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))}")
     try:
         import read_and_update as rau
         rau.main()
@@ -878,6 +883,7 @@ async def user_add(message):
             "link":link,
             "nation":nation,
             "platforms":platforms,
+            "badges": [],
             "emmr":starting_mmr,
             "mhmmr":starting_mmr,
             "aarmmr":starting_mmr,
@@ -907,6 +913,7 @@ async def user_add(message):
             "aadrank": 0,
             "aadrankchange": 0,
             "dorankchange": 0,
+            "dorank": 0,
             "discord_id":discord_id}
             )
         await message.channel.send("Successfully added user.")
@@ -1008,7 +1015,22 @@ async def compare_users(message):
     await message.channel.send(f"The chance of {', '.join(teams[0])} ({round(chance[1][0])} MMR) beating {', '.join(teams[1])} ({round(chance[1][1])} MMR) in {modes_dict[mode]} is {chance_p}%.")
     return
 
-                                   
+
+@permission_locked
+@command_dec
+async def reload_modules(message):
+    import importlib
+    for module in sys.modules.values():
+        try:
+            if module.__file__.startswith("/home/dell/Match_Update/"):
+                importlib.reload(module)
+                print(f"Reloaded module: {module.__name__}")
+        except:
+            pass
+    await message.channel.send("Successfully reloaded modules.")
+    return
+
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -1077,7 +1099,7 @@ async def on_message(message):
             return
     
         # update db
-        if message.content.lower().startswith("updater"):
+        if message.content.lower().startswith("update"):
             await updater(message)
             return
     
@@ -1138,6 +1160,10 @@ async def on_message(message):
 
         if message.content.lower().startswith("compare"):
             await compare_users(message)
+            return
+
+        if message.content.lower().startswith("reload"):
+            await reload_modules(message)
             return
      
     elif message.content == "Y":

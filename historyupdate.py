@@ -1,6 +1,7 @@
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from datetime import date
+from util import *
 
 
 def update():
@@ -22,7 +23,7 @@ def update():
     for i in range(len(players)):
         p = players[i]
 
-        for mode in ["mh", "e", "aar", "aad"]:
+        for mode in ["mh", "e", "aar", "aad", "do"]:
             # if player has no mmrhistory update it
             if p[f"{mode}history"]["mmrs"] == []:
                 mmr_update(d, db, p, mode)
@@ -54,5 +55,29 @@ def mmr_update(d, db, p, mode):
     return
 
 
+def get_last_game(player, mode):
+    """
+    Get the date of the last game a player played in a given mode.
+
+    :param player: player name or document
+    :param mode: mode name as used in db
+    :return: last game played's date
+    """
+    db = connect()
+    if isinstance(player, str):
+        player = db.players.find_one({"name": player})
+    found = False
+    igns = player["ign"]
+    if type(igns) == str:
+        igns = [igns]
+    if player["name"] not in igns:
+        igns += [name]
+    search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
+    search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+    last_match = db.matches.find({"$or": search}).sort("_id", -1).limit(1)[0]
+    return last_match["date"]
+
+
 if __name__=="__main__":
-    update()
+    #update()
+    print(get_last_game("Dellpit", "Manhunt"))
