@@ -5,6 +5,7 @@ def introduce_num_sessions():
     db = connect()
     for mode in ["e", "mh", "aar", "aad", "do"]:
         db.players.update({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
+        db.players.update({}, {"$set": {f"{mode}lastdecay": "1970-01-01"}})
     print("Done.")
     return
 
@@ -34,9 +35,16 @@ def decay_all(mode):
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
         last_day = datetime.strptime(last_day, "%y-%m-%d")
-        diff = datetime.now() - last_day
-        if diff.days > days_threshold:
+        diff_play = datetime.now() - last_day
+        #make sure it's been at least a week since last decay
+        last_decay = p[f"{mode}history"]["dates"][-1]
+        last_decay = datetime.strptime(last_decay, "%y-%m-%d")
+        diff_decay = datetime.now() - last_decay
+        if diff_play.days > days_threshold and diff_decay > 6:
             db.players.update_one({"_id": p["_id"]},
-                    {"$set":
-                        {f"{mode}mmr": max(f"{mode}mmr" - decay_amount, decay_threshold)}})
+                    {"$set": [
+                        {f"{mode}mmr": max(f"{mode}mmr" - decay_amount, decay_threshold)},
+                        {f"{mode}lastdecay": datetime.now().strftime("%Y-%m-%d")},
+                        ]})
     return
+
