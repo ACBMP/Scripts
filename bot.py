@@ -3,7 +3,7 @@ import random
 import discord
 from discord.utils import get
 from discord.ext import commands
-from teams import find_teams
+import teams
 from util import *
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -183,12 +183,16 @@ AN compare PLAYER_A vs PLAYER_B```"""
 AN ladder [MODE]```"""
     reload_help = """To reload all the bot's imported modules, run\n```css
 AN reload```"""
+    lobbies_help = """To generate MMR-based lobbies, run\n```css
+AN lobbies PLAYER_A, PLAYER_B, PLAYER_C, PLACER_D, ...```Grouped lobby generation is currently not supported, but is being worked on."""
 
     # if the user asked for help on a specific function the msg isn't empty after parsing
     # so we find out what it is and return an embed with the long description from above
     if msg != "":
         if msg == "team comps":
             return discord.Embed(title=":elevator: Team Generator", description=team_help, color=0xff00fe)
+        elif msg == "lobbies":
+            return discord.Embed(title=":put_litter_in_its_place: Lobbies Generator", description=lobbies_help, color=0xff00fe)
         elif msg == "play":
             return discord.Embed(title=":vibration_mode: Add to Queue", description=lfg_help, color=0xff00fe)
         elif msg == "queue remove":
@@ -223,6 +227,7 @@ AN reload```"""
          embedVar.add_field(name=":no_mobile_phones: Remove from Queue", value="AN queue remove", inline=True)
          embedVar.add_field(name=":flag_gb: Print Queue", value="AN queue", inline=True)
          embedVar.add_field(name=":elevator: Team Generator", value="AN team comps", inline=True)
+         embedVar.add_field(name=":put_litter_in_its_place: Lobbies Generator", value="AN lobbies", inline=True)
          embedVar.add_field(name=":mag: User Lookup", value="AN lookup", inline=True)
          embedVar.add_field(name=":handshake: Lookup Synergies", value="AN synergy", inline=True)
          embedVar.add_field(name=":judge: Remake Calculator", value="AN remake", inline=True)
@@ -465,7 +470,7 @@ async def replace_matches(message):
 # teams.py is the really relevant stuff
 def team_finder(players, mode, random):
     # this outputs all the players in one array so we need to split it
-    teams = find_teams(players, mode=mode, random=random)
+    teams = teams.find_teams(players, mode=mode, random=random)
     t1, t2 = [], []
     for i in [0, 1]:
         for player in teams[i]:
@@ -537,6 +542,25 @@ async def team_comps(message, ident):
             await channel.send(matchup)
         except:
             await channel.send("That didn't work, idiot. " + find_insult())
+    return
+
+
+@command_dec
+async def find_lobbies(message):
+    lobby_sizes = {"e": 4, "mh": 6, "do": 8, "aa": 8}
+    channel = message.channel
+    # let's just stick to default modes so people don't get confused
+    msg = message.content[len("lobbies "):]
+    mode = False
+    if "mode" in msg:
+        temp = msg.split(" ")
+        mode = temp[temp.index("mode") + 1]
+        msg = msg.replace(" mode " + mode, "")
+    mode = check_mode(mode, message.guild.id, short=True)
+    lobbies = teams.find_lobbies(msg.split(", "), mode, lobby_sizes[mode])
+    lobbies = [", ".join(l) for l in lobbies]
+    lobbies_text = "\n".join(lobbies)
+    await channel.send("Suggested lobbies:\n" + lobbies_text)
     return
 
 
@@ -939,6 +963,18 @@ async def user_edit(message):
         return
     # kinda iffy to do this but there's a reason why it's permission locked
     value = eval(info[2])
+    # update names in case that's what's updated
+    # I'm pretty sure this should be optimized
+    if "key" == "name":
+        search = [{"team1": {"$elemMatch": {"player": name}}}]
+        search += [{"team2": {"$elemMatch": {"player": name}}}]
+        matches = db.matches.find({"$or": search})
+        for m in matches:
+            for i in [1, 2]:
+                for j in range(len(m[f"team{i}"])):
+                    if m[f"team{i}"][j]["player"] == player["name"]:
+                        m[f"team{i}"][j]["player"] = value
+            db.matches.update_one({"_id": m["_id"]}, {"$set": {"team1": m["team1"], "team2": m["team2"]}})
     db.players.update_one({"_id": player["_id"]}, {"$set": {key: value}})
     await message.channel.send(f"Successfully edited {player['name']}.")
     return
@@ -1107,6 +1143,10 @@ async def on_message(message):
     
         if message.content.lower().startswith(ident):
             await team_comps(message, ident)
+            return
+
+        if message.content.lower().startswith("lobbies"):
+            await find_lobbies(message)
             return
     
         play = "play"

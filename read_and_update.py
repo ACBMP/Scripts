@@ -58,7 +58,7 @@ def read_and_update():
                 for entry in teams[i]:
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
-                    temp_dict["player"] = temp_list[0]
+                    temp_dict["player"] = identify_player(db, temp_list[0])["name"]
                     temp_dict["score"] = int(temp_list[1])
                     temp_dict["kills"] = int(temp_list[2])
                     temp_dict["deaths"] = int(temp_list[3])
