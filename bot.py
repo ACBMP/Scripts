@@ -965,7 +965,7 @@ async def user_edit(message):
     value = eval(info[2])
     # update names in case that's what's updated
     # I'm pretty sure this should be optimized
-    if "key" == "name":
+    if key == "name":
         search = [{"team1": {"$elemMatch": {"player": name}}}]
         search += [{"team2": {"$elemMatch": {"player": name}}}]
         matches = db.matches.find({"$or": search})
