@@ -14,22 +14,28 @@ def update():
 
     # get current date
     d = date.today().strftime("%y-%m-%d")
+    
+    # find matches from current date
+    players = {}
+    matches = db.matches.find({"date": date.today().strftime("%Y-$m-$d")})
 
-    # list all players
-    players = db.players.find()
-    players = list(players)
+    # save all the players who played
+    for m in matches:
+        if m["mode"] == "Artifact assault":
+            continue
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                try:
+                    if p["player"] in players[m["mode"]]:
+                        continue
+                    players[m["mode"]].append(p["player"])
+                except KeyError:
+                    players[m["mode"]] = [p["player"]]
 
-    # iterature through players and update
-    for i in range(len(players)):
-        p = players[i]
-
-        for mode in ["mh", "e", "aar", "aad", "do"]:
-            # if player has no mmrhistory update it
-            if p[f"{mode}history"]["mmrs"] == []:
-                mmr_update(d, db, p, mode)
-            # if player's current mmr differs from previous mmr update it
-            elif p[f"{mode}mmr"] != p[f"{mode}history"]["mmrs"][-1]:
-                mmr_update(d, db, p, mode)
+    # run history mmr update on all players who played
+    for mode in players.keys():
+        for p in players[mode]:
+            mmr_update(d, db, identify_player(db, p), mode)
         
     return
 
@@ -43,8 +49,7 @@ def mmr_update(d, db, p, mode):
     :param p: player
     :param mode: gamemode
     """
-    if mode not in ["e", "mh", "aar", "aad", "do"]:
-        raise ValueError("mmr_update: Unrecognized mode!")
+    mode = check_mode(mode, short=True)
 
     dates = p[f"{mode}history"]["dates"]
     dates.append(d)
@@ -79,5 +84,5 @@ def get_last_game(player, mode):
 
 
 if __name__=="__main__":
-    #update()
-    print(get_last_game("Dellpit", "Manhunt"))
+    update()
+    #print(get_last_game("Dellpit", "Manhunt"))
