@@ -124,9 +124,7 @@ def command_dec(func):
             await func(*arg)
         except Exception as e:
             print(e)
-            client = discord.Client()
-            channel = await client.fetch_channel(arg[0].id)
-            await channel.send(str(e) + " " + find_insult())
+            await arg[0].channel.send(str(e) + " " + find_insult())
     return exceptionhandler
 
 
