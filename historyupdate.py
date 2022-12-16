@@ -4,6 +4,38 @@ from datetime import date
 from util import *
 
 
+def aa_roles(m):
+    """
+    Determine roles for players in an AA match and append to their dict.
+    """
+    kds = [{}, {}]
+    for team in [1, 2]:
+        # find kd for every player in team
+        for p in m[f"team{team}"]:
+            try:
+                kds[team - 1][p["player"]] = p["kills"] / p["deaths"]
+            except ZeroDivisionError:
+                kds[team - 1][p["player"]] = 1000 # easier than inf I think
+        # sort the kds, this creates a list of tuples
+        kds[team - 1] = sorted(kds[team - 1].items(), key=lambda x: x[1])
+        # highest kds are defenders
+        role = "r"
+        # go through every player
+        for i in range(len(m[f"team{team}"])):
+            if i > 1:
+                role = "d"
+            # set role value on match 
+            found = False
+            j = 0
+            # go thru players until we find the right player
+            while not found:
+                if m[f"team{team}"][j]["player"] == kds[team-1][i][0]:
+                    m[f"team{team}"][j]["role"] = role
+                    found = True
+                j += 1
+    return m
+
+
 def update():
     """
     Update all players' MMRs if they differ from their previous MMR.
@@ -21,16 +53,23 @@ def update():
 
     # save all the players who played
     for m in matches:
-        if m["mode"] == "Artifact assault":
-            continue
+        mode = m["mode"]
+        # for aa we have to figure out roles
+        if mode == "Artifact assault":
+            m = aa_roles(m)
         for i in [1, 2]:
             for p in m[f"team{i}"]:
+                # we can just use shortened roles
+                if mode == "Artifact assault":
+                    mode = "aa" + p["role"]
                 try:
-                    if p["player"] in players[m["mode"]]:
+                    if p["player"] in players[mode]:
                         continue
-                    players[m["mode"]].append(p["player"])
+                    players[mode].append(p["player"])
                 except KeyError:
-                    players[m["mode"]] = [p["player"]]
+                    players[mode] = [p["player"]]
+                # reset mode - only important for aa but whatever
+                mode = m["mode"]
 
     # run history mmr update on all players who played
     for mode in players.keys():
@@ -49,7 +88,9 @@ def mmr_update(d, db, p, mode):
     :param p: player
     :param mode: gamemode
     """
-    mode = check_mode(mode, short=True)
+    # skip check_mode for AA 
+    if mode not in ["aar, aad"]:
+        mode = check_mode(mode, short=True)
 
     dates = p[f"{mode}history"]["dates"]
     dates.append(d)
