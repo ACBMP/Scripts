@@ -1,31 +1,34 @@
 from util import *
-from datetime import datetime
+from datetime import datetime, date
+from historyupdate import mmr_update
 
 def introduce_num_sessions():
     db = connect()
     for mode in ["e", "mh", "aar", "aad", "do"]:
-        db.players.update({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
-        db.players.update({}, {"$set": {f"{mode}lastdecay": "1970-01-01"}})
+        db.players.update_many({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
+        db.players.update_many({}, {"$set": {f"{mode}lastdecay": "1970-01-01"}})
     print("Done.")
     return
 
 
 def update_sessions(players, mode):
     db = connect()
-    db.players.update({"name": {"$nin": players}}, {"$inc": {f"{mode}sessionssinceplayed}", 1}})
+    db.players.update_many({"name": {"$nin": players}}, {"$inc": {f"{mode}sessionssinceplayed": 1}})
     return
 
 
 def decay_all(mode):
     db = connect()
     # number of sessions that have to be missed
-    sessions_threshold = 5
+    sessions_threshold = 3
     # number of days since last session
     days_threshold = 7
     # amount to be subtracted from decay
     decay_amount = 5
     # mmr after which decay sets in and lowest value you can decay to
-    decay_threshold = 1200
+    decay_threshold = 1000
+    # how often the decay should be applied
+    decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
     players = db.players.find({"$and": [
         {f"{mode}sessionssinceplayed": {"$gt": sessions_threshold}},
@@ -40,11 +43,18 @@ def decay_all(mode):
         last_decay = p[f"{mode}history"]["dates"][-1]
         last_decay = datetime.strptime(last_decay, "%y-%m-%d")
         diff_decay = datetime.now() - last_decay
-        if diff_play.days > days_threshold and diff_decay > 6:
+        if diff_play.days > days_threshold and diff_decay >= decay_interval:
             db.players.update_one({"_id": p["_id"]},
                     {"$set": [
                         {f"{mode}mmr": max(f"{mode}mmr" - decay_amount, decay_threshold)},
                         {f"{mode}lastdecay": datetime.now().strftime("%Y-%m-%d")},
                         ]})
+            # update the player's mmr history
+            mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
     return
 
+
+if __name__ == "__main__":
+    for mode in ["e", "mh", "aar", "aad", "do"]:
+        decay_all(mode)
+    print("Done decaying.")
