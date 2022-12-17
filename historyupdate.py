@@ -38,7 +38,7 @@ def aa_roles(m):
 
 def update():
     """
-    Update all players' MMRs if they differ from their previous MMR.
+    Update all players' MMRs if they played a game on the current day.
     """
     # establishing a connection to the db
     client = MongoClient('mongodb://localhost:27017/')
@@ -49,7 +49,8 @@ def update():
     
     # find matches from current date
     players = {}
-    matches = db.matches.find({"date": date.today().strftime("%Y-$m-$d")})
+    today_db = date.today().strftime("%Y-%m-%d")
+    matches = db.matches.find({"date": today_db})
 
     # save all the players who played
     for m in matches:
@@ -73,8 +74,11 @@ def update():
 
     # run history mmr update on all players who played
     for mode in players.keys():
+        # update sessionssinceplayed
+        db.players.update_many({"name": {"$nin": players[mode]}}, {"$inc": {f"{check_mode(mode, short=True)}sessionssinceplayed": 1}})
+        # run history update
         for p in players[mode]:
-            mmr_update(d, db, identify_player(db, p), mode)
+            mmr_update(d, db, identify_player(db, p), check_mode(mode, short=True))
         
     return
 
