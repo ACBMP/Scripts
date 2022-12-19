@@ -47,10 +47,9 @@ def update():
     # get current date
     d = date.today().strftime("%y-%m-%d")
     
-    # find matches from current date
+    # find matches not in history
     players = {}
-    today_db = date.today().strftime("%Y-%m-%d")
-    matches = db.matches.find({"date": today_db})
+    matches = db.matches.find({"inhist": False})
 
     # save all the players who played
     for m in matches:
@@ -80,6 +79,7 @@ def update():
         for p in players[mode]:
             mmr_update(d, db, identify_player(db, p), check_mode(mode, short=True))
         
+    db.matches.update_many({"inhist": False}, {"$set": {"inhist": True}})
     return
 
 
