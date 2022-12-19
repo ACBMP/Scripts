@@ -4,9 +4,10 @@ from historyupdate import mmr_update
 
 def introduce_num_sessions():
     db = connect()
+    today = date.today().strftime("%Y-%m-%d")
     for mode in ["e", "mh", "aar", "aad", "do"]:
         db.players.update_many({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
-        db.players.update_many({}, {"$set": {f"{mode}lastdecay": "1970-01-01"}})
+        db.players.update_many({}, {"$set": {f"{mode}lastdecay": today}})
     print("Done.")
     return
 
@@ -46,8 +47,10 @@ def decay_all(mode):
         if diff_play.days > days_threshold and diff_decay >= decay_interval:
             db.players.update_one({"_id": p["_id"]},
                     {"$set": [
-                        {f"{mode}mmr": max(f"{mode}mmr" - decay_amount, decay_threshold)},
+                        {f"{mode}mmr": max(p[f"{mode}mmr"] - decay_amount, decay_threshold)},
                         {f"{mode}lastdecay": datetime.now().strftime("%Y-%m-%d")},
+                        # require one session to be played in between decays
+                        {f"{mode}sessionssinceplayed": sessions_threshold - 1},
                         ]})
             # update the player's mmr history
             mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
