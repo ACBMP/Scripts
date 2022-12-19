@@ -32,6 +32,8 @@ def read_and_update():
 
             #new flag
             entry_dict["new"]=True
+            # inhist flag
+            entry_dict["inhist"] = False
 
             #mode
             if csv_entry[0] in ["M", "E", "AA", "DO"]:
