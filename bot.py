@@ -280,7 +280,8 @@ def rank_pic_big(elo):
 
 # command to look up a user on the AN db
 # connect to DB -> look up user -> print user
-def lookup_user(message):
+@command_dec
+async def lookup_user(message):
     player = message.content.replace("lookup ", "")
     player = player.replace("  ", " ")
     db = connect()
@@ -324,9 +325,13 @@ def lookup_user(message):
                      Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
                 else:
                     if mode == 'aar':
+                        try:
+                            deaths_per_score = round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)
+                        except ZeroDivisionError:
+                            deaths_per_score = ":infinity:"
                         embedVar.add_field(name=modes_dict[mode], value=user_stats +
                                 f"Avg Scores: {round(player_db[f'{mode}stats']['scored'] / player_db[f'{mode}games']['total'], 2)} \n \
-                                 Avg Deaths / Score: {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)} \n \
+                                 Avg Deaths / Score: {deaths_per_score} \n \
                                  Rat Index: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 3)}",
                                  inline=False)
                     else:
@@ -335,7 +340,8 @@ def lookup_user(message):
                                  Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
                                  inline=False)
         embedVar.set_image(url="https://assassins.network/static/badges/" + rank_pic_big(top_elo))
-    return embedVar
+    await message.channel.send(embed=embedVar)
+    return
 
 # WIP
 async def lookup_ladder(message):
@@ -433,7 +439,7 @@ async def sanity_check_matches(message):
     """
     sanity check matches for errors
     """
-    await message.channel.send(sanity.main())
+    await send_long_message(sanity.main(), message.channel)
 
 
 # edit matches.txt file
@@ -470,10 +476,10 @@ async def replace_matches(message):
 # teams.py is the really relevant stuff
 def team_finder(players, mode, random):
     # this outputs all the players in one array so we need to split it
-    teams = teams.find_teams(players, mode=mode, random=random)
+    ts = teams.find_teams(players, mode=mode, random=random)
     t1, t2 = [], []
     for i in [0, 1]:
-        for player in teams[i]:
+        for player in ts[i]:
             if i == 0:
                 t1.append(player["name"])
             elif i == 1:
@@ -530,11 +536,8 @@ async def team_comps(message, ident):
 
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
-        try:
-            matchup = team_finder(players, mode, r_factor)
-            await channel.send(matchup)
-        except:
-            await channel.send("I couldn't identify all players named. " + find_insult())
+        matchup = team_finder(players, mode, r_factor)
+        await channel.send(matchup)
     # otherwise we try to grab the mode's queue and use that
     else:
         try:
@@ -1084,10 +1087,7 @@ async def on_message(message):
      
         # lookup
         if message.content.lower().startswith("lookup"):
-            try:
-                await message.channel.send(embed=lookup_user(message))
-            except ValueError as e:
-                await message.channel.send(e)
+            await lookup_user(message)
             return
     
         # ladder
