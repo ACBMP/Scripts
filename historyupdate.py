@@ -99,7 +99,7 @@ def mmr_update(d, db, p, mode):
     dates = p[f"{mode}history"]["dates"]
     dates.append(d)
     mmrs = p[f"{mode}history"]["mmrs"]
-    mmrs.append(p[f"{mode}mmr"])
+    mmrs.append(round(p[f"{mode}mmr"]))
     db.players.update_one({"name":p["name"]},{"$set":{f"{mode}history.dates":dates,f"{mode}history.mmrs":mmrs}})
 
     return

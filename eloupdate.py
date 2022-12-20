@@ -179,14 +179,14 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
         for j in range(2):
             result.append({
                     "name": teams[j][i]["name"],
-                    "mmr": int(round(new_R(
+                    "mmr": new_R(
                         R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j + 1}'][i]['role']}mmr"],
                         S=S[j],
                         E=Es[j],
                         N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
                         t1=score_1, t2=score_2,
                         ref=4 if aa else ref
-                        )))
+                        )
                     })
             if aa:
                 result[-1]["role"] = match[f'team{j + 1}'][i]['role']

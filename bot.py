@@ -312,8 +312,8 @@ async def lookup_user(message):
         top_elo = 0
         for mode in modes_list:
             if player_db[f"{mode}games"]["total"] > 0:
-                top_elo = max(top_elo, player_db[f'{mode}mmr'])
-                user_stats = f"MMR (Rank): {player_db[f'{mode}mmr']} ({player_db[f'{mode}rank']})\n \
+                top_elo = round(max(top_elo, player_db[f'{mode}mmr']))
+                user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \
                                Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
                                Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
                                Games Played: {player_db[f'{mode}games']['total']}\n"
