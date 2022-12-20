@@ -75,6 +75,7 @@ def update():
     for mode in players.keys():
         # update sessionssinceplayed
         db.players.update_many({"name": {"$nin": players[mode]}}, {"$inc": {f"{check_mode(mode, short=True)}sessionssinceplayed": 1}})
+        db.players.update_many({"name": {"$in": players[mode]}}, {"$set": {f"{check_mode(mode, short=True)}sessionssinceplayed": 0}})
         # run history update
         for p in players[mode]:
             mmr_update(d, db, identify_player(db, p), check_mode(mode, short=True))
