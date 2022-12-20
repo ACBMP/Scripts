@@ -18,6 +18,23 @@ def update_sessions(players, mode):
     return
 
 
+def spread_decay(mode, amount, excluded):
+    if not len(excluded):
+        return
+    db = connect()
+    players = db.players.find({"$and": [
+        {f"{mode}games.total": {"$gte": 10}},
+        {"_id": {"$nin": excluded}},
+        ]})
+    amount /= len(players)
+    players = db.players.update_many({"$and": [
+        {f"{mode}games.total": {"$gte": 10}},
+        {"_id": {"$nin": excluded}},
+        ]},
+        {"$inc": {f"{mode}mmr": amount}})
+    return
+    
+
 def decay_all(mode):
     db = connect()
     # number of sessions that have to be missed
@@ -35,6 +52,10 @@ def decay_all(mode):
         {f"{mode}sessionssinceplayed": {"$gt": sessions_threshold}},
         {f"{mode}mmr": {"$gt": decay_threshold}}
         ]})
+    # global spread decay pool
+    decay_pool = 0
+    # list of truly decayed players
+    decayed_players = []
     # go through the players and make sure their last day played is also > threshold
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
@@ -54,6 +75,10 @@ def decay_all(mode):
                         ]})
             # update the player's mmr history
             mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
+            # add to pool and decayed players
+            decay_pool += decay_amount
+            decayed_players.append(p["_id"])
+    spread_decay(mode, decay_pool, decayed_players)
     return
 
 
