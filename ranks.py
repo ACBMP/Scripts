@@ -18,7 +18,7 @@ def main(modes=["mh", "e", "aar", "aad", "do"]):
     
         elos = []
     
-        for k, v in itertools.groupby(p_sorted, lambda x: round(x[f"{mode}mmr"])):
+        for k, v in itertools.groupby(p_sorted, lambda x: x[f"{mode}mmr"]):
             elos.append(k)
     
         for i in elos:
