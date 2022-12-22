@@ -68,7 +68,7 @@ def rank_frame(mode, table):
         ranks.append(p[f"{mode}rank"])
         changes.append(p[f"{mode}rankchange"])
         players.append(p[f"name"])
-        points.append(p[f"{mode}mmr"])
+        points.append(int(round(p[f"{mode}mmr"])))
 
     df['Rank'] = ranks
     #df['Change'] = changes
@@ -116,7 +116,7 @@ def stat_frame(stat, mode, table):
         stats.append("%.2f" % round(fstat(p), 2) if stat != "Highscore" else fstat(p))
         ranks.append(p[f"{mode}rank"])
         players.append(p[f"name"])
-        points.append(p[f"{mode}mmr"])
+        points.append(int(round(p[f"{mode}mmr"])))
 
     df[stat] = stats
     df['Rank'] = ranks
@@ -132,7 +132,7 @@ def first_place_frame(mode, table):
     player = db.players.find_one({f"{mode}rank" : 1})
     
     df = pd.DataFrame()
-    df[player['name']] = [str(player[f"{mode}mmr"]),
+    df[player['name']] = [str(int(round(player[f"{mode}mmr"]))),
             str(max(player[f"{mode}history"]["mmrs"])),
             f'{round(player[f"{mode}games"]["won"] * 100 / (player[f"{mode}games"]["lost"] + player[f"{mode}games"]["won"]), 2)}%',
             str(player[f"{mode}games"]["total"]),
@@ -171,7 +171,7 @@ def tweet(mode):
         if first.count() == 1:
             first = db.players.find({f"{mode}rank" : 1})
             first = first[0]
-            text = f"Congratulations to {first['name']} for climbing the mountain and attaining the coveted first place with {first[f'{mode}mmr']} points!"
+            text = f"Congratulations to {first['name']} for climbing the mountain and attaining the coveted first place with {int(round(first[f'{mode}mmr']))} points!"
         else:
             first = db.players.find({f"{mode}rank" : 1})
             players, players_joined = join_players(first)
@@ -197,7 +197,7 @@ def tweet(mode):
         if r == 0:
             if first.count() == 1:
                 first = first[0]
-                text = f"{first['name']} currently sits atop our leaderboards with {first[f'{mode}mmr']} points."
+                text = f"{first['name']} currently sits atop our leaderboards with {int(round(first[f'{mode}mmr']))} points."
                 first_place_frame(mode, "table.png")
             else:
                 players, players_joined = join_players(first)
