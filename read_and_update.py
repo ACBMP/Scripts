@@ -35,6 +35,18 @@ def read_and_update():
             # inhist flag
             entry_dict["inhist"] = False
 
+            # save map
+            if "$" in csv_entry[0]:
+                temp = csv_entry[0].split("$")
+                csv_entry[0] = temp[0]
+                entry_dict["map"] = identify_map(temp[1])
+
+            # save host
+            if "$" in csv_entry[2]:
+                temp = csv_entry[2].split("$")
+                csv_entry[2] = temp[0]
+                entry_dict["host"] = int(temp[1])
+
             #mode
             if csv_entry[0] in ["M", "E", "AA", "DO"]:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()

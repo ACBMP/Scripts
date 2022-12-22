@@ -159,9 +159,10 @@ AN queue [MODE]```"""
 AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
 AN OCR [GAME] [TOTAL_PLAYERS] [+CORRECTION TEAM]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work.\nTo correct for e.g. one dodge on team 1, append +750 1."""
-    add_help = """To queue matches for being added to AN, use\n```css
+    add_help = f"""To queue matches for being added to AN, use\n```css
 AN add FORMATTED_MATCH```with the match data formatted in the AN format pinned in #an-help on the #secualhealing server, e.g.:\n```css
-M, 3, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```"""
+M, 3, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```If you want to save map and/or host:\n```css
+E$Forli, 2, 1$1, ...```Where the maps are identified by the following keys: {", ".join(util.identify_map(get_map_keys=True))} and the second number in 1$1 represents the host team."""
     edit_help = """To edit ALL the matches to be added to the database, use\n```css
 AN edit UPDATED_MATCHES```Please note that you should first print all matches with ```css
 AN print``` and edit those results, then feed ALL the matches to this in one single command. Otherwise, all unmentioned matches will be removed."""

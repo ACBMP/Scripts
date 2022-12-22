@@ -141,3 +141,45 @@ def permission_locked(func):
             await message.channel.send("You do not have the required permissions! Please contact an admin.")
     return permission_checker
 
+
+def identify_map(name=None, get_map_keys=False):
+    maps = {
+            "antioch": "Antioch",
+            "castel": "Castel Gandolfo",
+            "galata": "Galata",
+            "ippo": "Ippokratous",
+            "kh": "Knight's Hospital",
+            "msm": "Mont-Saint-Michel",
+            "rome": "Rome",
+            "souk": "Souk",
+            "venice": "Venice",
+            "dyers": "Dyers",
+            "imperial": "Imperial",
+            "jerusalem": "Jerusalem",
+            "siena": "Siena",
+            "sd": "San Donato",
+            "florence": "Florence",
+            "monte": "Monteriggioni",
+            "alhambra": "Alhambra",
+            "pienza": "Pienza",
+            "forli": "Forli",
+            "st mathieu": "Saint-Mathieu",
+            "santa lucia": "Santa Lucia",
+            "tampa": "Tampa Bay",
+            "havana": "Havana",
+            "kingston": "Kingston",
+            "palenque": "Palenque",
+            "portobelo": "Portobelo",
+            "prison": "Prison",
+            "plantation": "Virginian Plantation",
+            "saba": "Saba Island",
+            "st pierre": "Saint Pierre",
+            "charlestown": "Charlestown",
+            }
+    # return the map keys if needed
+    if get_map_keys:
+        return maps.keys()
+    elif name is None:
+        raise ValueError("name cannot be None if get_map_keys is not set!")
+
+    return maps[name.lower()]

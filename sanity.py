@@ -34,13 +34,31 @@ def sanity_check(data):
 
         players = game.split(", ")
         mode = players[0]
+        if "$" in mode:
+            temp = mode.split("$")
+            map_name = temp[1]
+            mode = temp[0]
+        else:
+            map_name = None
 
         # sanity check mode
         if mode not in ["M", "E", "AA", "DO"]:
             out += f"Unknown mode {mode} detected in:\n{game}\n"
 
+        # sanity check map name
+        if map_name:
+            map_name = identify_map(map_name)
+
         num_players = int(players[1])
-        outcome = int(players[2])
+        outcome = players[2]
+        # host
+        if "$" in outcome:
+            temp = outcome.split("$")
+            host = temp[1]
+            if host not in ["1", "2"]:
+                out += f"Host team not in 1, 2 in:\n{game}"
+            outcome = temp[1]
+        outcome = int(outcome)
         gamers = players[3:] # very epic
 
         # check for missing players or commas
