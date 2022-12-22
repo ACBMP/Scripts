@@ -4,7 +4,7 @@ import discord
 from discord.utils import get
 from discord.ext import commands
 import teams
-from util import *
+import util
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, date
@@ -13,7 +13,7 @@ import AC_Score_OCR
 import requests
 import signal
 import sys
-from tweet import rank_frame
+import tweet
 import glob
 import os
 import sanity
@@ -21,7 +21,7 @@ import synergy
 import elostats
 import subprocess
 import telegram_bot
-from add_badges import readable_badges
+import add_badges as badges
 
 subprocess.Popen(["python3", "telegram_bot.py"])
 
@@ -85,7 +85,7 @@ Kill_Streak = ["+100", "+300", "+250", "+750"]
 Loss_Streak = ["Extra Precision", "Reset Cooldowns", "Score X2", "Boost Cooldowns"]
 
 #Command which generates random ability sets for a set number of players
-@command_dec
+@util.command_dec
 async def ability_randomizer(message):
     aset = ", ".join(random.sample(abilities, k=2))
     aset += "\n" + ", ".join(random.sample(Perks, k=2))
@@ -155,7 +155,7 @@ AN synergy [PLAYER] [MODE] [MIN_GAMES] [TRACK_TEAMS]```"""
 AN queue remove```"""
     queue_help = """To print the players currently queued up for a mode, use\n```css
 AN queue [MODE]```"""
-    remake_help = """To calculate whether a game should be remade after a disconnect, use\n```css
+    remake_help = """To calculate whether a game should be remade after a disutil.connect, use\n```css
 AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
 AN OCR [GAME] [TOTAL_PLAYERS] [+CORRECTION TEAM]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work.\nTo correct for e.g. one dodge on team 1, append +750 1."""
@@ -279,12 +279,12 @@ def rank_pic_big(elo):
 
 
 # command to look up a user on the AN db
-# connect to DB -> look up user -> print user
-@command_dec
+# util.connect to DB -> look up user -> print user
+@util.command_dec
 async def lookup_user(message):
     player = message.content.replace("lookup ", "")
     player = player.replace("  ", " ")
-    db = connect()
+    db = util.connect()
     if player == "lookup":
         player_db = db.players.find_one({"discord_id" : str(message.author.id)})
         player = player_db["name"]
@@ -293,10 +293,10 @@ async def lookup_user(message):
         player_db = db.players.find_one({"discord_id" : discord_id})
         player = player_db["name"]
     else:
-        player_db = identify_player(db, player)
+        player_db = util.identify_player(db, player)
     if player_db is None:
         embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
-        embedVar.add_field(name=find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
+        embedVar.add_field(name=util.find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
     else:
         # embed title is player name and their country flag as an emoji
         import flag
@@ -306,7 +306,7 @@ async def lookup_user(message):
             embedVar = discord.Embed(title=f"{player} :clown:", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
         # only add information that is present
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
-        badges = readable_badges(player_db["name"])
+        badges = badges.readable_badges(player_db["name"])
         if len(badges) > 0:
             embedVar.add_field(name="Achievements", value=badges, inline=False)
         top_elo = 0
@@ -349,26 +349,26 @@ async def lookup_ladder(message):
     Look up and print the leaderboard ladder for a mode.
     """
     mode = message.content.replace("ladder", "").split(" ")[-1]
-    mode = check_mode(mode, server=message.guild.id, short=True)
+    mode = util.check_mode(mode, server=message.guild.id, short=True)
     # try to deal with proper url linking
-    mode_link = check_mode(mode, short=False)
+    mode_link = util.check_mode(mode, short=False)
     mode_link = mode_link.split(" ")[-1]
     # deal with empty leaderboard error
     fname = "table.png"
     try:
-        rank_frame(mode, fname)
+        tweet.rank_frame(mode, fname)
     except IndexError:
         fname = "TimDaddy.png"
     table = discord.File(fname, filename=fname)
-    embedVar = discord.Embed(title=check_mode(mode).title() + " Leaderboard",
+    embedVar = discord.Embed(title=util.check_mode(mode).title() + " Leaderboard",
             url=f"https://assassins.network/{mode_link}", color=0xff00ff)
     embedVar.set_image(url=f"attachment://{fname}")
     await message.channel.send(embed=embedVar, file=table)
 
 
-@command_dec
+@util.command_dec
 async def lookup_synergy(message):
-    db = connect()
+    db = util.connect()
     content = message.content
     content = content[8:]
     content = content.split(" ")
@@ -377,7 +377,7 @@ async def lookup_synergy(message):
         player = db.players.find_one({"discord_id" : str(message.author.id)})
         player = player["name"]
     else:
-        player = identify_player(db, player)["name"]
+        player = util.identify_player(db, player)["name"]
     # this is so primitive I'm sorry
     min_games = 5
     track_teams = False
@@ -389,7 +389,7 @@ async def lookup_synergy(message):
                 track_teams = content[3]
     else:
         mode = None
-    mode = check_mode(mode, message.guild.id, short=False).capitalize()
+    mode = util.check_mode(mode, message.guild.id, short=False).capitalize()
     # since there are two modes that are grouped together to AA
     if "Artifact" in mode:
         mode = "Artifact assault"
@@ -420,7 +420,7 @@ def add_match(message):
 
 
 # print the matches.txt file
-@command_dec
+@util.command_dec
 async def print_matches(message):
     with open("matches.txt", "r") as f:
         content = f.read()
@@ -434,7 +434,7 @@ async def print_matches(message):
     return
 
 
-@command_dec
+@util.command_dec
 async def sanity_check_matches(message):
     """
     sanity check matches for errors
@@ -444,7 +444,7 @@ async def sanity_check_matches(message):
 
 # edit matches.txt file
 # this overwrites the whole thing
-@command_dec
+@util.command_dec
 async def edit_matches(message):
     msg = message.content.replace("edit ", "").replace("edit ", "")
     with open("matches.txt", "w") as f:
@@ -455,7 +455,7 @@ async def edit_matches(message):
 
 
 # edit matches.txt file by replacing content from the file
-@command_dec
+@util.command_dec
 async def replace_matches(message):
     msg = message.content.replace("replace ", "").replace("replace ", "")
     msg = msg.split(" with ")
@@ -491,8 +491,8 @@ class OutcomeError(Exception):
     pass
 
 # update the AN db by running the read_and_update script
-@permission_locked
-@command_dec
+@util.permission_locked
+@util.command_dec
 async def updater(message):
     # database backup
     os.system(f"mongodump -d public -o dump/dump_{str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))}")
@@ -510,7 +510,7 @@ async def updater(message):
 
 
 # team comps generator
-@command_dec
+@util.command_dec
 async def team_comps(message, ident):
     # message parsing
     channel = message.channel
@@ -530,9 +530,9 @@ async def team_comps(message, ident):
         mode = re.findall(".* mode (.*)", players[-1])
         players[-1] = players[-1].replace(" mode " + mode[0], "")
         mode = str(mode[0])
-        mode = check_mode(mode, short=True)
+        mode = util.check_mode(mode, short=True)
     else:
-        mode = check_mode(0, message.guild.id, short=True)
+        mode = util.check_mode(0, message.guild.id, short=True)
 
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
@@ -544,11 +544,11 @@ async def team_comps(message, ident):
             matchup = team_finder(queues[mode], mode, r_factor)
             await channel.send(matchup)
         except:
-            await channel.send("That didn't work, idiot. " + find_insult())
+            await channel.send("That didn't work, idiot. " + util.find_insult())
     return
 
 
-@command_dec
+@util.command_dec
 async def find_lobbies(message):
     lobby_sizes = {"e": 4, "mh": 6, "do": 8, "aa": 8}
     channel = message.channel
@@ -559,7 +559,7 @@ async def find_lobbies(message):
         temp = msg.split(" ")
         mode = temp[temp.index("mode") + 1]
         msg = msg.replace(" mode " + mode, "")
-    mode = check_mode(mode, message.guild.id, short=True)
+    mode = util.check_mode(mode, message.guild.id, short=True)
     lobbies = teams.find_lobbies(msg.split(", "), mode, lobby_sizes[mode])
     lobbies = [", ".join(l) for l in lobbies]
     lobbies_text = "\n".join(lobbies)
@@ -582,7 +582,7 @@ async def queue_rm(mode, user, player, channel):
 
 # add player to play queue command
 # this is the most poorly written function in here honestly
-@command_dec
+@util.command_dec
 async def play_command(msg, user, channel, gid):
     # parse the message for times
     # only support hours for simplicity's sake
@@ -615,10 +615,10 @@ async def play_command(msg, user, channel, gid):
         mode = re.findall(".* mode (.*)", msg)[0]
         mode = mode.split(" ")[0]
         msg = msg.replace(" mode " + mode, "")
-        mode = check_mode(mode, short=True)
+        mode = util.check_mode(mode, short=True)
     # if mode is empty use guild ID to auto determine mode
     else:
-        mode = check_mode(0, gid, short=True)
+        mode = util.check_mode(0, gid, short=True)
     
     # now that the rest of the message has been parsed only the player name should be left
     player = msg
@@ -632,17 +632,17 @@ async def play_command(msg, user, channel, gid):
     
     # this is where we try to find the player according to their Discord ID if no player is specified
     # otherwise we try to match the given player to an AN user
-    db = connect()
+    db = util.connect()
 
     if not player:
         player_db = db.players.find_one({"discord_id" : str(user.id)})
         if not player_db:
-            await channel.send("I don't know you. " + find_insult())
+            await channel.send("I don't know you. " + util.find_insult())
             return
         player = player_db["name"]
     else:
         try:
-            player_db = identify_player(db, player)
+            player_db = util.identify_player(db, player)
         except ValueError as e:
             await channel.send(e)
             return
@@ -696,7 +696,7 @@ async def play_command(msg, user, channel, gid):
     return
 
 # queue removal command
-@command_dec
+@util.command_dec
 async def queue_rm_command(msg, user, channel): 
     # remove trailing and leading spaces
     if msg:
@@ -705,16 +705,16 @@ async def queue_rm_command(msg, user, channel):
         elif msg[0] == " ":
             msg = msg[1:]
 
-    db = connect()
+    db = util.connect()
 
     if not msg:
         player_db = db.players.find_one({"discord_id" : str(user.id)})
         if not player_db:
-            await channel.send("I don't know you. " + find_insult())
+            await channel.send("I don't know you. " + util.find_insult())
             return
     else:
         try:
-            player_db = identify_player(db, player)
+            player_db = util.identify_player(db, player)
         except ValueError as e:
             await channel.send(e)
             return
@@ -744,18 +744,18 @@ async def queue_rm_command(msg, user, channel):
 
 # command to print the whole queue for a mode
 # very simple
-@command_dec
+@util.command_dec
 async def print_queue(message):
     msg = message.content.lower()
     msg = msg.replace("queue ", "")
     msg = msg.replace("queue", "")
-    mode = check_mode(msg, message.guild.id, short=True)
+    mode = util.check_mode(msg, message.guild.id, short=True)
     await message.channel.send(f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode]])}")
     return
 
 
 # command to calculate whether a remake is necessary according to https://rulebook.assassins.network
-@command_dec
+@util.command_dec
 async def check_remake(message):
     """
     Check whether a remake is necessary according to rulebook.
@@ -765,14 +765,14 @@ async def check_remake(message):
     msg = message.content.split(" ")[1:]
     # check that the message includes only the scores time left and players
     if len(msg) > 6:
-        await message.channel.send("I did not understand that. " + find_insult())
+        await message.channel.send("I did not understand that. " + util.find_insult())
         return
     elif len(msg) < 4:
-        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + find_insult())
+        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult())
         return
     # auto set mode if not given
     elif len(msg) == 4:
-        mode = check_mode(0, message.guild.id)
+        mode = util.check_mode(0, message.guild.id)
     else:
         mode = msg[-1]
     score_1, score_2 = int(msg[0]), int(msg[1])
@@ -791,7 +791,7 @@ async def check_remake(message):
 
     # check mode and use correct function
     try:
-        if check_mode(mode) == "escort":
+        if util.check_mode(mode) == "escort":
             s_diff = escort(time, players)
             if abs(score_1 - score_2) / max(score_1, score_2) > s_diff:
                 s_diff = round(s_diff)
@@ -806,14 +806,14 @@ async def check_remake(message):
             else:
                 await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
     except:
-        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + find_insult())
+        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult())
         return
 
     return
 
 
 # the OCR function
-@command_dec
+@util.command_dec
 async def ocr_screenshot(message):
 
     # function to grab params from guild IDs
@@ -886,8 +886,8 @@ async def ocr_screenshot(message):
         return
 
 # add users to the db
-@permission_locked
-@command_dec
+@util.permission_locked
+@util.command_dec
 async def user_add(message):
     msg = message.content[9:]
     info = msg.split("; ")
@@ -900,7 +900,7 @@ async def user_add(message):
         discord_id = info[5].replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
     except IndexError:
         discord_id = ""
-    db = connect()
+    db = util.connect()
     starting_mmr = 800
     d = date.today().strftime("%y-%m-%d")
     try:
@@ -948,8 +948,8 @@ async def user_add(message):
         await message.channel.send("An error has occured.")
 
 
-@permission_locked
-@command_dec
+@util.permission_locked
+@util.command_dec
 async def user_edit(message):
     """
     User editing function.
@@ -957,8 +957,8 @@ async def user_edit(message):
     msg = message.content[10:]
     info = msg.split(": ")
     name = info[0]
-    db = connect()
-    player = identify_player(db, name)
+    db = util.connect()
+    player = util.identify_player(db, name)
     all_keys = player.keys()
     key = info[1]
     if key not in all_keys:
@@ -1011,10 +1011,10 @@ async def sync_channels(message):
                 if len(attachments) > 1:
                     att = []
                     for n in range(len(attachments)):
-                        att += [att_to_file(message, n)]
+                        att += [util.att_to_file(message, n)]
                     await channel.send(content, files=att)
                 else:
-                    att = att_to_file(message)
+                    att = util.att_to_file(message)
                     await channel.send(content, file=att)
                 # delete files after they're sent
                 files = glob.glob("sync/*")
@@ -1025,9 +1025,9 @@ async def sync_channels(message):
     return 
  
 
-@command_dec
+@util.command_dec
 async def compare_users(message):
-    db = connect()
+    db = util.connect()
     content = message.content[8:]
     if " mode " in content:
         content, mode = content.split(" mode ")
@@ -1035,19 +1035,19 @@ async def compare_users(message):
         mode = None
     teams_str = content.split(" vs ")
     if len(teams_str) < 2:
-        await message.channel.send("Missing a second team. " + find_insult())
+        await message.channel.send("Missing a second team. " + util.find_insult())
         return
     teams = [[], []]
     for i in range(2):
         players = teams_str[i].split(", ")
         for j in range(len(players)):
             try:
-                players[j] = identify_player(db, players[j])
+                players[j] = util.identify_player(db, players[j])
             except ValueError:
-                await message.channel.send(f"I've never heard of {players[j]}. {find_insult()}")
+                await message.channel.send(f"I've never heard of {players[j]}. {util.find_insult()}")
                 return
         teams[i] = players
-    mode = check_mode(mode, message.guild.id, short=True)
+    mode = util.check_mode(mode, message.guild.id, short=True)
     chance = elostats.compare_players(teams[0], teams[1], mode, verbose=True)
     chance_p = round(chance[0] * 100, 2)
     teams = [[p["name"] for p in team] for team in teams]
@@ -1055,8 +1055,8 @@ async def compare_users(message):
     return
 
 
-@permission_locked
-@command_dec
+@util.permission_locked
+@util.command_dec
 async def reload_modules(message):
     import importlib
     for module in sys.modules.values():
@@ -1101,7 +1101,7 @@ async def on_message(message):
                 await lookup_synergy(message)
             except discord.errors.HTTPException as e:
                 print(e)
-                await message.channel.send("An error has occurred, you might not have enough games. " + find_insult())
+                await message.channel.send("An error has occurred, you might not have enough games. " + util.find_insult())
             return
         
         # add games
@@ -1175,7 +1175,7 @@ async def on_message(message):
             try:
                 await queue_rm_command(msg, user, channel)
             except:
-                await channel.send("Did not find you in a queue. " + find_insult())
+                await channel.send("Did not find you in a queue. " + util.find_insult())
             return
     
         # print current queue
