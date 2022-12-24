@@ -190,6 +190,22 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
                     })
             if aa:
                 result[-1]["role"] = match[f'team{j + 1}'][i]['role']
+    # if host data is given update those
+    try:
+        db = connect()
+        map_db = db.maps.find_one({"name": match["map"]})
+        db.maps.update_one({"name": match["map"]}, {"$set": {f"{mode}.hostrating":
+            new_R(
+                R=map_db[f"{mode}.hostrating"],
+                S=S[match["hostteam"] - 1],
+                E=Es[match["hostteam"] - 1],
+                N=map_db[f"{mode}.games"] + 10,
+                t1=score_1, t2=score_2,
+                ref=4 if aa else ref
+                )
+            }})
+    except:
+        pass
 
     return result
 
