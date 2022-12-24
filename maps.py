@@ -13,8 +13,8 @@ def update_maps():
             map_name = match["map"]
         except:
             continue
-        # short mode + .
-        smode = check_mode(match["mode"], short=True) + "."
+        # short mode
+        smode = check_mode(match["mode"], short=True)
         # stats that are tracked no matter what
         base_stats = ["kills", "deaths", "score"]
         bs = [_get_stat(match, s) for s in base_stats]
@@ -36,3 +36,17 @@ def update_maps():
         db.maps.update_one({"name": map_name}, {"$inc": stats})
 
     return
+
+
+def introduce_maps():
+    db = connect()
+    maps_db = db["maps"]
+    stats = {}
+    base_stats = ["kills", "deaths", "score", "hostwins", "hostlosses", "games"]
+    for m in ["aa.", "do.", "e.", "mh."]:
+        for s in base_stats:
+            stats[m + bs] = 0
+    stats["aascored"] = 0
+
+    for k in identify_map(get_map_keys=True):
+        maps_db.insert_one(dict({"name": identify_map(k)}, **stats))
