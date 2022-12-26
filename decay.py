@@ -74,7 +74,7 @@ def decay_all(mode):
             mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
             # add to pool and decayed players
             decay_pool += decay_amount
-            decayed_players.append(p["_id"])
+        decayed_players.append(p["_id"])
     if decay_pool:
         spread_decay(mode, decay_pool, decayed_players)
         ranks.main([mode])
@@ -82,6 +82,10 @@ def decay_all(mode):
 
 
 if __name__ == "__main__":
-    for mode in ["e", "mh", "aar", "aad", "do"]:
-        decay_all(mode)
-    print("Done decaying.")
+    # let's start on the 26th
+    if datetime.now() < datetime.strptime("22-12-26", "%y-%m-%d"):
+        introduce_num_sessions()
+    else:
+        for mode in ["e", "mh", "aar", "aad", "do"]:
+            decay_all(mode)
+        print("Done decaying.")
