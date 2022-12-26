@@ -21,7 +21,7 @@ import synergy
 import elostats
 import subprocess
 import telegram_bot
-import add_badges as badges
+from add_badges import readable_badges
 
 subprocess.Popen(["python3", "telegram_bot.py"])
 
@@ -307,7 +307,7 @@ async def lookup_user(message):
             embedVar = discord.Embed(title=f"{player} :clown:", url=f"https://assassins.network/profile/{player.replace(' ', '%20')}", color=0xff00ff)
         # only add information that is present
         embedVar.add_field(name="In-Game Names", value=", ".join(player_db["ign"]), inline=False)
-        badges = badges.readable_badges(player_db["name"])
+        badges = readable_badges(player_db["name"])
         if len(badges) > 0:
             embedVar.add_field(name="Achievements", value=badges, inline=False)
         top_elo = 0
