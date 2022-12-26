@@ -34,6 +34,7 @@ def read_and_update():
             entry_dict["new"]=True
             # inhist flag
             entry_dict["inhist"] = False
+            host_player = None
 
             # save map
             if "$" in csv_entry[0]:
@@ -73,7 +74,7 @@ def read_and_update():
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
                     temp_dict["player"] = identify_player(db, temp_list[0])["name"]
-                    if temp_dict["player"] == host_player:
+                    if host_player and temp_dict["player"] == host_player:
                         entry_dict["hostteam"] = i + 1
                         entry_dict["hostplayer"] = host_player
                     temp_dict["score"] = int(temp_list[1])
