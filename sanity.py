@@ -46,8 +46,11 @@ def sanity_check(data):
             out += f"Unknown mode {mode} detected in:\n{game}\n"
 
         # sanity check map name
-        if map_name:
-            map_name = identify_map(map_name)
+        try:
+            if map_name:
+                map_name = identify_map(map_name)
+        except KeyError:
+            out += f"map {map_name} was not recognized"
 
         num_players = int(players[1])
         outcome = players[2]
