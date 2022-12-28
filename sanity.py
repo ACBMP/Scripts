@@ -26,6 +26,7 @@ def sanity_check(data):
     """
     games = data.split("\n")
     db = connect()
+    out = ""
     for game in games:
         # filter out empty lines (these don't matter anyway)
         if not game.split():
@@ -33,18 +34,39 @@ def sanity_check(data):
 
         players = game.split(", ")
         mode = players[0]
+        if "$" in mode:
+            temp = mode.split("$")
+            map_name = temp[1]
+            mode = temp[0]
+        else:
+            map_name = None
 
         # sanity check mode
         if mode not in ["M", "E", "AA", "DO"]:
-            return f"Unknown mode {mode} detected in:\n{game}"
+            out += f"Unknown mode {mode} detected in:\n{game}\n"
+
+        # sanity check map name
+        try:
+            if map_name:
+                map_name = identify_map(map_name)
+        except KeyError:
+            out += f"map {map_name} was not recognized"
 
         num_players = int(players[1])
-        outcome = int(players[2])
+        outcome = players[2]
+        # host
+        if "$" in outcome:
+            temp = outcome.split("$")
+            host = temp[1]
+            if host not in ["1", "2"]:
+                out += f"Host team not in 1, 2 in:\n{game}"
+            outcome = temp[1]
+        outcome = int(outcome)
         gamers = players[3:] # very epic
 
         # check for missing players or commas
         if len(gamers) != num_players * 2:
-            return f"Formatting error or missing player found in:\n{game}"
+            out += f"Formatting error or missing player found in:\n{game}\n"
 
         # load player data
         score = [0, 0]
@@ -58,40 +80,39 @@ def sanity_check(data):
         for j in range(len(gamers)):
             # check for $ delim count
             if gamers[j].count("$") != num_delim:
-                return f"Incorrect $ delim count detected for {gamers[j]} in:\n{game}"
+                out += f"Incorrect $ delim count detected for {gamers[j]} in:\n{game}\n"
             player = gamers[j].split("$")
 
             # check if player in db
             try:
                 identify_player(db, player[0])
             except ValueError as e:
-                return str(e).replace("insert_player: p", "P") + ":\n" + game
+                out += str(e).replace("insert_player: p", "P") + ":\n" + game + "\n"
 
             # sum score
             if mode != "AA":
                 try:
                     score[i] += int(player[1])
                 except ValueError:
-                    return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
+                    out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
             else:
                 try:
                     score[i] += int(player[4])
                 except ValueError:
-                    return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
+                    out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
 
             # check if score is reasonable
             if int(player[1]) > 20000:
-                return f"Unusually high score detected in:\n{game.replace(player[1], f'**{player[1]}**')}" 
-
+                out += f"Unusually high score detected in:\n{game.replace(player[1], f'**{player[1]}**')}\n" 
             # sum k/d
             try:
                 kills[i] += int(player[2])
             except ValueError:
-                return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
+                out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
             try:
                 deaths[i] += int(player[3])
             except ValueError:
-                return f"Detected nonnumerical input for {gamers[j]} in:\n{game}"
+                out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
 
             # switch to next team
             if j == num_players - 1:
@@ -103,16 +124,18 @@ def sanity_check(data):
             for i in range(2):
                 # mildly retarded
                 if kills[i] != deaths[(i + 1) % 2]:
-                    return f"Incorrect kill ({i + 1})/death ({i + 1 % 2 + 1}) count detected in:\n{game}"
+                    out += f"Incorrect kill (team {i + 1})/death (team {(i + 1) % 3}) count detected in:\n{game}\n"
         
         # sanity check score and outcome
         if mode != "DO":
             if outcome > 0:
                 if max(score) != score[outcome - 1]:
-                    return f"Incorrect score/outcome detected in:\n{game}"
+                    out += f"Incorrect score/outcome detected in:\n{game}\n"
             else:
                 if score[0] != score[1]:
-                    return f"Incorrect score/outcome detected in:\n{game}"
+                    out += f"Incorrect score/outcome detected in:\n{game}\n"
+    if out:
+        return out
     return "No errors detected"
 
 

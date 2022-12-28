@@ -60,6 +60,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "F$o$x9$2": "Auditore92",
                 "F_o$x$92": "Auditore92",
                 "F_ox92": "Auditore92",
+                "F_ox_9_2": "Auditore92",
                 "Tha$_Fazz": "Tha_Fazz",
                 "95On": "95on",
                 "950n": "95on",
@@ -68,6 +69,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "F$ox92": "Auditore92",
                 "Fox$92": "Auditore92",
                 "F_ox$92": "Auditore92",
+                "XxdJlantitou": "XxJlantitou",
+                "JIantitou": "Jlantitou",
                 }
     elif game.lower() == "acr":
         scale = img.width / 1280

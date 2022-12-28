@@ -1,3 +1,9 @@
 __pycache__/
 dump/
+*.pyc
 botconfig.py
+1230matches.txt
+aa_matches.txt
+matches.txt
+screenshots/
+old_matches/

@@ -114,8 +114,19 @@ def countries():
         print(f":flag_{k.lower()}:: {cd[k]}")
     return
 
+
+def average_elos():
+    import numpy as np
+    db = connect()
+    for mode in ["e", "mh", "aar", "aad", "do"]:
+        players = db.players.find({f"{mode}games.total": {"$gte": 1}})
+        elos = [p[f"{mode}mmr"] for p in players]
+        print(check_mode(mode).title(), "average elo:", np.mean(elos), "| number of players:", len(elos))
+    return
+
 if __name__ == "__main__":
-    most_games("Manhunt")
+    average_elos()
+    #most_games("Manhunt")
     #countries()
     #stomp("Escort")
 #    most_games("Artifact assault")

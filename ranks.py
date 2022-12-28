@@ -12,7 +12,7 @@ def main(modes=["mh", "e", "aar", "aad", "do"]):
     for mode in modes:
         db = connect()
         players = db.players.find({f"{mode}games.total": {"$gte":10}})
-        p_sorted = sorted(players, key=lambda player: player[f"{mode}mmr"], reverse=True)
+        p_sorted = sorted(players, key=lambda player: round(player[f"{mode}mmr"]), reverse=True)
         r = 1
         n = -1
     

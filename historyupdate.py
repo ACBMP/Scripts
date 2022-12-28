@@ -4,9 +4,41 @@ from datetime import date
 from util import *
 
 
+def aa_roles(m):
+    """
+    Determine roles for players in an AA match and append to their dict.
+    """
+    kds = [{}, {}]
+    for team in [1, 2]:
+        # find kd for every player in team
+        for p in m[f"team{team}"]:
+            try:
+                kds[team - 1][p["player"]] = p["kills"] / p["deaths"]
+            except ZeroDivisionError:
+                kds[team - 1][p["player"]] = 1000 # easier than inf I think
+        # sort the kds, this creates a list of tuples
+        kds[team - 1] = sorted(kds[team - 1].items(), key=lambda x: x[1])
+        # highest kds are defenders
+        role = "r"
+        # go through every player
+        for i in range(len(m[f"team{team}"])):
+            if i > 1:
+                role = "d"
+            # set role value on match 
+            found = False
+            j = 0
+            # go thru players until we find the right player
+            while not found:
+                if m[f"team{team}"][j]["player"] == kds[team-1][i][0]:
+                    m[f"team{team}"][j]["role"] = role
+                    found = True
+                j += 1
+    return m
+
+
 def update():
     """
-    Update all players' MMRs if they differ from their previous MMR.
+    Update all players' MMRs if they played a game on the current day.
     """
     # establishing a connection to the db
     client = MongoClient('mongodb://localhost:27017/')
@@ -14,23 +46,41 @@ def update():
 
     # get current date
     d = date.today().strftime("%y-%m-%d")
+    
+    # find matches not in history
+    players = {}
+    matches = db.matches.find({"inhist": False})
 
-    # list all players
-    players = db.players.find()
-    players = list(players)
+    # save all the players who played
+    for m in matches:
+        mode = m["mode"]
+        # for aa we have to figure out roles
+        if mode == "Artifact assault":
+            m = aa_roles(m)
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                # we can just use shortened roles
+                if mode == "Artifact assault":
+                    mode = "aa" + p["role"]
+                try:
+                    if p["player"] in players[mode]:
+                        continue
+                    players[mode].append(p["player"])
+                except KeyError:
+                    players[mode] = [p["player"]]
+                # reset mode - only important for aa but whatever
+                mode = m["mode"]
 
-    # iterature through players and update
-    for i in range(len(players)):
-        p = players[i]
-
-        for mode in ["mh", "e", "aar", "aad", "do"]:
-            # if player has no mmrhistory update it
-            if p[f"{mode}history"]["mmrs"] == []:
-                mmr_update(d, db, p, mode)
-            # if player's current mmr differs from previous mmr update it
-            elif p[f"{mode}mmr"] != p[f"{mode}history"]["mmrs"][-1]:
-                mmr_update(d, db, p, mode)
+    # run history mmr update on all players who played
+    for mode in players.keys():
+        # update sessionssinceplayed
+        db.players.update_many({"name": {"$nin": players[mode]}}, {"$inc": {f"{check_mode(mode, short=True)}sessionssinceplayed": 1}})
+        db.players.update_many({"name": {"$in": players[mode]}}, {"$set": {f"{check_mode(mode, short=True)}sessionssinceplayed": 0}})
+        # run history update
+        for p in players[mode]:
+            mmr_update(d, db, identify_player(db, p), check_mode(mode, short=True))
         
+    db.matches.update_many({"inhist": False}, {"$set": {"inhist": True}})
     return
 
 
@@ -43,13 +93,14 @@ def mmr_update(d, db, p, mode):
     :param p: player
     :param mode: gamemode
     """
-    if mode not in ["e", "mh", "aar", "aad", "do"]:
-        raise ValueError("mmr_update: Unrecognized mode!")
+    # skip check_mode for AA 
+    if mode not in ["aar, aad"]:
+        mode = check_mode(mode, short=True)
 
     dates = p[f"{mode}history"]["dates"]
     dates.append(d)
     mmrs = p[f"{mode}history"]["mmrs"]
-    mmrs.append(p[f"{mode}mmr"])
+    mmrs.append(round(p[f"{mode}mmr"]))
     db.players.update_one({"name":p["name"]},{"$set":{f"{mode}history.dates":dates,f"{mode}history.mmrs":mmrs}})
 
     return
@@ -79,5 +130,5 @@ def get_last_game(player, mode):
 
 
 if __name__=="__main__":
-    #update()
-    print(get_last_game("Dellpit", "Manhunt"))
+    update()
+    #print(get_last_game("Dellpit", "Manhunt"))
