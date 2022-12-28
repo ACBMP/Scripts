@@ -32,6 +32,21 @@ def read_and_update():
 
             #new flag
             entry_dict["new"]=True
+            # inhist flag
+            entry_dict["inhist"] = False
+            host_player = None
+
+            # save map
+            if "$" in csv_entry[0]:
+                temp = csv_entry[0].split("$")
+                csv_entry[0] = temp[0]
+                entry_dict["map"] = identify_map(temp[1])
+
+            # save host
+            if "$" in csv_entry[2]:
+                temp = csv_entry[2].split("$")
+                csv_entry[2] = temp[0]
+                host_player = identify_player(db, temp[1])["name"]
 
             #mode
             if csv_entry[0] in ["M", "E", "AA", "DO"]:
@@ -58,7 +73,10 @@ def read_and_update():
                 for entry in teams[i]:
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
-                    temp_dict["player"] = temp_list[0]
+                    temp_dict["player"] = identify_player(db, temp_list[0])["name"]
+                    if host_player and temp_dict["player"] == host_player:
+                        entry_dict["hostteam"] = i + 1
+                        entry_dict["hostplayer"] = host_player
                     temp_dict["score"] = int(temp_list[1])
                     temp_dict["kills"] = int(temp_list[2])
                     temp_dict["deaths"] = int(temp_list[3])
