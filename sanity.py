@@ -54,7 +54,6 @@ def sanity_check(data):
             out += f"Unknown mode {mode} detected in:\n{game}\n"
         
         # sanity check map name
-<<<<<<< HEAD
         if map_name:
             try:
                 identify_map(map_name)
