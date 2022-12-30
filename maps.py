@@ -22,10 +22,11 @@ def update_maps():
         stats = {smode + k: v for (k, v) in zip(base_stats, bs)}
         # in aa also track scored artifacts
         if match["mode"] == "Artifact assault":
-            stats["aascored"] = _get_stat(match, "scored")
+            stats["aa.scored"] = _get_stat(match, "scored")
         # if host data was given save w/l
         try:
-            if int(match["hostteam"] == match["outcome"]):
+            # determine which team host was on
+            if match["hostteam"] == match["outcome"]:
                 stats[smode + "hostwins"] = 1
             else:
                 stats[smode + "hostlosses"] = 1
@@ -42,7 +43,7 @@ def introduce_maps():
     db = connect()
     maps_db = db["maps"]
     stats = {}
-    base_stats = {"kills": 0, "deaths": 0, "score": 0, "hostwins": 0, "hostlosses": 0, "games": 0}
+    base_stats = {"kills": 0, "deaths": 0, "score": 0, "hostwins": 0, "hostlosses": 0, "games": 0, "hostrating": 1000}
     for m in ["aa", "do", "e", "mh"]:
         stats[m] = base_stats
     stats["aa"]["scored"] = 0
