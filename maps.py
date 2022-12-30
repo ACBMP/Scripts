@@ -1,7 +1,13 @@
 from util import *
 
 def _get_stat(match, stat):
-    return sum([p[stat] for p in match[f"team{i}"] for i in [1, 2]]),
+    out = 0
+    for i in [1, 2]:
+        for p in match[f"team{i}"]:
+            out += p[stat]
+   # if stat == "score":
+   #     out /= len(match["team1"])
+    return out
 
 
 def update_maps():
