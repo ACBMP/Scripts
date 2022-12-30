@@ -6,6 +6,7 @@ import tweet
 import botconfig as conf
 from datetime import date
 from util import *
+import maps
 
 def read_and_update():
     """
@@ -108,6 +109,7 @@ def main():
     Run all scripts necessary for fully adding a new match.
     """
     modes = read_and_update()
+    maps.update_maps()
     eloupdate.new_matches()
     historyupdate.update()
     rmodes = []
