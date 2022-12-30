@@ -43,6 +43,7 @@ def read_and_update():
                 if len(temp) == 3:
                     entry_dict["map"] = identify_map(temp[1])
                     entry_dict["host"] = identify_player(db, temp[2])["name"]
+                    host_player = entry_dict["host"]
                 else:
                     # check if either a map or player can be identified
                     try:
@@ -50,6 +51,7 @@ def read_and_update():
                     except:
                         try:
                             entry_dict["host"] = identify_player(db, temp[2])["name"]
+                            host_player = entry_dict["host"]
                         except:
                             raise ValueError("Could not identify host or map!")
 
@@ -81,7 +83,6 @@ def read_and_update():
                     temp_dict["player"] = identify_player(db, temp_list[0])["name"]
                     if host_player and temp_dict["player"] == host_player:
                         entry_dict["hostteam"] = i + 1
-                        entry_dict["hostplayer"] = host_player
                     temp_dict["score"] = int(temp_list[1])
                     temp_dict["kills"] = int(temp_list[2])
                     temp_dict["deaths"] = int(temp_list[3])
