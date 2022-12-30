@@ -82,10 +82,6 @@ def decay_all(mode):
 
 
 if __name__ == "__main__":
-    # let's start on the 26th
-    if datetime.now() < datetime.strptime("22-12-26", "%y-%m-%d"):
-        introduce_num_sessions()
-    else:
-        for mode in ["e", "mh", "aar", "aad", "do"]:
-            decay_all(mode)
-        print("Done decaying.")
+    for mode in ["e", "mh", "aar", "aad", "do"]:
+        decay_all(mode)
+    print("Done decaying.")

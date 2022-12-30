@@ -7,3 +7,9 @@ aa_matches.txt
 matches.txt
 screenshots/
 old_matches/
+*.png
+*.svg
+*.pdf
+*.patch
+*.txt
+*.md

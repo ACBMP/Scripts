@@ -31,33 +31,43 @@ def sanity_check(data):
         # filter out empty lines (these don't matter anyway)
         if not game.split():
             continue
-
         players = game.split(", ")
         mode = players[0]
+        map_name = None
         if "$" in mode:
             temp = mode.split("$")
-            map_name = temp[1]
             mode = temp[0]
-        else:
-            map_name = None
+            if len(temp) == 3:
+                map_name = temp[1]
+                host_player = temp[2]
+            else:
+                try:
+                    map_name = identify_map(temp[1])
+                except:
+                    try:
+                        host_player = identify_player(db, temp[1])
+                    except:
+                        out += f"Unknown map or host detected in:\n{game}\n"
 
         # sanity check mode
         if mode not in ["M", "E", "AA", "DO"]:
             out += f"Unknown mode {mode} detected in:\n{game}\n"
-
+        
         # sanity check map name
         if map_name:
-            map_name = identify_map(map_name)
+            try:
+                identify_map(map_name)
+            except:
+                out += f"Unknown map detected in:\n{game}\n"
+        # sanity check host player
+        if host_player:
+            try:
+                identify_player(db, host_player)
+            except:
+                out += f"Unknown host detected in:\n{game}\n"
 
         num_players = int(players[1])
         outcome = players[2]
-        # host
-        if "$" in outcome:
-            temp = outcome.split("$")
-            host = temp[1]
-            if host not in ["1", "2"]:
-                out += f"Host team not in 1, 2 in:\n{game}"
-            outcome = temp[1]
         outcome = int(outcome)
         gamers = players[3:] # very epic
 
@@ -74,6 +84,7 @@ def sanity_check(data):
         num_delim = 3
         if mode == "AA":
             num_delim += 1
+
         for j in range(len(gamers)):
             # check for $ delim count
             if gamers[j].count("$") != num_delim:
@@ -139,7 +150,8 @@ def sanity_check(data):
 def main():
     try:
         return sanity_check(read_file("matches.txt"))
-    except:
+    except Exception as e:
+        print(e)
         return "Something must be very messed up in your input, sanity failed."
 
 

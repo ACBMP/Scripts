@@ -36,17 +36,22 @@ def read_and_update():
             entry_dict["inhist"] = False
             host_player = None
 
-            # save map
+            # save map/host
             if "$" in csv_entry[0]:
                 temp = csv_entry[0].split("$")
                 csv_entry[0] = temp[0]
-                entry_dict["map"] = identify_map(temp[1])
-
-            # save host
-            if "$" in csv_entry[2]:
-                temp = csv_entry[2].split("$")
-                csv_entry[2] = temp[0]
-                host_player = identify_player(db, temp[1])["name"]
+                if len(temp) == 3:
+                    entry_dict["map"] = identify_map(temp[1])
+                    entry_dict["host"] = identify_player(db, temp[2])["name"]
+                else:
+                    # check if either a map or player can be identified
+                    try:
+                        entry_dict["map"] = identify_map(temp[1])
+                    except:
+                        try:
+                            entry_dict["host"] = identify_player(db, temp[2])["name"]
+                        except:
+                            raise ValueError("Could not identify host or map!")
 
             #mode
             if csv_entry[0] in ["M", "E", "AA", "DO"]:
