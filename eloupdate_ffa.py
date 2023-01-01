@@ -156,11 +156,13 @@ def player_ratings(match: Match, ref=None):
 
     for p in range(len(match.players)):
         player = match.players[p]
+        pos = p - 1 if p > 0 and match.players[p].score == match.players[p-1].score else p
+        result = get_result(pos + 1, len(match.players))
         results.append({
                     "name": player.player,
                     "mmr": int(round(new_mmr(
                             current_mmr=ratings[p],
-                            result=get_result(p + 1, len(match.players)),
+                            result=result,
                             expected_result=expected_outcomes[p],
                             games_played=(player._db_data[f"{match.mode}games"]["total"] + 1),
                             scores=scores,
