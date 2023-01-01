@@ -61,14 +61,7 @@ def new_mmr(current_mmr: int, result: float, expected_result: float, max_change:
             max_change = max_mmr_change(games_played, current_mmr)
         return current_mmr + max_change * (result - expected_result) * (1 + stomp_mmr_boost(scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
     else:
-        if result == 1:
-            return current_mmr + 50
-        elif result == 0:
-            return current_mmr - 10
-        elif result == .5:
-            return current_mmr + 20
-        else:
-            raise ValueError("Broken outcome.")
+        return (result * 60) - 10
 
 def max_mmr_change(total_games, current_mmr):
     """
@@ -111,7 +104,7 @@ def stomp_mmr_boost(scores: List[int], ref_score: int = None):
             return max(abs(scores[1] - scores[1]) - 1, 0) / ref_score
         return 0
     
-def weighted_mean(ratings, ratings_o):
+def weighted_mean(ratings):
     """
     Weighted arithmetic mean.
     Weights are calculated based on players' MMRs compared to the opposing
@@ -121,10 +114,15 @@ def weighted_mean(ratings, ratings_o):
     :param ratings_o: opposing team's ratings
     :return: weighted mean of ratings, weights used
     """
-    mean = sum(ratings_o) / len(ratings_o)
     diffs = []
-    for r in ratings:
-        diffs.append(abs(r - mean))
+    for player in range(ratings):
+        p_rating = ratings[player]
+        opponents = []
+        for opponent in range(ratings):
+            if opponent != player:
+                opponents.append(ratings[player])
+        mean = sum(opponents) / len(opponents)
+        diffs.append(abs(p_rating - mean))
     weights = []
     for d in diffs:
         try:
@@ -139,7 +137,7 @@ def weighted_mean(ratings, ratings_o):
 
 
 def get_result(position: int, players: int):
-    pass
+    return 1 - ((position-1) / (players - 1))
 
 def player_ratings(match: Match, ref=None):
     """
@@ -153,7 +151,7 @@ def player_ratings(match: Match, ref=None):
     # calculate expected outcome for each player
     ratings = list(map(lambda player: player.get_mmr(), match.players))
     scores = list(map(lambda player: player.score, match.players))
-    expected_outcomes = expected_results(ratings)
+    expected_outcomes = expected_results(weighted_mean(ratings))
     results = []
 
     for p in range(len(match.players)):
@@ -162,7 +160,7 @@ def player_ratings(match: Match, ref=None):
                     "name": player.player,
                     "mmr": int(round(new_mmr(
                             current_mmr=ratings[p],
-                            result=get_result(p, len(match.players)),
+                            result=get_result(p + 1, len(match.players)),
                             expected_result=expected_outcomes[p],
                             games_played=(player._db_data[f"{match.mode}games"]["total"] + 1),
                             scores=scores,
