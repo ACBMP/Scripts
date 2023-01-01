@@ -40,6 +40,8 @@ def update_maps():
             pass
         # wins + 1
         stats[smode + "games"] = 1
+        # save number of players
+        stats[smode + "players"] = len(match["team1"]) * 2
         db.maps.update_one({"name": map_name}, {"$inc": stats})
 
     return
@@ -49,7 +51,7 @@ def introduce_maps():
     db = connect()
     maps_db = db["maps"]
     stats = {}
-    base_stats = {"kills": 0, "deaths": 0, "score": 0, "hostwins": 0, "hostlosses": 0, "games": 0, "hostrating": 1000}
+    base_stats = {"kills": 0, "deaths": 0, "score": 0, "hostwins": 0, "hostlosses": 0, "games": 0, "hostrating": 1000, "players": 0}
     for m in ["aa", "do", "e", "mh"]:
         stats[m] = base_stats
     stats["aa"]["scored"] = 0

@@ -581,6 +581,16 @@ async def queue_rm(mode, user, player, channel):
     return
 
 
+## I started this but it's too annoying - at this point I hate the queueing system
+## this should end up being an embed listing everyone in the Q along with all schedules
+#async def queue_embed(channel, mode):
+#    smode = check_mode(mode, channel, short=True)
+#    lmode = check_mode(mode, channel, short=False)
+#    queue_str = ", ".join(queue[smode])
+#    queued = scheduler.get_jobs()
+#    for j in queued:
+#    embed = discord.Embed(title=f"{lmode} Queue", color=0xff00ff)
+
 # add player to play queue command
 # this is the most poorly written function in here honestly
 @util.command_dec
