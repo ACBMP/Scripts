@@ -137,7 +137,8 @@ def weighted_mean(ratings):
 
 
 def get_result(position: int, players: int):
-    return 1 - ((position-1) / (players - 1))
+    return ((1.1 ** (players - position)) - 1) \
+        / (1.1**(players-1) - 1)
 
 def player_ratings(match: Match, ref=None):
     """
