@@ -196,6 +196,9 @@ def new_matches():
         #Updating the relevant MMR
         
         mode = check_mode(match.mode, short=True)
+        if not check_mode_ffa(mode):
+            continue
+
         for resultentry in results:
             db.players.update_one({
                     "name": resultentry["name"]

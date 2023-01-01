@@ -233,6 +233,8 @@ def new_matches():
         i = 0
         R_team = [0, 0] # team ratings which should be calculated in the loop
         score_key = "score"
+        if check_mode_ffa(m["mode"]):
+            continue
         if m["mode"] == "Artifact assault":
             score_key += "d"
 

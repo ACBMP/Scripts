@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import eloupdate
+import eloupdate_ffa
 import historyupdate
 import ranks
 import tweet
@@ -103,6 +104,7 @@ def main():
     """
     modes = read_and_update()
     eloupdate.new_matches()
+    eloupdate_ffa.new_matches()
     historyupdate.update()
     rmodes = []
     mkeys = list(modes.keys())
