@@ -189,7 +189,7 @@ def new_matches():
     for m in matches:
         match = Match(**m)
 
-        match.players.sort(key=lambda p: p.score)
+        match.players.sort(key=lambda p: p.score, reverse=True)
         results = player_ratings(match=m, ref=None)        
         
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
