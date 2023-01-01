@@ -75,6 +75,11 @@ def check_mode(mode, server=None, short=False):
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 
+def check_mode_ffa(mode):
+    mode = check_mode(mode, short=True)
+    if mode in ["aa", "aar", "aad", "mh", "do", "e"]:
+        return False
+    return True
 
 def att_to_file(message, n=0):
     """
