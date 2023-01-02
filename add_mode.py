@@ -25,7 +25,7 @@ def add_ffa_mode(mode):
     stats = {"highscore": 0, "kills": 0, "deaths": 0, "totalscore": 0}
     rank = 0
     rankchange = 0
-    db.players.update_many({}, {"$set" {f"{mode}mmr": mmr, f"{mode}games": games,
+    db.players.update_many({}, {"$set": {f"{mode}mmr": mmr, f"{mode}games": games,
         f"{mode}stats": stats, f"{mode}rank": rank, f"{mode}rankchange": rankchange,
         f"{mode}history": history}})
     print(f"Successfully added {check_mode(mode)} stats for all players")
