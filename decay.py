@@ -51,7 +51,8 @@ def decay_all(mode):
     # find all players with mmr > threshold and sessions since played > threshold
     players = db.players.find({"$and": [
         {f"{mode}sessionssinceplayed": {"$gt": sessions_threshold}},
-        {f"{mode}mmr": {"$gt": decay_threshold}}
+        {f"{mode}mmr": {"$gt": decay_threshold}},
+#        {f"{mode}games.total": {"$gte": 9}}
         ]})
     # global spread decay pool
     decay_pool = 0
@@ -70,11 +71,13 @@ def decay_all(mode):
                         # require one session to be played in between decays
                         f"{mode}sessionssinceplayed": sessions_threshold - 1}
                         })
+            # to refresh the mmr
+            p = db.players.find_one({"_id": p["_id"]})
             # update the player's mmr history
             mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
             # add to pool and decayed players
             decay_pool += decay_amount
-        decayed_players.append(p["_id"])
+            decayed_players.append(p["_id"])
     if decay_pool:
         spread_decay(mode, decay_pool, decayed_players)
         ranks.main([mode])
