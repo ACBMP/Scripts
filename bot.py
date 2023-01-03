@@ -1044,6 +1044,7 @@ async def compare_users(message):
         content, mode = content.split(" mode ")
     else:
         mode = None
+    mode = util.check_mode(mode, message.guild.id, short=True)
     teams_str = content.split(" vs ")
     if len(teams_str) < 2:
         await message.channel.send("Missing a second team. " + util.find_insult())
@@ -1055,10 +1056,15 @@ async def compare_users(message):
             try:
                 players[j] = util.identify_player(db, players[j])
             except ValueError:
-                await message.channel.send(f"I've never heard of {players[j]}. {util.find_insult()}")
-                return
+                try:
+                    players[j] = {
+                        "name": f'a {util.rank_title(int(players[j]))}',
+                        f"{mode}mmr": int(players[j])
+                    }
+                except ValueError:
+                    await message.channel.send(f"I've never heard of {players[j]}. {util.find_insult()}")
+                    return
         teams[i] = players
-    mode = util.check_mode(mode, message.guild.id, short=True)
     chance = elostats.compare_players(teams[0], teams[1], mode, verbose=True)
     chance_p = round(chance[0] * 100, 2)
     teams = [[p["name"] for p in team] for team in teams]
