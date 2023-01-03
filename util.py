@@ -183,3 +183,14 @@ def identify_map(name=None, get_map_keys=False):
         raise ValueError("name cannot be None if get_map_keys is not set!")
 
     return maps[name.lower()]
+
+def rank_title(elo):
+    if elo < 801:
+        return "Disciple"
+    if elo < 1000:
+        return "Cleric"
+    if elo < 1200:
+        return "Cleric Supreme"
+    if elo < 1400:
+        return "Grand Cleric"
+    return "Supreme Overlord Cleric"
