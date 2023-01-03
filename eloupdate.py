@@ -151,6 +151,7 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     R_old_1 = []
     R_old_2 = []
     # disgusting
+    mode = check_mode(match["mode"], short=True)
     if aa:
         for i in range(l):
             role = match["team1"][i]["role"]
@@ -158,7 +159,6 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
             role = match["team2"][i]["role"]
             R_old_2.append(team_2[i][f"aa{role}mmr"])
     else:
-        mode = check_mode(match["mode"], short=True)
         for i in range(l):
             R_old_1.append(team_1[i][f"{mode}mmr"])
             R_old_2.append(team_2[i][f"{mode}mmr"])
