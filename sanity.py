@@ -85,6 +85,7 @@ def sanity_check(data):
         if mode == "AA":
             num_delim += 1
 
+        all_gamers = []
         for j in range(len(gamers)):
             # check for $ delim count
             if gamers[j].count("$") != num_delim:
@@ -93,9 +94,15 @@ def sanity_check(data):
 
             # check if player in db
             try:
-                identify_player(db, player[0])
+                player[0] = identify_player(db, player[0])["name"]
             except ValueError as e:
                 out += str(e).replace("insert_player: p", "P") + ":\n" + game + "\n"
+
+            # check for duplicate players
+            if player[0] in all_gamers:
+                out += f"Duplicate player {player[0]} detected in:\n{game}\n"
+            else:
+                all_gamers.append(player[0])
 
             # sum score
             if mode != "AA":
