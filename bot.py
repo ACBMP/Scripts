@@ -186,6 +186,8 @@ AN ladder [MODE]```"""
 AN reload```"""
     lobbies_help = """To generate MMR-based lobbies, run\n```css
 AN lobbies PLAYER_A, PLAYER_B, PLAYER_C, PLACER_D, ...```Grouped lobby generation is currently not supported, but is being worked on."""
+    swap_help = """To swap teams in an OCR result, run\n```css
+AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
 
     # if the user asked for help on a specific function the msg isn't empty after parsing
     # so we find out what it is and return an embed with the long description from above
@@ -210,6 +212,8 @@ AN lobbies PLAYER_A, PLAYER_B, PLAYER_C, PLACER_D, ...```Grouped lobby generatio
             return discord.Embed(title=":wrestlers: Compare Users", description=compare_help, color=0xff00fe)
         elif msg == "ocr":
             return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
+        elif msg == "swap":
+            return discord.Embed(title=":left_right_arrow: Swap Teams", description=swap_help, color=0xff00fe)
         elif msg == "sanity":
             return discord.Embed(title=":confused: Sanity Check", description=sanity_help, color=0xff00fe)
         elif msg == "add":
@@ -234,6 +238,7 @@ AN lobbies PLAYER_A, PLAYER_B, PLAYER_C, PLACER_D, ...```Grouped lobby generatio
          embedVar.add_field(name=":judge: Remake Calculator", value="AN remake", inline=True)
          embedVar.add_field(name=":wrestlers: Compare Users", value="AN compare", inline=True)
          embedVar.add_field(name=":camera: Scan Screenshot", value="AN OCR", inline=True)
+         embedVar.add_field(name=":left_right_arrow: Swap Teams", value="AN swap", inline=True)
          embedVar.add_field(name=":memo: Add Matches", value="AN add", inline=True)
          embedVar.add_field(name=":printer: Print Matches", value="AN print", inline=True)
          embedVar.add_field(name=":confused: Sanity Check", value="AN sanity", inline=True)
@@ -896,6 +901,17 @@ async def ocr_screenshot(message):
         await message.channel.send("Could not find attachment.")
         return
 
+
+@util.command_dec
+async def swap_teams(message):
+    msg = message.content[5:]
+    items = msg.split(", ")
+    t1 = items[3:3 + int(items[1])]
+    t2 = items[3 + int(items[1]):]
+    out = ", ".join(items[0:3] + t2 + t1)
+    await message.channel.send(out)
+    return
+
 # add users to the db
 @util.permission_locked
 @util.command_dec
@@ -1208,6 +1224,9 @@ async def on_message(message):
     
         if message.content.lower().startswith("ocr"):
             await ocr_screenshot(message)
+
+        if message.content.lower().startswith("swap"):
+            await swap_teams(message)
 
         if message.content.lower().startswith("user add"):
             await user_add(message)
