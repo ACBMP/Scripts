@@ -989,6 +989,8 @@ async def user_edit(message):
                     if m[f"team{i}"][j]["player"] == player["name"]:
                         m[f"team{i}"][j]["player"] = value
             db.matches.update_one({"_id": m["_id"]}, {"$set": {"team1": m["team1"], "team2": m["team2"]}})
+        # update host in match history as well
+        db.matches.update_many({"host": name}, {"$set": {"host": value}})
     db.players.update_one({"_id": player["_id"]}, {"$set": {key: value}})
     await message.channel.send(f"Successfully edited {player['name']}.")
     return
