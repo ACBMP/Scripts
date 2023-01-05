@@ -1,8 +1,10 @@
 from util import *
 
-def _get_stat(match, stat):
+def _get_stat(match, stat, teams=[1, 2]):
+    if isinstance(teams, int):
+        teams = [teams]
     out = 0
-    for i in [1, 2]:
+    for i in teams:
         for p in match[f"team{i}"]:
             out += p[stat]
    # if stat == "score":
@@ -29,6 +31,7 @@ def update_maps():
         # in aa also track scored artifacts
         if match["mode"] == "Artifact assault":
             stats["aa.scored"] = _get_stat(match, "scored")
+            stats["aa.hostscored"] = _get_stat(match, "scored", [match["hostteam"]])
         # if host data was given save w/l
         try:
             # determine which team host was on
@@ -55,6 +58,7 @@ def introduce_maps():
     for m in ["aa", "do", "e", "mh"]:
         stats[m] = base_stats
     stats["aa"]["scored"] = 0
+    stats["aa"]["hostscored"] = 0
 
     for k in identify_map(get_map_keys=True):
         maps_db.insert_one(dict({"name": identify_map(k)}, **stats))
