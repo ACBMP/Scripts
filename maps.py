@@ -37,7 +37,7 @@ def update_maps():
             # determine which team host was on
             if match["hostteam"] == match["outcome"]:
                 stats[smode + "hostwins"] = 1
-            else:
+            elif match["outcome"] != 0:
                 stats[smode + "hostlosses"] = 1
         except KeyError:
             pass
