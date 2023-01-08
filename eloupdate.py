@@ -43,6 +43,31 @@ def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
         else:
             raise ValueError("Broken outcome.")
 
+def R_change(R, S, E, N, t1, t2, ref=None):
+    """
+    Calculate rating change.
+    
+    :param R: current MMR
+    :param S: outcome; 0 for loss, 1 for win, 0.5 for tie
+    :param E: expected win chance
+    :param N: total number of games played
+    :param t1: player's score
+    :param t2: opponent's score
+    :param ref: reference "stomp" score
+    :return: MMR change
+    """
+    if N > 10:
+        return Kc(N, R) * (S - E) * (1 + score(t1, t2, ref)) + S
+    else:
+        if S == 1:
+            return 50
+        elif S == 0:
+            return -10
+        elif S == .5:
+            return 20
+        else:
+            raise ValueError("Broken outcome.")
+
 def Kc(N, R):
     """
     Calculate max MMR change.
@@ -177,22 +202,36 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     for i in range(l):
         # iterate through both teams
         for j in range(2):
-            result.append({
-                    "name": teams[j][i]["name"],
-                    "mmr": new_R(
-                        R=teams[j][i][f"{mode}mmr"] if not aa else teams[j][i][f"aa{match[f'team{j + 1}'][i]['role']}mmr"],
+            if aa:
+                role = match[f'team{j + 1}'][i]['role']
+                rating = teams[j][i][f"aa{role}mmr"]
+                games = teams[j][i][f"aa{role}games"]["total"]
+                ref = 4
+            else:
+                rating = teams[j][i][f"{mode}mmr"]
+                games = teams[j][i][f"{mode}games"]["total"]
+            mmr_change = R_change(
+                        R=rating,
                         S=S[j],
                         E=Es[j],
-                        N=(teams[j][i][f"{mode}games" if not aa else f"aa{match[f'team{j + 1}'][i]['role']}games"]["total"] + 1),
-                        t1=score_1, t2=score_2,
-                        ref=4 if aa else ref
+                        N=games + 1,
+                        t1=score_1,
+                        t2=score_2,
+                        ref=ref
                         )
+            result.append({
+                    "name": teams[j][i]["name"],
+                    "mmr": rating + mmr_change
                     })
+            # save the rating change
+            match[f"team{j + 1}"][i]["mmrchange"] = mmr_change
             if aa:
                 result[-1]["role"] = match[f'team{j + 1}'][i]['role']
+    # update the teams in the match so they include mmr change for all players
+    db = connect()
+    db.matches.update_one({"_id": match["_id"]}, {"$set": {"team1": match["team1"], "team2": match["team2"]}})
     # if host data is given update those
     try:
-        db = connect()
         map_db = db.maps.find_one({"name": match["map"]})
         db.maps.update_one({"name": match["map"]}, {"$set": {f"{mode}.hostrating":
             new_R(
