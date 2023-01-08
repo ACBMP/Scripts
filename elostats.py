@@ -24,5 +24,5 @@ if __name__ == "__main__":
     p1 = ["Dellpit", "Auditore92", "Tha Fazz"]
     p1 = [identify_player(db, p) for p in p1]
     p2 = ["DevelSpirit", "Jelko", "EternityEzioWolf"]
-    p1 = [identify_player(db, p) for p in p2]
+    p2 = [identify_player(db, p) for p in p2]
     print(compare_players(p1, p2, "mh", db))
