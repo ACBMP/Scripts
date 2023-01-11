@@ -178,8 +178,8 @@ AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...];
 AN user edit NAME: KEY: VALUE```Please note that new values need to be formatted like Python code, e.g. instead of nation: US, run nation: \"US\"."""
     sanity_help = """To run the sanity checker over the currently added matches, run\n```css
 AN sanity```"""
-    compare_help = """To find the likelihood of one player beating another, run\n```css
-AN compare PLAYER_A vs PLAYER_B```"""
+    compare_help = """To find the likelihood of one team beating another, run\n```css
+AN compare PLAYER_A[, ADDITIONAL_PLAYER_A] vs PLAYER_B[, ADDITIONAL_PLAYER_B]```"""
     ladder_help = """To view the leaderboard for a mode, run\n```css
 AN ladder [MODE]```"""
     reload_help = """To reload all the bot's imported modules, run\n```css
