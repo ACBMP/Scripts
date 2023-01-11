@@ -906,9 +906,14 @@ async def ocr_screenshot(message):
 async def swap_teams(message):
     msg = message.content[5:]
     items = msg.split(", ")
+    outcome = int(items[2])
+    if outcome == 1:
+        outcome = 2
+    elif outcome == 2:
+        outcome = 1
     t1 = items[3:3 + int(items[1])]
     t2 = items[3 + int(items[1]):]
-    out = ", ".join(items[0:3] + t2 + t1)
+    out = ", ".join(items[0:2] + outcome + t2 + t1)
     await message.channel.send(out)
     return
 
