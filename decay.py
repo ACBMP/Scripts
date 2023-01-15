@@ -50,7 +50,7 @@ def decay_all(mode):
     decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
     players = db.players.find({"$and": [
-        {f"{mode}sessionssinceplayed": {"$gt": sessions_threshold}},
+        {f"{mode}sessionssinceplayed": {"$gte": sessions_threshold}},
         {f"{mode}mmr": {"$gt": decay_threshold}},
 #        {f"{mode}games.total": {"$gte": 9}}
         ]})
