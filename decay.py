@@ -78,6 +78,7 @@ def decay_all(mode):
             # add to pool and decayed players
             decay_pool += decay_amount
             decayed_players.append(p["_id"])
+            print(f"Decayed {p['name']}.")
     if decay_pool:
         spread_decay(mode, decay_pool, decayed_players)
         ranks.main([mode])

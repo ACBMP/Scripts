@@ -180,6 +180,8 @@ AN user edit NAME: KEY: VALUE```Please note that new values need to be formatted
 AN sanity```"""
     compare_help = """To find the likelihood of one team beating another, run\n```css
 AN compare PLAYER_A[, ADDITIONAL_PLAYER_A] vs PLAYER_B[, ADDITIONAL_PLAYER_B]```"""
+    estimate_help = """To estimate players' rating changes in a match, run\n```css
+AN estimate PLAYER_A[, ADDITIONAL_PLAYER_A] vs PLAYER_B[, ADDITIONAL_PLAYER_B] [mode MODE]```"""
     ladder_help = """To view the leaderboard for a mode, run\n```css
 AN ladder [MODE]```"""
     reload_help = """To reload all the bot's imported modules, run\n```css
@@ -210,6 +212,8 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
             return discord.Embed(title=":judge: Remake Calculator", description=remake_help, color=0xff00fe)
         elif msg == "compare":
             return discord.Embed(title=":wrestlers: Compare Users", description=compare_help, color=0xff00fe)
+        elif msg == "estimate":
+            return discord.Embed(title=":estimate: Estimate Changes", description=estimate_help, color=0xff00fe)
         elif msg == "ocr":
             return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
         elif msg == "swap":
@@ -237,6 +241,7 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
          embedVar.add_field(name=":handshake: Lookup Synergies", value="AN synergy", inline=True)
          embedVar.add_field(name=":judge: Remake Calculator", value="AN remake", inline=True)
          embedVar.add_field(name=":wrestlers: Compare Users", value="AN compare", inline=True)
+         embedVar.add_field(name=":chart: Estimate Changes", value="AN estimate", inline=True)
          embedVar.add_field(name=":camera: Scan Screenshot", value="AN OCR", inline=True)
          embedVar.add_field(name=":left_right_arrow: Swap Teams", value="AN swap", inline=True)
          embedVar.add_field(name=":memo: Add Matches", value="AN add", inline=True)
@@ -1095,6 +1100,65 @@ async def compare_users(message):
     return
 
 
+#@util.command_dec
+async def estimate_change(message):
+    import eloupdate as elo
+    db = util.connect()
+    content = message.content[9:]
+    # identify mode
+    mode = None
+    if " mode " in content:
+        temp = content.split(" mode ")
+        mode = temp[1]
+        content = temp[0]
+    mode = util.check_mode(mode, message.guild.id, short=True)
+    # extract players and team comps
+    if " vs. " in content:
+        ts = content.split(" vs. ")
+    else:
+        ts = content.split(" vs ")
+    ts = [ts[i].split(", ") for i in [0, 1]]
+    ts = [teams.extract_players(t) for t in ts]
+    team_ratings = [[p[f"{mode}mmr"] for p in ts[i]] for i in [0, 1]]
+    # get team elos
+    team_ratings = [elo.w_mean(team_ratings[0], team_ratings[1])[0], elo.w_mean(team_ratings[1], team_ratings[0])[0]]
+    # get expected outcome
+    expect = elo.E(team_ratings)
+    expect = [expect, 1 - expect]
+    # get rating changes
+    changes = {ts[i][j]["name"]: [round(elo.R_change(ts[i][j][f"{mode}mmr"], S, expect[i], ts[i][j][f"{mode}games"]["total"] + 1, 0, 0, 0), 2) for S in [0, 0.5, 1]] for i in [0, 1] for j in range(len(ts[0]))}
+    outputs = [[f"{k}: {'+' if changes[k][i] > 0 else ''}{changes[k][i]}" for i in [0, 1, 2]] for k in changes.keys()]
+    embedVar = discord.Embed(title="Rating Change Estimates", url = "https://assassins.network/elo", color = 0xff00ff)
+    # strings with names of all players in teams and their ratings
+    names = ["\n".join([f'{ts[i][j]["name"]} ({round(ts[i][j][f"{mode}mmr"], 2)} MMR)' for j in range(len(ts[0]))]) for i in [0, 1]]
+    # team string with names and team rating
+    team_str = [f"{names[i]}\nTeam Rating: **{round(team_ratings[i], 2)}**" for i in [0, 1]]
+    embedVar.add_field(name="Team 1", value=team_str[0], inline=False)
+    embedVar.add_field(name="Team 2", value=team_str[1], inline=False)
+    team_size = len(ts[0])
+    # team 1 perspective
+    w = t = l = ""
+    for i in range(len(outputs)):
+        # a line break between teams
+        if i == team_size:
+            w += "\n"
+            t += "\n"
+            l += "\n"
+        t += outputs[i][1] + "\n"
+        # check whether we're at t1 or t2 w
+        if i < team_size:
+            w += outputs[i][2] + "\n"
+            l += outputs[i][0] + "\n"
+        else:
+            w += outputs[i][0] + "\n"
+            l += outputs[i][2] + "\n"
+    embedVar.add_field(name="Team 1 Win", value=w, inline=True)
+    embedVar.add_field(name="Tie", value=t, inline=True)
+    embedVar.add_field(name="Team 2 Win", value=l, inline=True)
+    await message.channel.send(embed=embedVar)
+    return
+
+
 @util.permission_locked
 @util.command_dec
 async def reload_modules(message):
@@ -1243,6 +1307,10 @@ async def on_message(message):
 
         if message.content.lower().startswith("compare"):
             await compare_users(message)
+            return
+
+        if message.content.lower().startswith("estimate"):
+            await estimate_change(message)
             return
 
         if message.content.lower().startswith("reload"):
