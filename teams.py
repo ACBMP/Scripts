@@ -5,7 +5,7 @@ import itertools
 from util import *
 
 
-def find_teams(players, mode, random=25, debug=False):
+def find_teams(players, mode, random=25, debug=False, groups=None):
     """
     Main function to run to find optimal teams.
 
@@ -22,6 +22,15 @@ def find_teams(players, mode, random=25, debug=False):
     shuffle(players)
     players = extract_players(players)
     all_combs = combinations(players)
+    # group check not optimal
+    if groups:
+        print(groups)
+        for g in groups:
+            gset = set([identify_player(connect(), p)["name"] for p in g])
+            for i in reversed(range(len(all_combs))):
+                temp = [[p["name"] for p in all_combs[i][j]] for j in [0, 1]]
+                if not (gset.issubset(temp[0]) or gset.issubset(temp[1])):
+                    del all_combs[i]
     all_diffs = []
     for comb in all_combs:
         all_diffs.append(team_diff(comb[0], comb[1], mode, random))
@@ -212,11 +221,12 @@ def test(n):
     """
     players = ["Sugarfree", "Edi", "Arun", "TDCANDHP", "Cota", "Xanthex"]#["Dellpit", "Tha Fazz", "Auditore92", "EsquimoJo", "Crispi Kreme", "EternityEzioWolf"]
     for x in range(n):
-        res = find_teams(players, "Domination", 25)
+        res = find_teams(players, "Domination", 25, groups=[players[1:3]])
         for i in [1, 2]:
             print(f"Team {i}")
             for player in res[i - 1]:
                 print(player["name"])
+#                print(player)
     return
 
 
@@ -226,7 +236,7 @@ def test_lobbies(n, **kwargs):
     return
 
 if __name__ == "__main__":
-    #test(1)
+    test(10)
 #    test_lobbies(1, players=["Sugarfree", "Edi", "Arun", "TDCANDHP", "Cota", "Xanthex"], lobby_size=2)
-    test_lobbies(1, players="Sugarfree., iqueazo, piesio1, luc_link5, durza, rorce, scorpius, camiikase, Shmush, Vlad, Lunaire.-, ShadowX, Xanthex, FynnC, Arun, Lars".split(", "), lobby_size=8)
+#    test_lobbies(1, players="Sugarfree., iqueazo, piesio1, luc_link5, durza, rorce, scorpius, camiikase, Shmush, Vlad, Lunaire.-, ShadowX, Xanthex, FynnC, Arun, Lars".split(", "), lobby_size=8)
 
