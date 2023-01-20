@@ -213,7 +213,7 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
         elif msg == "compare":
             return discord.Embed(title=":wrestlers: Compare Users", description=compare_help, color=0xff00fe)
         elif msg == "estimate":
-            return discord.Embed(title=":estimate: Estimate Changes", description=estimate_help, color=0xff00fe)
+            return discord.Embed(title=":chart: Estimate Changes", description=estimate_help, color=0xff00fe)
         elif msg == "ocr":
             return discord.Embed(title=":camera: Scan Screenshot", description=ocr_help, color=0xff00fe)
         elif msg == "swap":
