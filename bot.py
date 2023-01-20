@@ -918,7 +918,7 @@ async def swap_teams(message):
         outcome = 1
     t1 = items[3:3 + int(items[1])]
     t2 = items[3 + int(items[1]):]
-    out = ", ".join(items[0:2] + [outcome] + t2 + t1)
+    out = ", ".join(items[0:2] + [str(outcome)] + t2 + t1)
     await message.channel.send(out)
     return
 
