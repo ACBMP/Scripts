@@ -24,13 +24,14 @@ def find_teams(players, mode, random=25, debug=False, groups=None):
     all_combs = combinations(players)
     # group check not optimal
     if groups:
-        print(groups)
         for g in groups:
             gset = set([identify_player(connect(), p)["name"] for p in g])
             for i in reversed(range(len(all_combs))):
                 temp = [[p["name"] for p in all_combs[i][j]] for j in [0, 1]]
                 if not (gset.issubset(temp[0]) or gset.issubset(temp[1])):
                     del all_combs[i]
+        if all_combs == []:
+            raise ValueError("Impossible to find team compositions with given groups.")
     all_diffs = []
     for comb in all_combs:
         all_diffs.append(team_diff(comb[0], comb[1], mode, random))

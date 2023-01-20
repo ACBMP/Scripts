@@ -144,7 +144,7 @@ def help_message(message):
     # they need to be ugly like this for ```css to work and not using that makes it look ugly
     intro = "Welcome to the Assassins' Network bot. The following commands are currently available:\n"
     team_help = "To generate random teams, send:\n" +"""```css
-AN team comps [PLAYER_0, PLAYER_2, PLAYER_3...] [mode MODE] [random FACTOR]```""" + "\nNot specifying players uses the queue from the specified mode.\nPlayer names must be Assassins' Network names."
+AN team comps [PLAYER_0, PLAYER_2, PLAYER_3...] [mode MODE] [random FACTOR]```""" + "\nNot specifying players uses the queue from the specified mode.\nPlayer names must be Assassins' Network names.\nTo force players onto the same team, separate names by \" & \" instead of \", \"."
     lfg_help = """\nTo queue up for a game, type\n```css
 AN play [PLAYER] [mode MODE] [in START_TIME] [for LENGTH_TIME]```\nIf PLAYER is unspecified, the bot attempts to match your Discord account to a player. Otherwise, these must be AN usernames.\nTimes must be given in hours. Default `LENGTH_TIME` is 3 hours, default mode is defined by the server the command is sent in."""
     lookup_help = """To look up a user's stats on AN, type\n```css
@@ -485,9 +485,9 @@ async def replace_matches(message):
 
 # team comp finder
 # teams.py is the really relevant stuff
-def team_finder(players, mode, random):
+def team_finder(players, mode, random, groups=[]):
     # this outputs all the players in one array so we need to split it
-    ts = teams.find_teams(players, mode=mode, random=random)
+    ts = teams.find_teams(players, mode=mode, random=random, groups=groups)
     t1, t2 = [], []
     for i in [0, 1]:
         for player in ts[i]:
@@ -547,7 +547,21 @@ async def team_comps(message, ident):
 
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
-        matchup = team_finder(players, mode, r_factor)
+        # check if groups specified
+        delim = " & "
+        groups = []
+        for p in players:
+            if delim in p:
+                # if so delete the group element
+                players.remove(p)
+                # figure out the grouped players
+                group_players = p.split(delim)
+                # add to groups list
+                groups.append(group_players)
+                # and add the playres back into the overall list
+                for gp in group_players:
+                    players.append(gp)
+        matchup = team_finder(players, mode, r_factor, groups=groups)
         await channel.send(matchup)
     # otherwise we try to grab the mode's queue and use that
     else:
