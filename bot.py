@@ -1132,7 +1132,7 @@ async def estimate_change(message):
     else:
         ts = content.split(" vs ")
     ts = [ts[i].split(", ") for i in [0, 1]]
-    ts = [teams.extract_players(t) for t in ts]
+    ts = [teams.extract_players(t, mode) for t in ts]
     team_ratings = [[p[f"{mode}mmr"] for p in ts[i]] for i in [0, 1]]
     # get team elos
     team_ratings = [elo.w_mean(team_ratings[0], team_ratings[1])[0], elo.w_mean(team_ratings[1], team_ratings[0])[0]]

@@ -20,7 +20,7 @@ def find_teams(players, mode, random=25, debug=False, groups=None):
     if len(players) % 2 == 1 or len(players) < 2 or len(players) > 8:
         raise ValueError("find_teams: even number of players in [2, 8] required!")
     shuffle(players)
-    players = extract_players(players)
+    players = extract_players(players, mode)
     all_combs = combinations(players)
     # group check not optimal
     if groups:
@@ -98,7 +98,7 @@ def team_diff(team1, team2, mode, random):
     return abs(elo1 - elo2)
 
 
-def extract_players(players):
+def extract_players(players, mode):
     """
     Find players in database.
 
@@ -108,7 +108,17 @@ def extract_players(players):
     db = connect()
     p = []
     for player in players:
-        p.append(identify_player(db, player))
+        try:
+            p.append(identify_player(db, player))
+        except ValueError:
+            try:
+                p.append({
+                    "name": f'{rank_title(int(player))}',
+                    f"{mode}mmr": int(player),
+                    f"{mode}games": {"total": 50}
+                })
+            except ValueError:
+                raise ValueError(f"I've never heard of {player}.")
     return p
 
 
