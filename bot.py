@@ -1138,6 +1138,12 @@ async def estimate_change(message):
     team_ratings = [elo.w_mean(team_ratings[0], team_ratings[1])[0], elo.w_mean(team_ratings[1], team_ratings[0])[0]]
     # get expected outcome
     expect = elo.E(team_ratings)
+    if expect == 0.5:
+        expect_outcome = "Tie"
+    elif expect > 0.5:
+        expect_outcome = f"Team 1 - {round(expect * 100)}%"
+    else:
+        expect_outcome = f"Team 2 - {round(expect * 100)}%"
     expect = [expect, 1 - expect]
     # get rating changes
     changes = {ts[i][j]["name"]: [round(elo.R_change(ts[i][j][f"{mode}mmr"], S, expect[i], ts[i][j][f"{mode}games"]["total"] + 1, 0, 0, 0), 2) for S in [0, 0.5, 1]] for i in [0, 1] for j in range(len(ts[0]))}
@@ -1149,6 +1155,7 @@ async def estimate_change(message):
     team_str = [f"{names[i]}\nTeam Rating: **{round(team_ratings[i], 2)}**" for i in [0, 1]]
     embedVar.add_field(name="Team 1", value=team_str[0], inline=False)
     embedVar.add_field(name="Team 2", value=team_str[1], inline=False)
+    embedVar.add_field(name="Expected Winner", value=expect_outcome, inline=False)
     team_size = len(ts[0])
     # team 1 perspective
     w = t = l = ""
