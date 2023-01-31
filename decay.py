@@ -28,7 +28,7 @@ def spread_decay(mode, amount, excluded):
         {"_id": {"$nin": excluded}},
         ]}))
     amount /= len(players)
-    players = db.players.update_many({"$and": [
+    db.players.update_many({"$and": [
         {f"{mode}games.total": {"$gte": 10}},
         {"_id": {"$nin": excluded}},
         ]},
@@ -49,15 +49,13 @@ def decay_all(mode):
     # how often the decay should be applied
     decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
-    players = db.players.find({"$and": [
+    players = db.players.find_many({"$and": [
         {f"{mode}sessionssinceplayed": {"$gte": sessions_threshold}},
         {f"{mode}mmr": {"$gt": decay_threshold}},
 #        {f"{mode}games.total": {"$gte": 9}}
         ]})
     # global spread decay pool
     decay_pool = 0
-    # list of truly decayed players
-    decayed_players = []
     # go through the players and make sure their last day played is also > threshold
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
@@ -77,10 +75,9 @@ def decay_all(mode):
             mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
             # add to pool and decayed players
             decay_pool += decay_amount
-            decayed_players.append(p["_id"])
             print(f"Decayed {p['name']}.")
     if decay_pool:
-        spread_decay(mode, decay_pool, decayed_players)
+        spread_decay(mode, decay_pool, players)
         ranks.main([mode])
     return
 
