@@ -360,7 +360,7 @@ async def lookup_ladder(message):
     Look up and print the leaderboard ladder for a mode.
     """
     mode = message.content.replace("ladder", "").split(" ")[-1]
-    mode = util.check_mode(mode, server=message.guild.id, short=True)
+    mode = util.check_mode(mode, server=message.guild.id, short=True, channel=message.channel.id)
     # try to deal with proper url linking
     mode_link = util.check_mode(mode, short=False)
     mode_link = mode_link.split(" ")[-1]
@@ -400,7 +400,7 @@ async def lookup_synergy(message):
                 track_teams = content[3]
     else:
         mode = None
-    mode = util.check_mode(mode, message.guild.id, short=False).capitalize()
+    mode = util.check_mode(mode, message.guild.id, short=False, channel=message.channel.id).capitalize()
     # since there are two modes that are grouped together to AA
     if "Artifact" in mode:
         mode = "Artifact assault"
@@ -543,7 +543,7 @@ async def team_comps(message, ident):
         mode = str(mode[0])
         mode = util.check_mode(mode, short=True)
     else:
-        mode = util.check_mode(0, message.guild.id, short=True)
+        mode = util.check_mode(0, message.guild.id, short=True, channel=message.channel.id)
 
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
@@ -584,7 +584,7 @@ async def find_lobbies(message):
         temp = msg.split(" ")
         mode = temp[temp.index("mode") + 1]
         msg = msg.replace(" mode " + mode, "")
-    mode = util.check_mode(mode, message.guild.id, short=True)
+    mode = util.check_mode(mode, message.guild.id, short=True, channel=channel.id)
     lobbies = teams.find_lobbies(msg.split(", "), mode, lobby_sizes[mode])
     lobbies = [", ".join(l) for l in lobbies]
     lobbies_text = "\n".join(lobbies)
@@ -653,7 +653,7 @@ async def play_command(msg, user, channel, gid):
         mode = util.check_mode(mode, short=True)
     # if mode is empty use guild ID to auto determine mode
     else:
-        mode = util.check_mode(0, gid, short=True)
+        mode = util.check_mode(0, gid, short=True, channel=message.channel.id)
     
     # now that the rest of the message has been parsed only the player name should be left
     player = msg
@@ -784,7 +784,7 @@ async def print_queue(message):
     msg = message.content.lower()
     msg = msg.replace("queue ", "")
     msg = msg.replace("queue", "")
-    mode = util.check_mode(msg, message.guild.id, short=True)
+    mode = util.check_mode(msg, message.guild.id, short=True, channel=message.channel.id)
     await message.channel.send(f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode]])}")
     return
 
@@ -807,7 +807,7 @@ async def check_remake(message):
         return
     # auto set mode if not given
     elif len(msg) == 4:
-        mode = util.check_mode(0, message.guild.id)
+        mode = util.check_mode(0, message.guild.id, channel=message.channel.id)
     else:
         mode = msg[-1]
     score_1, score_2 = int(msg[0]), int(msg[1])
@@ -1086,7 +1086,7 @@ async def compare_users(message):
         content, mode = content.split(" mode ")
     else:
         mode = None
-    mode = util.check_mode(mode, message.guild.id, short=True)
+    mode = util.check_mode(mode, message.guild.id, short=True, channel=message.channel.id)
     teams_str = content.split(" vs ")
     if len(teams_str) < 2:
         await message.channel.send("Missing a second team. " + util.find_insult())
@@ -1125,7 +1125,7 @@ async def estimate_change(message):
         temp = content.split(" mode ")
         mode = temp[1]
         content = temp[0]
-    mode = util.check_mode(mode, message.guild.id, short=True)
+    mode = util.check_mode(mode, message.guild.id, short=True, channel=message.channel.id)
     # extract players and team comps
     if " vs. " in content:
         ts = content.split(" vs. ")

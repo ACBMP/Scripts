@@ -36,7 +36,7 @@ def identify_player(db, name):
 
 
 # mode checker
-def check_mode(mode, server=None, short=False):
+def check_mode(mode, server=None, short=False, channel=None):
     """
     Identify the mode referred to by parsing the mode string and falling back
     to discord server IDs.
@@ -44,6 +44,7 @@ def check_mode(mode, server=None, short=False):
     :param mode: mode string to parse
     :param server: discord server ID
     :param short: switch between abbreviations and full names
+    :param channel: discord channel ID
     :return: identified mode
     """
     # default modes for servers
@@ -56,8 +57,19 @@ def check_mode(mode, server=None, short=False):
             return "aa" if short else "artifact assault"
         elif server in conf.do_servers:
             return "do" if short else "domination"
+        elif channel:
+            if channel in conf.e_channels:
+                return "e" if short else "escort"
+            elif channel in conf.mh_channels:
+                return "mh" if short else "manhunt"
+            elif channel in conf.aa_channels:
+                return "aa" if short else "artifact assault"
+            elif channel in conf.do_channels:
+                return "do" if short else "domination"
+            else:
+                return "escort"
         else:
-            return "manhunt"
+            return "escort"
     mode = mode.lower()
     # if server wasn't specified use abbreviations
     if mode in ["m", "mh", "manhunt"]:
