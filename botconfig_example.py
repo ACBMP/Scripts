@@ -2,6 +2,8 @@
 discord_id = ""
 admin = #int
 main_server = #int
+main_channel = #int
+mod_role = #int
 e_servers = [] #ints
 mh_servers = [] #ints
 do_servers = [] #ints
