@@ -23,9 +23,14 @@ import subprocess
 import telegram_bot
 from add_badges import readable_badges
 
+# Members intent
+intents = discord.Intents.default()
+intents.members = True
+client = commands.Bot(intents=intents, command_prefix="an")
+
 subprocess.Popen(["python3", "telegram_bot.py"])
 
-client = discord.Client()
+#client = discord.Client()
 
 @client.event
 async def on_ready():
@@ -1194,6 +1199,36 @@ async def reload_modules(message):
     await message.channel.send("Successfully reloaded modules.")
     return
 
+@client.event
+async def on_member_join(member):
+    if member.guild.id == conf.main_server:
+        db = util.connect()
+        user_id = member.mention.replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
+        in_db = db.players.find_one({"discord_id": user_id})
+        if in_db:
+            new_nick = in_db["name"]
+            # ideally I'd like to append badges to names
+            # I prefer that over adding igns
+            await member.edit(nick=new_nick)
+        else:
+            print(f"Couldn't identify user {member.id}")
+            channel = client.get_channel(conf.main_channel)
+            await channel.send(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please ping <@&{conf.mod_role}> with your prefered name, in-game usernames, platforms, and the nation you'd like to represent.")
+    return
+
+@util.permission_locked
+async def rename_all(message):
+    db = util.connect()
+    for member in message.guild.members:
+        if member.id == message.guild.owner.id:
+            continue
+        in_db = db.players.find_one({"discord_id": member.mention.replace("@!", "").replace(">", "").replace("<", "").replace("@", "")})
+        if in_db:
+            print(f"Renaming {in_db['name']}")
+            await member.edit(nick=in_db["name"])
+        else:
+            print(f"Couldn't identify {member.name}")
+    return
 
 @client.event
 async def on_message(message):
@@ -1336,6 +1371,10 @@ async def on_message(message):
 
         if message.content.lower().startswith("reload"):
             await reload_modules(message)
+            return
+        
+        if message.content.lower() == "rename all":
+            await rename_all(message)
             return
      
     elif message.content == "Y":
