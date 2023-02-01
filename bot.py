@@ -653,7 +653,7 @@ async def play_command(msg, user, channel, gid):
         mode = util.check_mode(mode, short=True)
     # if mode is empty use guild ID to auto determine mode
     else:
-        mode = util.check_mode(0, gid, short=True, channel=message.channel.id)
+        mode = util.check_mode(0, gid, short=True, channel=channel.id)
     
     # now that the rest of the message has been parsed only the player name should be left
     player = msg
