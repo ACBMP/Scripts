@@ -20,6 +20,10 @@ def update_sessions(players, mode):
 
 
 def spread_decay(mode, amount, excluded):
+    try:
+        len(excluded)
+    except:
+        return
     if not len(excluded):
         return
     db = connect()
@@ -49,7 +53,7 @@ def decay_all(mode):
     # how often the decay should be applied
     decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
-    players = db.players.find_many({"$and": [
+    players = db.players.find({"$and": [
         {f"{mode}sessionssinceplayed": {"$gte": sessions_threshold}},
         {f"{mode}mmr": {"$gt": decay_threshold}},
 #        {f"{mode}games.total": {"$gte": 9}}
