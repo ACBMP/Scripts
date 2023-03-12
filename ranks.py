@@ -18,19 +18,19 @@ def main(modes=["mh", "e", "aar", "aad", "do"]):
     
         elos = []
     
-        for k, v in itertools.groupby(p_sorted, lambda x: x[f"{mode}mmr"]):
-            elos.append(k)
+        for k, v in itertools.groupby(p_sorted, lambda x: round(x[f"{mode}mmr"])):
+            elos.append(round(k))
     
         for i in elos:
-            p = db.players.find({f"{mode}mmr":i, f"{mode}games.total": {"$gte":10}})
-            for player in p:
-                if player[f"{mode}rank"] == 0:
-                    c = 0
-                else:
-                    c = player[f"{mode}rank"] - r
-                db.players.update_one({"_id":player["_id"]}, {"$set":{f"{mode}rankchange":c}})
-                n += 1
-            db.players.update_many({f"{mode}mmr":i, f"{mode}games.total": {"$gte":10}}, {"$set":{f"{mode}rank":r}})
+            for p in p_sorted:
+                if round(p[f"{mode}mmr"]) == i:
+                    if p[f"{mode}rank"] == 0:
+                        c = 0
+                    else:
+                        c = p[f"{mode}rank"] - r
+                    c = p[f"{mode}rank"] - r
+                    db.players.update_one({"_id":p["_id"]}, {"$set":{f"{mode}rankchange":c, f"{mode}rank":r}})
+                    n += 1
             r += 1 + n
             n = -1
     
