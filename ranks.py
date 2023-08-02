@@ -3,12 +3,14 @@ from util import *
 
 # I have yet to run this so nobody has a rank yet
 
-def main(modes=["mh", "e", "aar", "aad", "do"]):
+def main(modes=None):
     """
     Update ranks for all players with >= 10 games in given modes.
 
     :param modes: modes to run over
     """
+    modes = modes if modes else ALL_MODES
+
     for mode in modes:
         db = connect()
         players = db.players.find({f"{mode}games.total": {"$gte":10}})

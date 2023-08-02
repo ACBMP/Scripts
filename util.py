@@ -3,6 +3,12 @@ import datetime
 import discord
 import random
 
+GAME_MODES = ["e", "mh", "aa", "do", "dm"]
+ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm"]
+TEAM_MODES = ["e", "mh", "aar", "aad", "do"]
+FFA_MODES = ["dm"]
+QUEUEABLE_MODES = ["e", "mh", "do"]
+
 def connect():
     """
     very basic connect to port 27017 mongodb client
@@ -57,6 +63,8 @@ def check_mode(mode, server=None, short=False, channel=None):
             return "aa" if short else "artifact assault"
         elif server in conf.do_servers:
             return "do" if short else "domination"
+        elif server in conf.dm_servers:
+            return "dm" if short else "deathmatch"
         elif channel:
             if channel in conf.e_channels:
                 return "e" if short else "escort"
@@ -66,6 +74,8 @@ def check_mode(mode, server=None, short=False, channel=None):
                 return "aa" if short else "artifact assault"
             elif channel in conf.do_channels:
                 return "do" if short else "domination"
+            elif server in conf.dm_channels:
+                return "dm" if short else "deathmatch"
             else:
                 return "escort"
         else:
@@ -84,14 +94,14 @@ def check_mode(mode, server=None, short=False, channel=None):
         return "aad" if short else "artifact assault defending"
     elif mode in ["do", "domination"]:
         return "do" if short else "domination"
+    elif mode in ["dm", "deathmatch"]:
+        return "dm" if short else "deathmatch"
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 
 def check_mode_ffa(mode):
     mode = check_mode(mode, short=True)
-    if mode in ["aa", "aar", "aad", "mh", "do", "e"]:
-        return False
-    return True
+    return mode in FFA_MODES
 
 def att_to_file(message, n=0):
     """
@@ -181,17 +191,53 @@ def identify_map(name=None, get_map_keys=False):
             "pienza": "Pienza",
             "forli": "Forli",
             "st mathieu": "Saint-Mathieu",
+            "st mathieu1": "Saint-Mathieu DM",
+            "st mathieu2": "Saint-Mathieu DM2",
+            "st mathieu3": "Saint-Mathieu DM3",
             "santa lucia": "Santa Lucia",
+            "santa lucia1": "Santa Lucia DM",
+            "santa lucia2": "Santa Lucia DM2",
+            "santa lucia3": "Santa Lucia DM3",
             "tampa": "Tampa Bay",
+            "tampa1": "Tampa Bay DM",
+            "tampa2": "Tampa Bay DM2",
+            "tampa3": "Tampa Bay DM3",
             "havana": "Havana",
+            "havana1": "Havana DM",
+            "havana2": "Havana DM2",
+            "havana3": "Havana DM3",
             "kingston": "Kingston",
+            "kingston1": "Kingston DM",
+            "kingston2": "Kingston DM2",
+            "kingston3": "Kingston DM3",
             "palenque": "Palenque",
+            "palenque1": "Palenque DM",
+            "palenque2": "Palenque DM2",
+            "palenque3": "Palenque DM3",
             "portobelo": "Portobelo",
+            "portobelo1": "Portobelo DM",
+            "portobelo2": "Portobelo DM2",
+            "portobelo3": "Portobelo DM3",
             "prison": "Prison",
+            "prison1": "Prison DM",
+            "prison2": "Prison DM2",
+            "prison3": "Prison DM3",
             "plantation": "Virginian Plantation",
+            "plantation1": "Virginian Plantation DM",
+            "plantation2": "Virginian Plantation DM2",
+            "plantation3": "Virginian Plantation DM3",
             "saba": "Saba Island",
+            "saba1": "Saba Island DM",
+            "saba2": "Saba Island DM2",
+            "saba3": "Saba Island DM3",
             "st pierre": "Saint Pierre",
+            "st pierre1": "Saint Pierre DM",
+            "st pierre2": "Saint Pierre DM2",
+            "st pierre3": "Saint Pierre DM3",
             "charlestown": "Charlestown",
+            "charlestown1": "Charlestown DM",
+            "charlestown2": "Charlestown DM2",
+            "charlestown3": "Charlestown DM3",
             }
     # return the map keys if needed
     if get_map_keys:
