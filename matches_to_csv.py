@@ -37,4 +37,5 @@ if __name__ == '__main__':
     for m in GAME_MODES:
         mode = check_mode(m, short=False)
         df = read_mongo('public', 'matches', {'mode': m}, 'localhost', 27017)
-        df.to_csv(f'/home/dell/AN_Flask/static/matches_{m.replace(" ", "_")}.csv', index=False)
+        df.to_csv(f"/home/dell/AN_Flask/static/matches_{m.lower().replace(' ', '_')}.csv", index=False)
+
