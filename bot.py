@@ -7,7 +7,7 @@ import teams
 import util
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from functools import partial
 import AC_Score_OCR
 import requests
@@ -622,7 +622,7 @@ async def queue_rm(mode, user, player, channel):
 
 # add player to play queue command
 # this is the most poorly written function in here honestly
-@util.command_dec
+#@util.command_dec
 async def play_command(msg, user, channel, gid):
     # parse the message for times
     # only support hours for simplicity's sake
@@ -720,7 +720,7 @@ async def play_command(msg, user, channel, gid):
     # if a start time was specified we add a job to the scheduler
     # the 1s timedelta is in case the script lags for a second
     if start > 0:
-        try:
+        try: 
             end_time_add = datetime.isoformat(datetime.now() + timedelta(seconds = 1, hours = start))
             scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + f"_{mode}_start")
             await channel.send(f"Will add {player} to the queue in {start} hour(s).")
@@ -782,6 +782,24 @@ async def queue_rm_command(msg, user, channel):
     return
 
 
+def get_job_eta(job):
+    """
+    Extract job ETA as days, hours, minutes.
+    """
+    futures = ""
+    st = job.trigger.start_date
+    td = st - datetime.now(timezone.utc)
+    days = td.days
+    if days > 0:
+        futures += f"{days} days, "
+    hours, remainder = divmod(td.seconds, 3600)
+    if hours > 0:
+        futures += f"{hours} hours, "
+    minutes, seconds = divmod(remainder, 60)
+    if minutes > 0:
+        futures += f"{minutes} minutes"
+    return futures
+
 # command to print the whole queue for a mode
 # very simple
 @util.command_dec
@@ -790,7 +808,24 @@ async def print_queue(message):
     msg = msg.replace("queue ", "")
     msg = msg.replace("queue", "")
     mode = util.check_mode(msg, message.guild.id, short=True, channel=message.channel.id)
-    await message.channel.send(f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {', '.join([p for p in queues[mode]])}")
+    jobs = scheduler.get_jobs()
+    if len(jobs) > 0:
+        current = ""
+        for p in queues[mode]:
+            if current:
+                current += ", "
+            current += f"{p} (for {get_job_eta(scheduler.get_job(f'{p}_{mode}_remove'))})"
+        futures = "\n"
+        for job in jobs:
+            if job.id.endswith("_start"):
+                futures += job.id[:-7 - len(mode)] + " in "
+                futures += get_job_eta(job)
+                futures += "\n"
+    else:
+        futures = ""
+        current = ", ".join(queues[mode])
+    response = f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {current}"
+    await message.channel.send(response + futures)
     return
 
 

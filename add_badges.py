@@ -212,4 +212,36 @@ if __name__ == "__main__":
 #    add_badge("Jelko", "2022-11-01", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
     add_badge("Sugarfree", "2022-11-01", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
 
+    season = 4
+
+    add_badge("piesio1", "2023-05-01", "1st", "AA Defending", season)
+    add_badge("Edi", "2023-05-01", "2nd", "AA Defending", season)
+    add_badge("dreamkiller2000", "2023-05-01", "3rd", "AA Defending", season)
+    add_badge("Sugarfree", "2023-05-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+
+    add_badge("Sugarfree", "2023-05-01", "1st", "AA Running", season)
+    add_badge("Onyxies", "2023-05-01", "2nd", "AA Running", season)
+    add_badge("Dusk", "2023-05-01", "3rd", "AA Running", season)
+    add_badge("dreamkiller2000", "2023-05-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+
+    add_badge("Edi", "2023-05-01", "1st", "Domination", season)
+    add_badge("Rorce", "2023-05-01", "2nd", "Domination", season)
+    add_badge("Lunaire.-", "2023-05-01", "3rd", "Domination", season)
+    add_badge("Jelko", "2023-05-01", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Sugarfree", "2023-05-01", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Onyxies", "2023-05-01", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Lars", "2023-05-01", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Xanthex", "2023-05-01", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+
+    add_badge("Dellpit", "2023-05-01", "1st", "Manhunt", season)
+    add_badge("Auditore92", "2023-05-01", "2nd", "Manhunt", season)
+    add_badge("DevelSpirit", "2023-05-01", "3rd", "Manhunt", season)
+    add_badge("EternityEzioWolf", "2023-05-01", "All-Star", "Manhunt", season, f"Season {season} Manhunt All-Star")
+    add_badge("xCanibal96", "2023-05-01", "All-Star", "Manhunt", season, f"Season {season} Manhunt All-Star")
+    add_badge("Ted95On", "2023-05-01", "All-Star", "Manhunt", season, f"Season {season} Manhunt All-Star")
+
+    add_badge("Tha Fazz", "2023-05-01", "1st", "Escort", season)
+    add_badge("Dellpit", "2023-05-01", "2nd", "Escort", season)
+    add_badge("Ted95On", "2023-05-01", "3rd", "Escort", season)
+    add_badge("Crispi Kreme", "2023-05-01", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
 

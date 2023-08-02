@@ -35,4 +35,4 @@ def read_mongo(db, collection, query={}, host='localhost', port=27017, username=
 if __name__ == '__main__':
     for m in ["Escort", "Manhunt", "Domination", "Artifact assault"]:
         df = read_mongo('public', 'matches', {'mode': m}, 'localhost', 27017)
-        df.to_csv(f'/home/dell/AN_Flask/static/matches_{m.lower().replace(" ", "_")}.csv', index=False)
+        df.to_csv(f"/home/dell/AN_Flask/static/matches_{m.lower().replace(' ', '_')}.csv", index=False)
