@@ -333,10 +333,10 @@ async def lookup_user(message):
                 user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \
                                Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
                                Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
-                if mode == 'dm' or 'assa' in mode:
-                    user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
                 user_stats += "Games Played: {player_db[f'{mode}games']['total']}\n"
-                if 'aa' not in mode:
+                if mode in util.FFA_MODES:
+                    user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
+                elif 'aa' not in mode:
                     embedVar.add_field(name=modes_dict[mode], value=user_stats +
                     f"K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
                      Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
