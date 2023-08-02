@@ -6,7 +6,7 @@ import ranks
 def introduce_num_sessions():
     db = connect()
     today = date.today().strftime("%Y-%m-%d")
-    for mode in ["e", "mh", "aar", "aad", "do"]:
+    for mode in ALL_MODES:
         db.players.update_many({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
         db.players.update_many({}, {"$set": {f"{mode}lastdecay": today}})
     print("Done.")
@@ -87,6 +87,6 @@ def decay_all(mode):
 
 
 if __name__ == "__main__":
-    for mode in ["e", "mh", "aar", "aad", "do"]:
+    for mode in ALL_MODES:
         decay_all(mode)
     print("Done decaying.")
