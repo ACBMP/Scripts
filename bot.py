@@ -127,7 +127,7 @@ async def send_long_message(content, channel):
 # otherwise it shows Wanted 6/9
 async def update_presence():
     presence = ""
-    for mode in ["e", "mh", "do"]:
+    for mode in util.QUEUEABLE_MODES:
         if len(queues[mode]):
             if presence:
                 presence += ", "
@@ -327,7 +327,7 @@ async def lookup_user(message):
         if len(badges) > 0:
             embedVar.add_field(name="Achievements", value=badges, inline=False)
         top_elo = 0
-        for mode in modes_list:
+        for mode in util.ALL_MODES:
             if player_db[f"{mode}games"]["total"] > 0:
                 top_elo = round(max(top_elo, player_db[f'{mode}mmr']))
                 user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \

@@ -23,7 +23,8 @@ def read_and_update():
     today = date.today().strftime("%Y-%m-%d")
     f = open(conf.RAU_FILE_PATH + conf.RAU_FILE_NAME,'r')
     # keep track of whether a mode was played
-    modes = {"mh": False, "e": False, "aa": False, "do": False}
+    mode_tracker = {k:False for k in GAME_MODES}
+
     for line in f:
         if line=="#":
             print("No new data to be added")
@@ -58,39 +59,53 @@ def read_and_update():
                             raise ValueError("Could not identify host or map!")
 
             #mode
-            if csv_entry[0] in ["M", "E", "AA", "DO"]:
+            if csv_entry[0] in GAME_MODES:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
                 # the replace is a bit stupid because we use both M and MH for manhunt
-                modes[csv_entry[0].lower().replace("m", "mh")] = True
+                mode_tracker[csv_entry[0].lower().replace("m", "mh")] = True
             else:
                 print("Error in the \'mode\' field!")
                 continue
             #outcome
-            entry_dict["outcome"]=int(csv_entry[2])
-        
-            #players
-            number_of_players = int(csv_entry[1])
-            teams = [[], []]
-            for index in range(0, number_of_players):
-                teams[0].append(csv_entry[3 + index])
-            for index in range(0, number_of_players):
-                teams[1].append(csv_entry[3 + number_of_players + index])
-
-            for i in range(2):
-                team_n = f"team{i + 1}"
-                entry_dict[team_n] = []
-                for entry in teams[i]:
+            if entry_dict["mode"] in FFA_MODES:
+                csv_entry.pop(0)
+                for entry in csv_entry:
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
                     temp_dict["player"] = identify_player(db, temp_list[0])["name"]
                     if host_player and temp_dict["player"] == host_player:
-                        entry_dict["hostteam"] = i + 1
+                        temp_dict["host"] = True
                     temp_dict["score"] = int(temp_list[1])
                     temp_dict["kills"] = int(temp_list[2])
                     temp_dict["deaths"] = int(temp_list[3])
-                    if csv_entry[0] == "AA":
-                        temp_dict["scored"] = int(temp_list[4])
-                    entry_dict[team_n].append(temp_dict)
+                    entry_dict["players"].append(temp_dict)
+            
+            else:
+                entry_dict["outcome"]=int(csv_entry[2])
+        
+                #players
+                number_of_players = int(csv_entry[1])
+                teams = [[], []]
+                for index in range(0, number_of_players):
+                    teams[0].append(csv_entry[3 + index])
+                for index in range(0, number_of_players):
+                    teams[1].append(csv_entry[3 + number_of_players + index])
+
+                for i in range(2):
+                    team_n = f"team{i + 1}"
+                    entry_dict[team_n] = []
+                    for entry in teams[i]:
+                        temp_dict = {}
+                        temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
+                        temp_dict["player"] = identify_player(db, temp_list[0])["name"]
+                        if host_player and temp_dict["player"] == host_player:
+                            entry_dict["hostteam"] = i + 1
+                        temp_dict["score"] = int(temp_list[1])
+                        temp_dict["kills"] = int(temp_list[2])
+                        temp_dict["deaths"] = int(temp_list[3])
+                        if csv_entry[0] == "AA":
+                            temp_dict["scored"] = int(temp_list[4])
+                        entry_dict[team_n].append(temp_dict)
             
             # add current date
             entry_dict["date"] = today
@@ -103,7 +118,7 @@ def read_and_update():
     f = open(conf.RAU_FILE_PATH + conf.RAU_FILE_NAME,'w')
     f.write("#")
     f.close()
-    return modes
+    return mode_tracker
 
 def main():
     """
