@@ -21,7 +21,7 @@ def add_ffa_mode(mode):
     d = date.today().strftime("%y-%m-%d")
     mmr = 800
     history = {"dates": [d], "mmrs": [mmr]}
-    games = {"total": 0, "won": 0, "podiums": 0, "lost": 0}
+    games = {"total": 0, "won": 0, "podium": 0, "lost": 0}
     stats = {"highscore": 0, "kills": 0, "deaths": 0, "totalscore": 0}
     rank = 0
     rankchange = 0
