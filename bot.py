@@ -40,14 +40,15 @@ async def on_ready():
 scheduler = AsyncIOScheduler()
 scheduler.start()
 
-modes_list = ['e', 'mh', 'aar', 'aad', 'do']
+modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm']
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
         'aar' : 'AA Running',
         'aad' : 'AA Defending',
         'aa' : 'Artifact Assault',
-        'do' : 'Domination'
+        'do' : 'Domination',
+        'dm' : 'Deathmatch'
         }
 
 # we save the queues here as simple arrays since we don't expect to scale
@@ -126,7 +127,7 @@ async def send_long_message(content, channel):
 # otherwise it shows Wanted 6/9
 async def update_presence():
     presence = ""
-    for mode in ["e", "mh", "do"]:
+    for mode in util.QUEUEABLE_MODES:
         if len(queues[mode]):
             if presence:
                 presence += ", "
@@ -326,14 +327,15 @@ async def lookup_user(message):
         if len(badges) > 0:
             embedVar.add_field(name="Achievements", value=badges, inline=False)
         top_elo = 0
-        for mode in modes_list:
+        for mode in util.ALL_MODES:
             if player_db[f"{mode}games"]["total"] > 0:
                 top_elo = round(max(top_elo, player_db[f'{mode}mmr']))
                 user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \
                                Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                               Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['lost'] + player_db[f'{mode}games']['won']) * 100)}% \n \
-                               Games Played: {player_db[f'{mode}games']['total']}\n"
-
+                               Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
+                if mode == 'dm' or 'assa' in mode:
+                    user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
+                user_stats += "Games Played: {player_db[f'{mode}games']['total']}\n"
                 if 'aa' not in mode:
                     embedVar.add_field(name=modes_dict[mode], value=user_stats +
                     f"K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
