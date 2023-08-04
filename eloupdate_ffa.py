@@ -133,9 +133,8 @@ def mean_opponent_rating(player, ratings):
 
     for opponent in range(len(ratings)):
         if opponent != player:
-            opponents.append(ratings[player])
-        mean = sum(opponents) / len(opponents)
-        diffs.append(abs(ratings[player] - mean))
+            opponents.append(ratings[opponent])
+            diffs.append(abs(ratings[player] - ratings[opponent]))
     weights = []
     for d in diffs:
         try:
