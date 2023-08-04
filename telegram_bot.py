@@ -40,19 +40,23 @@ def main():
         player = " ".join(context.args)
         if player:
             try:
-                player = identify_player(db, player)["name"]
+                player = identify_player(db, player)
             except:
                 context.bot.send_message(chat_id=update.effective_chat.id,
-                        text=f"Could not identify player {player}. Please check that it matches the username on https://assassins.network/profiles.")
+                        text=f"Could not identify player {player['name']}. Please check that it matches the username on https://assassins.network/profiles.")
                 return
         else:
             context.bot.send_message(chat_id=update.effective_chat.id,
                     text=f"No username specified. Please try again.")
             return
         # we have no way of verifying users but luckily we're small enough it doesn't matter
-        db.players.update_one({"name": player}, {"$set": {"telegram_id": update.message.chat_id}})
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                text=f"Successfully tied chat to AN account: {player}.")
+        if player["telegram_id"] == "":
+            db.players.update_one({"name": player["name"]}, {"$set": {"telegram_id": update.message.chat_id}})
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                    text=f"Successfully tied chat to AN account: {player['name']}.")
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                    text=f"Could not tie to AN account {player['name']}, as it already has a Telegram account tied to it. Please contact an administrator for help.")
         return
 
     updater = Updater(telegram_token, use_context=True)
