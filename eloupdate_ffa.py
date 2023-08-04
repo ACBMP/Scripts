@@ -108,7 +108,7 @@ def stomp_mmr_boost(scores: List[int], ref_score: int = None):
             return max(abs(scores[1] - scores[1]) - 1, 0) / ref_score
         return 0
     
-def weighted_mean(ratings):
+def weigh_ratings(ratings):
     """
     Weighted arithmetic mean.
     Weights are calculated based on players' MMRs compared to the opposing
@@ -137,7 +137,7 @@ def weighted_mean(ratings):
     if w_sum == 0:
         w_sum = len(ratings)
         weights = [1] * len(ratings)
-    return sum([ratings[_] * weights[_] for _ in range(len(ratings))]) / sum(weights), weights
+    return [ratings[_] * weights[_] for _ in range(len(ratings))], weights
 
 
 def get_result(position: int, players: int):
@@ -159,8 +159,8 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     ratings = list(map(lambda player: player.get_mmr(match.mode, db_conn), match.players))
     scores = list(map(lambda player: player.score, match.players))
-    #weighted_ratings = [weighted_mean(ratings)]
-    expected_outcomes = expected_results(ratings)
+    weighted_ratings = weigh_ratings(ratings)[0]
+    expected_outcomes = expected_results(weighted_ratings)
     results = []
 
     for p in range(len(match.players)):
