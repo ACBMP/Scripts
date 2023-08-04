@@ -165,10 +165,11 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     for p in range(len(match.players)):
         player = match.players[p]
-        pos = p - 1 if p > 0 and match.players[p].score == match.players[p-1].score else p
-        result = get_result(pos + 1, len(match.players))
+        pos = p if p > 0 and match.players[p].score == match.players[p-1].score else p+1
+        result = get_result(pos, len(match.players))
         results.append({
-                    "name": player.player,
+                    "player": player.dict(),
+                    "pos": pos,
                     "mmr": int(round(new_mmr(
                             current_mmr=ratings[p],
                             result=result,
@@ -196,46 +197,44 @@ def new_matches():
 
     for m in matches:
         match = Match(**m)
+
+        mode = check_mode(match.mode, short=True)
+        if mode not in FFA_MODES:
+            continue
+
         results = player_ratings(match=m, db_conn=db, ref=None)
         
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
         #Updating the relevant MMR
         
-        mode = check_mode(match.mode, short=True)
-        if mode not in FFA_MODES:
-            continue
-
-        for resultentry in results:
+        for result in results:
             db.players.update_one({
-                    "name": resultentry["name"]
+                    "name": result["player"]["player"]
                 }, {
                     "$set": {
                         f"{mode}mmr":
-                        resultentry["mmr"]
+                        result["mmr"]
                     }})
-
-            for i in range(len(match.players)):
-                pos = i+1
-                player = match.players[i]
-                db.players.update_one({
-                        "ign": player.player
-                    }, {
-                        "$inc": {
-                            f"{mode}games.total": 1,
-                            f"{mode}games.won": 1 if pos == 1 else 0,
-                            f"{mode}games.lost": 1 if pos != 1 else 0,
-                            f"{mode}games.podium": 1 if pos <= 3 else 0,
-                            f"{mode}games.finishes": pos,
-                            f"{mode}stats.totalscore": player.score,
-                            f"{mode}stats.kills": player.kills,
-                            f"{mode}stats.deaths": player.deaths
-                            }})
+            player = Player(**result["player"])
+            db.players.update_one({
+                "ign": player.player
+                }, {
+                "$inc": {
+                    f"{mode}games.total": 1,
+                    f"{mode}games.won": 1 if result["pos"] == 1 else 0,
+                    f"{mode}games.lost": 1 if result["pos"] != 1 else 0,
+                    f"{mode}games.podium": 1 if result["pos"] <= 3 else 0,
+                    f"{mode}games.finishes": result["pos"],
+                    f"{mode}stats.totalscore": player.score,
+                    f"{mode}stats.kills": player.kills,
+                    f"{mode}stats.deaths": player.deaths
+                }})
     
-                if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
-                    db.players.update_one({
-                            "ign": player.player
-                        }, {
-                            "$set": {f"{mode}stats.highscore": player.score}})
+            if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
+                db.players.update_one({
+                    "ign": player.player
+                }, {
+                    "$set": {f"{mode}stats.highscore": player.score}})
        
         db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
         print("Match updated successfully!")
