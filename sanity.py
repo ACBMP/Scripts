@@ -32,8 +32,9 @@ def sanity_check(data):
         if not game.split():
             continue
         players = game.split(", ")
-        mode = str(players[0]).lower()
+        mode = players[0]
         map_name = None
+        host_player = None
         if "$" in mode:
             temp = mode.split("$")
             mode = temp[0]
@@ -48,7 +49,7 @@ def sanity_check(data):
                         host_player = identify_player(db, temp[1])
                     except:
                         out += f"Unknown map or host detected in:\n{game}\n"
-
+        mode = str(mode).lower()
         # sanity check mode
         if mode not in GAME_MODES:
             out += f"Unknown mode {mode} detected in:\n{game}\n"
@@ -59,13 +60,7 @@ def sanity_check(data):
                 identify_map(map_name)
             except:
                 out += f"Unknown map detected in:\n{game}\n"
-        # sanity check host player
-        if host_player:
-            try:
-                identify_player(db, host_player)
-            except:
-                out += f"Unknown host detected in:\n{game}\n"
-        
+
         num_delim = 3
         all_gamers = []
 
@@ -85,7 +80,7 @@ def sanity_check(data):
             deaths = [0, 0]
             # team index
             i = 0
-            if mode == "AA":
+            if mode == "aa":
                 num_delim += 1
 
         else:
@@ -113,7 +108,7 @@ def sanity_check(data):
                 all_gamers.append(player[0])
 
             # sum score
-            if mode != "AA":
+            if mode != "aa":
                 try:
                     if mode not in FFA_MODES:
                         score[i] += int(player[1])
@@ -151,8 +146,17 @@ def sanity_check(data):
                 if j == num_players - 1:
                     i = 1
         
+        # sanity check host player
+        if host_player:
+            try:
+                identify_player(db, host_player)
+                if host_player not in all_gamers:
+                    out += f"{host_player} is host yet not found in player list for {game}"
+            except:
+                out += f"Unknown host detected in:\n{game}\n"
+
         # k/d check unfortunately doesn't work for console escort
-        if mode != "E":
+        if mode != "e":
             if mode not in FFA_MODES:
                 # sanity check k/d
                 for i in range(2):
@@ -163,7 +167,7 @@ def sanity_check(data):
                 out += f"Incorrect kill/death count detected in:\n{game}\n"
 
         # sanity check score and outcome
-        if mode not in FFA_MODES and mode != "DO":
+        if mode not in FFA_MODES and mode != "do":
             if outcome > 0:
                 if max(score) != score[outcome - 1]:
                     out += f"Incorrect score/outcome detected in:\n{game}\n"
