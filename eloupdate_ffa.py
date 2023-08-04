@@ -210,7 +210,7 @@ def new_matches():
             db.players.update_one({
                     "name": result["player"]["player"]
                 }, {
-                    "$inc": {
+                    "$set": {
                         f"{mode}mmr":
                         result["mmr"]
                     }})
@@ -218,7 +218,7 @@ def new_matches():
             db.players.update_one({
                 "ign": player.player
                 }, {
-                "$set": {
+                "$inc": {
                     f"{mode}games.total": 1,
                     f"{mode}games.won": 1 if result["pos"] == 1 else 0,
                     f"{mode}games.lost": 1 if result["pos"] != 1 else 0,
