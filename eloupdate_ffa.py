@@ -151,7 +151,7 @@ def mean_opponent_rating(player, ratings):
 
 def get_result(position: int, players: int):
     f_x = lambda x: 2.144033**x -1
-    x_val = list(np.linspace(1, 0, players))[position]
+    x_val = list(np.linspace(1, 0, players))[position-1]
     return f_x(x_val)
     #return ((1.1 ** (players - position)) - 1) \
     #    / (1.1**(players-1) - 1)
