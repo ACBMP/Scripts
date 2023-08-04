@@ -139,7 +139,7 @@ def get_result(position: int, players: int):
     return ((1.1 ** (players - position)) - 1) \
         / (1.1**(players-1) - 1)
 
-def player_ratings(match: Match, ref=None):
+def player_ratings(match: Match, db_conn, ref=None):
     """
     Calculate new ratings for all players in a match.
 
@@ -152,7 +152,7 @@ def player_ratings(match: Match, ref=None):
     if isinstance(match, dict):
         match = Match(**match)
 
-    ratings = list(map(lambda player: player.get_mmr(), match.players))
+    ratings = list(map(lambda player: player.get_mmr(db_conn, match.mode), match.players))
     scores = list(map(lambda player: player.score, match.players))
     expected_outcomes = expected_results(weighted_mean(ratings))
     results = []
@@ -190,7 +190,7 @@ def new_matches():
 
     for m in matches:
         match = Match(**m)
-        results = player_ratings(match=m, ref=None)        
+        results = player_ratings(match=m, db_conn=db, ref=None)
         
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
         #Updating the relevant MMR
