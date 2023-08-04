@@ -20,7 +20,6 @@ class Match(BaseModel):
     players: List[Player]
     new: bool
     mode: str
-    outcome: float
     players: List[Player]
 
 def expected_results(ratings: List[int]):
