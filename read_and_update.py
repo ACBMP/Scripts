@@ -143,11 +143,7 @@ def main():
     ranks.main(rmodes)
     for key in mkeys:
         if modes[key]:
-            if key == "aa":
-                pass
-                #tweet.tweet("aar")
-                #tweet.tweet("aad")
-            else:
+            if key in ["e", "mh"]:
                 tweet.tweet(key)
 
 if __name__=="__main__":
