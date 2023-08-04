@@ -27,23 +27,34 @@ class Match(BaseModel):
     mode: str
     players: List[Player]
 
-def expected_results(ratings: List[int]):
-    """
-    Expected win chance based on MMRs.
+# def expected_results(ratings: List[int]):
+#     """
+#     Expected win chance based on MMRs.
 
-    :param ratings: list or tuple containing the two MMRs to compare
-    :return: win chance for first MMR in ratings
-    """
+#     :param ratings: list or tuple containing the two MMRs to compare
+#     :return: win chance for first MMR in ratings
+#     """
+#     expected_outcomes = []
+#     for player in range(len(ratings)):
+#         expected = 0
+#         p_rating = ratings[player]
+#         for opponent in range(len(ratings)):
+#             if opponent != player:
+#                 o_rating = ratings[opponent]
+#                 expected += ((1 + 10 ** ((p_rating - o_rating) / 400)) ** -1) * 1/(len(ratings)-1)
+#         expected_outcomes.append(expected)
+#     return expected_outcomes
+
+def expected_results(ratings: List[int]):
     expected_outcomes = []
-    for player in range(len(ratings)):
-        expected = 0
-        p_rating = ratings[player]
-        for opponent in range(len(ratings)):
-            if opponent != player:
-                o_rating = ratings[opponent]
-                expected += ((1 + 10 ** ((p_rating - o_rating) / 400)) ** -1) * 1/(len(ratings)-1)
+
+    for p in range(len(ratings)):
+        mean_opponents = mean_opponent_rating(p, ratings)
+        p_rating = ratings[p]
+        expected = ((1 + 10 ** ((p_rating - mean_opponents) / 400)) ** -1)
         expected_outcomes.append(expected)
     return expected_outcomes
+
 
 def new_mmr(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
             scores: List[int] = None, stomp_ref: int = None):
@@ -107,7 +118,7 @@ def stomp_mmr_boost(scores: List[int], ref_score: int = None):
             return max(abs(scores[1] - scores[1]) - 1, 0) / ref_score
         return 0
     
-def weigh_ratings(ratings):
+def mean_opponent_rating(player, ratings):
     """
     Weighted arithmetic mean.
     Weights are calculated based on players' MMRs compared to the opposing
@@ -118,14 +129,13 @@ def weigh_ratings(ratings):
     :return: weighted mean of ratings, weights used
     """
     diffs = []
-    for player in range(len(ratings)):
-        p_rating = ratings[player]
-        opponents = []
-        for opponent in range(len(ratings)):
-            if opponent != player:
-                opponents.append(ratings[player])
+    opponents = []
+
+    for opponent in range(len(ratings)):
+        if opponent != player:
+            opponents.append(ratings[player])
         mean = sum(opponents) / len(opponents)
-        diffs.append(abs(p_rating - mean))
+        diffs.append(abs(ratings[player] - mean))
     weights = []
     for d in diffs:
         try:
@@ -136,8 +146,7 @@ def weigh_ratings(ratings):
     if w_sum == 0:
         w_sum = len(ratings)
         weights = [1] * len(ratings)
-    return [ratings[_] * weights[_] for _ in range(len(ratings))], weights
-
+    return sum([opponents[_] * weights[_] for _ in range(len(opponents))])/w_sum, weights
 
 def get_result(position: int, players: int):
     return ((1.1 ** (players - position)) - 1) \
@@ -158,8 +167,7 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     ratings = list(map(lambda player: player.get_mmr(match.mode, db_conn), match.players))
     scores = list(map(lambda player: player.score, match.players))
-    weighted_ratings = weigh_ratings(ratings)[0]
-    expected_outcomes = expected_results(weighted_ratings)
+    expected_outcomes = expected_results(ratings)
     results = []
 
     for p in range(len(match.players)):
