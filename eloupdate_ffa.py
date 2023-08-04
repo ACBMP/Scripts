@@ -26,7 +26,6 @@ class Match(BaseModel):
     players: List[Player]
     new: bool
     mode: str
-    players: List[Player]
 
 def expected_results(ratings: List[int]):
     """
