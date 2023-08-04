@@ -214,16 +214,17 @@ def new_matches():
                         resultentry["mmr"]
                     }})
 
-            for i in range(1, len(match.players) + 1):
+            for i in range(len(match.players)):
+                pos = i+1
                 player = match.players[i]
                 db.players.update_one({
                         "ign": player.player
                     }, {
                         "$inc": {
                             f"{mode}games.total": 1,
-                            f"{mode}games.won": 1 if i == 1 else 0,
-                            f"{mode}games.lost": 1 if i != 1 else 0,
-                            f"{mode}games.podium": 1 if i <= 3 else 0,
+                            f"{mode}games.won": 1 if pos == 1 else 0,
+                            f"{mode}games.lost": 1 if pos != 1 else 0,
+                            f"{mode}games.podium": 1 if pos <= 3 else 0,
                             f"{mode}stats.totalscore": player.score,
                             f"{mode}stats.kills": player.kills,
                             f"{mode}stats.deaths": player.deaths
