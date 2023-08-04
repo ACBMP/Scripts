@@ -59,15 +59,15 @@ def read_and_update():
                             raise ValueError("Could not identify host or map!")
 
             #mode
-            if csv_entry[0] in GAME_MODES:
+            try:
                 entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
                 # the replace is a bit stupid because we use both M and MH for manhunt
                 mode_tracker[csv_entry[0].lower().replace("m", "mh")] = True
-            else:
+            except ValueError:
                 print("Error in the \'mode\' field!")
                 continue
             #outcome
-            if entry_dict["mode"] in FFA_MODES:
+            if check_mode(entry_dict["mode"], short=True) in FFA_MODES:
                 csv_entry.pop(0)
                 for entry in csv_entry:
                     temp_dict = {}
