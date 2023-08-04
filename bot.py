@@ -819,7 +819,7 @@ async def print_queue(message):
             current += f"{p} (for {get_job_eta(scheduler.get_job(f'{p}_{mode}_remove'))})"
         futures = "\n"
         for job in jobs:
-            if job.id.endswith("_start"):
+            if job.id.endswith(f"{mode}_start"):
                 futures += job.id[:-7 - len(mode)] + " in "
                 futures += get_job_eta(job)
                 futures += "\n"
