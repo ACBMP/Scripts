@@ -216,7 +216,7 @@ def new_matches():
                     }})
             player = Player(**result["player"])
             db.players.update_one({
-                "ign": player.player
+                "name": player.get_db_data(db)["name"]
                 }, {
                 "$inc": {
                     f"{mode}games.total": 1,
