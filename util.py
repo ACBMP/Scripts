@@ -233,7 +233,7 @@ def identify_map(name=None, get_map_keys=False):
             "charlestown": "Charlestown",
             "charlestown1": "Charlestown DM",
             "charlestown2": "Charlestown DM2",
-            "charlestown3": "Charlestown DM3",
+            "charlestown3": "Charlestown DM3"
             }
     # return the map keys if needed
     if get_map_keys:
