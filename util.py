@@ -99,10 +99,6 @@ def check_mode(mode, server=None, short=False, channel=None):
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 
-def check_mode_ffa(mode):
-    mode = check_mode(mode, short=True)
-    return mode in FFA_MODES
-
 def att_to_file(message, n=0):
     """
     Convert discord attachment to file.

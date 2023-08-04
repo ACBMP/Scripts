@@ -42,7 +42,7 @@ def expected_results(ratings: List[int]):
     return expected_outcomes
 
 def new_mmr(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
-            scores: list[int] = None, stomp_ref: int = None):
+            scores: List[int] = None, stomp_ref: int = None):
     """
     Function to calculate new MMR.
 
@@ -196,7 +196,7 @@ def new_matches():
         #Updating the relevant MMR
         
         mode = check_mode(match.mode, short=True)
-        if not check_mode_ffa(mode):
+        if mode not in FFA_MODES:
             continue
 
         for resultentry in results:
