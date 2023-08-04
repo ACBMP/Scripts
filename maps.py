@@ -56,7 +56,10 @@ def update_maps():
         # wins + 1
         stats[f'{smode}.games'] = 1
         # save number of players
-        stats[f'{smode}.players'] = len(match["team1"]) * 2
+        if ffa:
+            stats[f'{smode}.players'] = len(match["players"])
+        else:
+            stats[f'{smode}.players'] = len(match["team1"]) * 2
         db.maps.update_one({"name": map_name}, {"$inc": stats})
     return
 
