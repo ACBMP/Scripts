@@ -2,6 +2,7 @@ from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from util import *
 from pydantic import BaseModel
+import numpy as np
 from typing import List
 
 class Player(BaseModel):
@@ -149,8 +150,11 @@ def mean_opponent_rating(player, ratings):
     return sum([opponents[_] * weights[_] for _ in range(len(opponents))])/w_sum
 
 def get_result(position: int, players: int):
-    return ((1.1 ** (players - position)) - 1) \
-        / (1.1**(players-1) - 1)
+    f_x = lambda x: 2.144033**x -1
+    x_val = list(np.linspace(1, 0, players))[position]
+    return f_x(x_val)
+    #return ((1.1 ** (players - position)) - 1) \
+    #    / (1.1**(players-1) - 1)
 
 def player_ratings(match: Match, db_conn, ref=None):
     """
