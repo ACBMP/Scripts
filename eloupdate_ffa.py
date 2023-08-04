@@ -30,10 +30,10 @@ def expected_results(ratings: List[int]):
     :return: win chance for first MMR in ratings
     """
     expected_outcomes = []
-    for player in range(ratings):
+    for player in range(len(ratings)):
         expected = 0
         p_rating = ratings[player]
-        for opponent in range(ratings):
+        for opponent in range(len(ratings)):
             if opponent != player:
                 o_rating = ratings[opponent]
                 expected += ((1 + 10 ** ((p_rating - o_rating) / 400)) ** -1) * 1/len(ratings-1)
@@ -117,7 +117,7 @@ def weighted_mean(ratings):
     for player in range(len(ratings)):
         p_rating = ratings[player]
         opponents = []
-        for opponent in range(ratings):
+        for opponent in range(len(ratings)):
             if opponent != player:
                 opponents.append(ratings[player])
         mean = sum(opponents) / len(opponents)
