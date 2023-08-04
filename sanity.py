@@ -67,6 +67,7 @@ def sanity_check(data):
                 out += f"Unknown host detected in:\n{game}\n"
         
         num_delim = 3
+        all_gamers = []
 
         if mode not in FFA_MODES:
             num_players = int(players[1])
@@ -86,14 +87,13 @@ def sanity_check(data):
             i = 0
             if mode == "AA":
                 num_delim += 1
-            all_gamers = []
 
         else:
             kills = 0
             deaths = 0
             score = 0
             gamers = players[1:]
-        
+
         for j in range(len(gamers)):
             # check for $ delim count
             if gamers[j].count("$") != num_delim:
