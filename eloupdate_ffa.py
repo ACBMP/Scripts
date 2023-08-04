@@ -36,7 +36,7 @@ def expected_results(ratings: List[int]):
         for opponent in range(len(ratings)):
             if opponent != player:
                 o_rating = ratings[opponent]
-                expected += ((1 + 10 ** ((p_rating - o_rating) / 400)) ** -1) * 1/len(ratings-1)
+                expected += ((1 + 10 ** ((p_rating - o_rating) / 400)) ** -1) * 1/(len(ratings)-1)
         expected_outcomes.append(expected)
     return expected_outcomes
 
