@@ -11,10 +11,15 @@ class Player(BaseModel):
     deaths: int
     db_data: dict = None
 
-    def get_mmr(self, db_conn, mode):
+    def get_db_data(self, db_conn = None) -> dict:
+        if not db_conn:
+            return self.db_data
         if not self.db_data:
-            self.db_data = identify_player(db_conn, self.player)
-        return self.db_data[f"{check_mode(mode, short=True)}mmr"]
+            self.db_data = identify_player(db_conn)
+        return self.db_data
+
+    def get_mmr(self, mode, db_conn=None):
+        return self.get_db_data(db_conn)[f"{check_mode(mode, short=True)}mmr"]
 
 class Match(BaseModel):
     players: List[Player]
@@ -152,7 +157,7 @@ def player_ratings(match: Match, db_conn, ref=None):
     if isinstance(match, dict):
         match = Match(**match)
 
-    ratings = list(map(lambda player: player.get_mmr(db_conn, match.mode), match.players))
+    ratings = list(map(lambda player: player.get_mmr(match.mode, db_conn), match.players))
     scores = list(map(lambda player: player.score, match.players))
     #weighted_ratings = [weighted_mean(ratings)]
     expected_outcomes = expected_results(ratings)
@@ -224,7 +229,7 @@ def new_matches():
                             f"{mode}stats.deaths": player.deaths
                             }})
     
-                if player.db_data[f"{mode}stats"]["highscore"] < player.score:
+                if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
                     db.players.update_one({
                             "ign": player.player
                         }, {
