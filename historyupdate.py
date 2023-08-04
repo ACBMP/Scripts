@@ -57,19 +57,28 @@ def update():
         # for aa we have to figure out roles
         if mode == "Artifact assault":
             m = aa_roles(m)
-        for i in [1, 2]:
-            for p in m[f"team{i}"]:
-                # we can just use shortened roles
-                if mode == "Artifact assault":
-                    mode = "aa" + p["role"]
+        if check_mode(mode, short=True) in FFA_MODES:
+            for p in m["players"]:
                 try:
                     if p["player"] in players[mode]:
                         continue
                     players[mode].append(p["player"])
                 except KeyError:
                     players[mode] = [p["player"]]
-                # reset mode - only important for aa but whatever
-                mode = m["mode"]
+        else:
+            for i in [1, 2]:
+                for p in m[f"team{i}"]:
+                    # we can just use shortened roles
+                    if mode == "Artifact assault":
+                        mode = "aa" + p["role"]
+                    try:
+                        if p["player"] in players[mode]:
+                            continue
+                        players[mode].append(p["player"])
+                    except KeyError:
+                        players[mode] = [p["player"]]
+                    # reset mode - only important for aa but whatever
+                    mode = m["mode"]
 
     # run history mmr update on all players who played
     for mode in players.keys():
