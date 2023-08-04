@@ -65,7 +65,7 @@ def new_mmr(current_mmr: int, result: float, expected_result: float, max_change:
             max_change = max_mmr_change(games_played, current_mmr)
         return current_mmr + max_change * (result - expected_result) * (1 + stomp_mmr_boost(scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
     else:
-        return (result * 60) - 10
+        return current_mmr + (result * 60) - 10
 
 def max_mmr_change(total_games, current_mmr):
     """
@@ -76,12 +76,11 @@ def max_mmr_change(total_games, current_mmr):
     :return: max MMR change
     """
     high_elo = 1200
-    if total_games < 30 and current_mmr < high_elo:
-        return 40
-    elif current_mmr < high_elo:
-        return 20
-    else: # current_mmr >= high_elo
+    if current_mmr >= high_elo:
         return 15
+    if total_games < 30:
+        return 40
+    return 20
 
 def stomp_mmr_boost(scores: List[int], ref_score: int = None):
     """
@@ -219,7 +218,7 @@ def new_matches():
             db.players.update_one({
                 "ign": player.player
                 }, {
-                "$inc": {
+                "$set": {
                     f"{mode}games.total": 1,
                     f"{mode}games.won": 1 if result["pos"] == 1 else 0,
                     f"{mode}games.lost": 1 if result["pos"] != 1 else 0,
