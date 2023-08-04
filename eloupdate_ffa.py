@@ -50,6 +50,8 @@ def expected_results(ratings: List[int]):
 
     for p in range(len(ratings)):
         mean_opponents = mean_opponent_rating(p, ratings)
+        print("player's rating:", ratings[p])
+        print("mean opponents:", mean_opponents)
         p_rating = ratings[p]
         expected = ((1 + 10 ** ((p_rating - mean_opponents) / 400)) ** -1)
         expected_outcomes.append(expected)
@@ -145,7 +147,7 @@ def mean_opponent_rating(player, ratings):
     if w_sum == 0:
         w_sum = len(ratings)
         weights = [1] * len(ratings)
-    return sum([opponents[_] * weights[_] for _ in range(len(opponents))])/w_sum, weights
+    return sum([opponents[_] * weights[_] for _ in range(len(opponents))])/w_sum
 
 def get_result(position: int, players: int):
     return ((1.1 ** (players - position)) - 1) \
