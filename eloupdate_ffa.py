@@ -149,6 +149,9 @@ def player_ratings(match: Match, ref=None):
     """
 
     # calculate expected outcome for each player
+    if isinstance(match, dict):
+        match = Match(**match)
+
     ratings = list(map(lambda player: player.get_mmr(), match.players))
     scores = list(map(lambda player: player.score, match.players))
     expected_outcomes = expected_results(weighted_mean(ratings))
@@ -187,8 +190,6 @@ def new_matches():
 
     for m in matches:
         match = Match(**m)
-
-        match.players.sort(key=lambda p: p.score, reverse=True)
         results = player_ratings(match=m, ref=None)        
         
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
