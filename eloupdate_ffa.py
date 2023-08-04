@@ -211,7 +211,7 @@ def new_matches():
             db.players.update_one({
                     "name": result["player"]["player"]
                 }, {
-                    "$set": {
+                    "$inc": {
                         f"{mode}mmr":
                         result["mmr"]
                     }})
