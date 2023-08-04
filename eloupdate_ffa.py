@@ -114,7 +114,7 @@ def weighted_mean(ratings):
     :return: weighted mean of ratings, weights used
     """
     diffs = []
-    for player in range(ratings):
+    for player in range(len(ratings)):
         p_rating = ratings[player]
         opponents = []
         for opponent in range(ratings):
