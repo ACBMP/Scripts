@@ -69,6 +69,7 @@ def read_and_update():
             #outcome
             if check_mode(entry_dict["mode"], short=True) in FFA_MODES:
                 csv_entry.pop(0)
+                entry_dict["players"] = []
                 for entry in csv_entry:
                     temp_dict = {}
                     temp_list = entry.split(conf.RAU_SECONDARY_TOKEN)
