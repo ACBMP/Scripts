@@ -154,7 +154,8 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     ratings = list(map(lambda player: player.get_mmr(db_conn, match.mode), match.players))
     scores = list(map(lambda player: player.score, match.players))
-    expected_outcomes = expected_results(weighted_mean(ratings)[0])
+    #weighted_ratings = [weighted_mean(ratings)]
+    expected_outcomes = expected_results(ratings)
     results = []
 
     for p in range(len(match.players)):
@@ -167,9 +168,9 @@ def player_ratings(match: Match, db_conn, ref=None):
                             current_mmr=ratings[p],
                             result=result,
                             expected_result=expected_outcomes[p],
-                            games_played=(player.db_data[f"{match.mode}games"]["total"] + 1),
+                            games_played=(player.db_data[f"{check_mode(match.mode, short=True)}games"]["total"] + 1),
                             scores=scores,
-                            ref=ref
+                            stomp_ref=ref
                         )))
                     })
     return results
@@ -222,9 +223,8 @@ def new_matches():
                             f"{mode}stats.kills": player.kills,
                             f"{mode}stats.deaths": player.deaths
                             }})
-                temp_player = db.players.find_one({"ign": player.player})
     
-                if temp_player[f"{mode}stats"]["highscore"] < player.score:
+                if player.db_data[f"{mode}stats"]["highscore"] < player.score:
                     db.players.update_one({
                             "ign": player.player
                         }, {
