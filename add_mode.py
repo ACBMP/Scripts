@@ -21,7 +21,7 @@ def add_ffa_mode(mode):
     d = date.today().strftime("%y-%m-%d")
     mmr = 800
     history = {"dates": [d], "mmrs": [mmr]}
-    games = {"total": 0, "won": 0, "podium": 0, "lost": 0}
+    games = {"total": 0, "won": 0, "podium": 0, "lost": 0, "finishes": 0}
     stats = {"highscore": 0, "kills": 0, "deaths": 0, "totalscore": 0}
     rank = 0
     rankchange = 0
@@ -29,6 +29,13 @@ def add_ffa_mode(mode):
         f"{mode}stats": stats, f"{mode}rank": rank, f"{mode}rankchange": rankchange,
         f"{mode}history": history}})
     print(f"Successfully added {check_mode(mode)} stats for all players")
+
+def remove_ffa_mode(mode):
+    db = connect()
+    db.players.update_many({}, {"$unset": {f"{mode}mmr": "", f"{mode}games": "",
+        f"{mode}stats": "", f"{mode}rank": "", f"{mode}rankchange": "",
+        f"{mode}history": ""}})
+    print(f"Successfully removed {check_mode(mode)} stats for all players")
 
 def add_aa():
     db = connect()
