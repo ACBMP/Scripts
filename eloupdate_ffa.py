@@ -231,7 +231,7 @@ def new_matches():
                             f"{mode}stats.deaths": player.deaths
                             }})
     
-                if player.db_data[f"{mode}stats"]["highscore"] < player.score:
+                if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
                     db.players.update_one({
                             "ign": player.player
                         }, {
