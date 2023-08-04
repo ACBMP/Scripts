@@ -28,7 +28,7 @@ def read_and_update():
     for line in f:
         if line=="#":
             print("No new data to be added")
-            return
+            return mode_tracker
         else:
             entry_dict={}
             csv_entry=line.split(conf.RAU_SPLIT_TOKEN)
