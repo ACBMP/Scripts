@@ -40,7 +40,7 @@ def update_maps():
             stats["aa.hostscored"] = _get_stat(match, "scored", [match["hostteam"]])
         # if host data was given save w/l
         if ffa:
-            if match["host"] == match["players"][0]["name"]:
+            if match["host"] == match["players"][0]["player"]:
                 stats[f'{smode}.hostwins'] = 1
             else:
                 stats[f'{smode}.hostlosses'] = 1
