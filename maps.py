@@ -1,14 +1,19 @@
 from util import *
 
-def _get_stat(match, stat, teams=[1, 2]):
-    if isinstance(teams, int):
-        teams = [teams]
+def _get_stat(match, stat, teams=None, ffa=False):
     out = 0
-    for i in teams:
-        for p in match[f"team{i}"]:
+    if ffa:
+        for p in match["players"]:
             out += p[stat]
-   # if stat == "score":
-   #     out /= len(match["team1"])
+    else:
+        teams = [1,2] if not teams else teams
+        if isinstance(teams, int):
+            teams = [teams]
+
+        for i in teams:
+            for p in match[f"team{i}"]:
+                out += p[stat]
+
     return out
 
 
@@ -23,9 +28,10 @@ def update_maps():
             continue
         # short mode
         smode = check_mode(match["mode"], short=True)
+        ffa = smode in FFA_MODES
         # stats that are tracked no matter what
         base_stats = ["kills", "deaths", "score"]
-        bs = [_get_stat(match, s) for s in base_stats]
+        bs = [_get_stat(match, s, ffa=ffa) for s in base_stats]
         # dict with the base starts for mode
         stats = {f'{smode}.{k}': v for (k, v) in zip(base_stats, bs)}
         # in aa also track scored artifacts
@@ -33,7 +39,7 @@ def update_maps():
             stats["aa.scored"] = _get_stat(match, "scored")
             stats["aa.hostscored"] = _get_stat(match, "scored", [match["hostteam"]])
         # if host data was given save w/l
-        if smode in FFA_MODES:
+        if ffa:
             if match["host"] == match["players"][0]["name"]:
                 stats[f'{smode}.hostwins'] = 1
             else:
