@@ -15,7 +15,7 @@ class Player(BaseModel):
         if not db_conn:
             return self.db_data
         if not self.db_data:
-            self.db_data = identify_player(db_conn)
+            self.db_data = identify_player(db_conn, self.player)
         return self.db_data
 
     def get_mmr(self, mode, db_conn=None):
