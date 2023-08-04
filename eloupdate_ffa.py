@@ -9,12 +9,12 @@ class Player(BaseModel):
     score: int
     kills: int
     deaths: int
-    _db_data: dict = None
+    db_data: dict = None
 
     def get_mmr(self, db_conn, mode):
-        if not self._db_data:
-            self._db_data = identify_player(db_conn, self.player)
-        return self._db_data[f"{check_mode(mode, short=True)}mmr"]
+        if not self.db_data:
+            self.db_data = identify_player(db_conn, self.player)
+        return self.db_data[f"{check_mode(mode, short=True)}mmr"]
 
 class Match(BaseModel):
     players: List[Player]
@@ -167,7 +167,7 @@ def player_ratings(match: Match, db_conn, ref=None):
                             current_mmr=ratings[p],
                             result=result,
                             expected_result=expected_outcomes[p],
-                            games_played=(player._db_data[f"{match.mode}games"]["total"] + 1),
+                            games_played=(player.db_data[f"{match.mode}games"]["total"] + 1),
                             scores=scores,
                             ref=ref
                         )))
