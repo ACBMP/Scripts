@@ -154,7 +154,7 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     ratings = list(map(lambda player: player.get_mmr(db_conn, match.mode), match.players))
     scores = list(map(lambda player: player.score, match.players))
-    expected_outcomes = expected_results(weighted_mean(ratings))
+    expected_outcomes = expected_results(weighted_mean(ratings)[0])
     results = []
 
     for p in range(len(match.players)):
