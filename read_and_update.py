@@ -80,7 +80,7 @@ def read_and_update():
                     temp_dict["kills"] = int(temp_list[2])
                     temp_dict["deaths"] = int(temp_list[3])
                     entry_dict["players"].append(temp_dict)
-                entry_dict["players"].players.sort(key=lambda p: p["score"], reverse=True)
+                entry_dict["players"].sort(key=lambda p: p["score"], reverse=True)
             
             else:
                 entry_dict["outcome"]=int(csv_entry[2])
