@@ -141,3 +141,60 @@ def add_new_maps():
 
     for k in new_maps.keys():
         maps_db.insert_one(dict({"name": identify_map(k)}, **stats))
+
+
+def remove_maps():
+    maps = {
+            "st mathieu1": "Saint-Mathieu DM",
+            "st mathieu2": "Saint-Mathieu DM2",
+            "st mathieu3": "Saint-Mathieu DM3",
+
+            "santa lucia1": "Santa Lucia DM",
+            "santa lucia2": "Santa Lucia DM2",
+            "santa lucia3": "Santa Lucia DM3",
+
+            "tampa1": "Tampa Bay DM",
+            "tampa2": "Tampa Bay DM2",
+            "tampa3": "Tampa Bay DM3",
+
+            "havana1": "Havana DM",
+            "havana2": "Havana DM2",
+            "havana3": "Havana DM3",
+
+            "kingston1": "Kingston DM",
+            "kingston2": "Kingston DM2",
+            "kingston3": "Kingston DM3",
+
+            "palenque1": "Palenque DM",
+            "palenque2": "Palenque DM2",
+            "palenque3": "Palenque DM3",
+
+            "portobelo1": "Portobelo DM",
+            "portobelo2": "Portobelo DM2",
+            "portobelo3": "Portobelo DM3",
+
+            "prison1": "Prison DM",
+            "prison2": "Prison DM2",
+            "prison3": "Prison DM3",
+
+            "plantation1": "Virginian Plantation DM",
+            "plantation2": "Virginian Plantation DM2",
+            "plantation3": "Virginian Plantation DM3",
+
+            "saba1": "Saba Island DM",
+            "saba2": "Saba Island DM2",
+            "saba3": "Saba Island DM3",
+
+            "st pierre1": "Saint Pierre DM",
+            "st pierre2": "Saint Pierre DM2",
+            "st pierre3": "Saint Pierre DM3",
+
+            "charlestown1": "Charlestown DM",
+            "charlestown2": "Charlestown DM2",
+            "charlestown3": "Charlestown DM3"
+    }
+    db = connect()
+    maps_db = db["maps"]
+
+    for k in maps.keys():
+        maps_db.delete_one(dict({"name": identify_map(k)}))

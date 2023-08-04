@@ -225,12 +225,13 @@ def new_matches():
                             f"{mode}games.won": 1 if pos == 1 else 0,
                             f"{mode}games.lost": 1 if pos != 1 else 0,
                             f"{mode}games.podium": 1 if pos <= 3 else 0,
+                            f"{mode}games.finishes": pos,
                             f"{mode}stats.totalscore": player.score,
                             f"{mode}stats.kills": player.kills,
                             f"{mode}stats.deaths": player.deaths
                             }})
     
-                if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
+                if player.db_data[f"{mode}stats"]["highscore"] < player.score:
                     db.players.update_one({
                             "ign": player.player
                         }, {
