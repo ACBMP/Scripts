@@ -44,15 +44,15 @@ def expected_results(ratings: List[int]):
         expected_outcomes.append(expected)
     return expected_outcomes
 
-#def expected_results(ratings: List[int]):
-#    expected_outcomes = []
-#
-#    for p in range(len(ratings)):
-#        mean_opponents = mean_opponent_rating(p, ratings)
-#        p_rating = ratings[p]
-#        expected = ((1 + 10 ** ((mean_opponents - p_rating) / 400)) ** -1)
-#        expected_outcomes.append(expected)
-#    return expected_outcomes
+def expected_results_vs_mean(ratings: List[int]):
+    expected_outcomes = []
+
+    for p in range(len(ratings)):
+        mean_opponents = mean_opponent_rating(p, ratings)
+        p_rating = ratings[p]
+        expected = ((1 + 10 ** ((mean_opponents - p_rating) / 400)) ** -1)
+        expected_outcomes.append(expected)
+    return expected_outcomes
 
 
 def new_mmr(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
@@ -125,26 +125,13 @@ def mean_opponent_rating(player, ratings):
 
     :param ratings: team ratings to be weighted
     :param ratings_o: opposing team's ratings
-    :return: weighted mean of ratings, weights used
+    :return: mean of ratings
     """
-    diffs = []
     opponents = []
-
     for opponent in range(len(ratings)):
         if opponent != player:
             opponents.append(ratings[opponent])
     return sum(opponents)/len(opponents)
-    weights = []
-    for d in diffs:
-        try:
-            weights.append(d / sum(diffs))
-        except ZeroDivisionError:
-            weights.append(0)
-    w_sum = sum(weights)
-    if w_sum == 0:
-        w_sum = len(ratings)
-        weights = [1] * len(ratings)
-    return sum([opponents[_] * weights[_] for _ in range(len(opponents))])/w_sum
 
 def get_result(position: int, players: int):
     f_x = lambda x: 2.144033**x -1
