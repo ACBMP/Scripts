@@ -244,4 +244,5 @@ if __name__ == "__main__":
     add_badge("Dellpit", "2023-05-01", "2nd", "Escort", season)
     add_badge("Ted95On", "2023-05-01", "3rd", "Escort", season)
     add_badge("Crispi Kreme", "2023-05-01", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
+    add_badge("Levi", "2023-05-01", "Rookie", "all", season, f"Season {season} Rookie of the Season")
 
