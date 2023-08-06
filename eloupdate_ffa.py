@@ -55,7 +55,7 @@ def expected_results_vs_mean(ratings: List[int]):
     return expected_outcomes
 
 
-def new_mmr(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
+def mmr_change(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
             scores: List[int] = None, stomp_ref: int = None):
     """
     Function to calculate new MMR.
@@ -73,9 +73,9 @@ def new_mmr(current_mmr: int, result: float, expected_result: float, max_change:
     if games_played > 10:
         if max_change is None:
             max_change = max_mmr_change(games_played, current_mmr)
-        return current_mmr + max_change * (result - expected_result) * (1 + stomp_mmr_boost(scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
+        return max_change * (result - expected_result) * (1 + stomp_mmr_boost(scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
     else:
-        return current_mmr + (result * 60) - 10
+        return (result * 60) - 10
 
 def max_mmr_change(total_games, current_mmr):
     """
@@ -162,17 +162,17 @@ def player_ratings(match: Match, db_conn, ref=None):
         player = match.players[p]
         pos = p if p > 0 and match.players[p].score == match.players[p-1].score else p+1
         result = get_result(pos, len(match.players))
+        new_mmr = ratings[p] + mmr_change(
+            current_mmr=ratings[p],
+            result=result,
+            expected_result=expected_outcomes[p],
+            games_played=(player.db_data[f"{check_mode(match.mode, short=True)}games"]["total"] + 1),
+            scores=scores,
+            stomp_ref=ref)
         results.append({
                     "player": player.dict(),
                     "pos": pos,
-                    "mmr": int(round(new_mmr(
-                            current_mmr=ratings[p],
-                            result=result,
-                            expected_result=expected_outcomes[p],
-                            games_played=(player.db_data[f"{check_mode(match.mode, short=True)}games"]["total"] + 1),
-                            scores=scores,
-                            stomp_ref=ref
-                        )))
+                    "mmr": new_mmr
                     })
     return results
 
