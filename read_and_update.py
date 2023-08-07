@@ -61,8 +61,9 @@ def read_and_update():
             #mode
             try:
                 mode = check_mode(csv_entry[0])
+                smode = check_mode(csv_entry[0], short=True)
                 entry_dict["mode"] = mode.capitalize()
-                mode_tracker[mode] = True
+                mode_tracker[smode] = True
             except ValueError:
                 print("Error in the \'mode\' field!")
                 continue
