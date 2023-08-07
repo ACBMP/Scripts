@@ -44,19 +44,8 @@ def expected_results(ratings: List[int]):
         expected_outcomes.append(expected)
     return expected_outcomes
 
-def expected_results_vs_mean(ratings: List[int]):
-    expected_outcomes = []
-
-    for p in range(len(ratings)):
-        mean_opponents = mean_opponent_rating(p, ratings)
-        p_rating = ratings[p]
-        expected = ((1 + 10 ** ((mean_opponents - p_rating) / 400)) ** -1)
-        expected_outcomes.append(expected)
-    return expected_outcomes
-
-
-def rating_change(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
-            scores: List[int] = None, stomp_ref: int = None):
+def rating_change(current_mmr: int, result: float, expected_result: float, max_change: int, games_played: int, 
+            position: int, scores: List[int], stomp_ref: int = None):
     """
     Function to calculate new MMR.
 
@@ -92,7 +81,7 @@ def max_mmr_change(total_games, current_mmr):
         return 40
     return 20
 
-def stomp_mmr_boost(scores: List[int], ref_score: int = None):
+def stomp_mmr_boost(position:int, scores: List[int], ref_score: int = None):
     """
     Score difference MMR boost.
     This is used to make sure closer games count less than stomps.
@@ -107,31 +96,16 @@ def stomp_mmr_boost(scores: List[int], ref_score: int = None):
     :param ref_score: reference score, 0 to return 0
     :return: boost amount
     """
-    if ref_score is None:
-        try:
-            return abs(scores[0] - scores[1]) / ((scores[0] + scores[1]) / 2)
-        except ZeroDivisionError:
-            return 0
-    else:
-        if ref_score > 0:
-            return max(abs(scores[1] - scores[1]) - 1, 0) / ref_score
-        return 0
-    
-def mean_opponent_rating(player, ratings):
-    """
-    Weighted arithmetic mean.
-    Weights are calculated based on players' MMRs compared to the opposing
-    team's.
+    avg_score = sum(scores) / len(scores)
 
-    :param ratings: team ratings to be weighted
-    :param ratings_o: opposing team's ratings
-    :return: mean of ratings
-    """
-    opponents = []
-    for opponent in range(len(ratings)):
-        if opponent != player:
-            opponents.append(ratings[opponent])
-    return sum(opponents)/len(opponents)
+    if ref_score is None:
+        ref_score = avg_score / 2
+    
+    if ref_score == 0:
+        return 0
+
+    return abs(scores[position] - avg_score) / ref_score
+
 
 def get_result(position: int, players: int):
     f_x = lambda x: 2.144033**x -1
@@ -167,6 +141,7 @@ def player_ratings(match: Match, db_conn, ref=None):
             result=result,
             expected_result=expected_outcomes[p],
             games_played=(player.db_data[f"{check_mode(match.mode, short=True)}games"]["total"] + 1),
+            position=pos,
             scores=scores,
             stomp_ref=ref)
         new_mmr = ratings[p] + mmr_change
@@ -200,7 +175,12 @@ def new_matches():
         if mode not in FFA_MODES:
             continue
 
-        results = player_ratings(match=m, db_conn=db, ref=None)
+        if mode == "dm":
+            ref = 3000
+        else:
+            ref = 6000
+
+        results = player_ratings(match=m, db_conn=db, ref=ref)
         
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
         #Updating the relevant MMR
