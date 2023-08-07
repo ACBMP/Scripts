@@ -104,7 +104,7 @@ def stomp_mmr_boost(position:int, scores: List[int], ref_score: int = None):
     if ref_score == 0:
         return 0
 
-    return abs(scores[position] - avg_score) / ref_score
+    return abs(scores[position-1] - avg_score) / ref_score
 
 
 def get_result(position: int, players: int):
