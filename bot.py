@@ -290,7 +290,7 @@ async def lookup_user(message):
                 user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \
                                Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
                                Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
-                user_stats += "Games Played: {player_db[f'{mode}games']['total']}\n"
+                user_stats += f"Games Played: {player_db[f'{mode}games']['total']}\n"
                 if mode in util.FFA_MODES:
                     user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
                     user_stats += f"Average Finish: {round(player_db[f'{mode}games']['finishes'] / (player_db[f'{mode}games']['total']))} \n"
