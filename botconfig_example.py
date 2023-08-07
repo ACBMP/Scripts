@@ -8,12 +8,14 @@ e_servers = [] #ints
 mh_servers = [] #ints
 do_servers = [] #ints
 dm_servers = [] #ints
+asb_servers = [] #ints
 aa_servers = [] #ints
 e_channels = [] #ints
 mh_channels = [] #ints
 do_channels = [] #ints
 aa_channels = [] #ints
 dm_channels = [] #ints
+asb_channels = [] #ints
 synched_channels = [] #ints
 sync_roles = {main_server : [],
              : [],

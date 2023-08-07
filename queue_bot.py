@@ -24,7 +24,7 @@ intents.members = True
 
 client = commands.Bot(command_prefix="an", intents=intents)
 
-modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm']
+modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm', 'asb']
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
@@ -32,7 +32,8 @@ modes_dict = {
         'aad' : 'AA Defending',
         'aa' : 'Artifact Assault',
         'do' : 'Domination',
-        'dm' : 'Deathmatch'
+        'dm' : 'Deathmatch',
+        'asb': 'Assassinate Brotherhood'
         }
 
 

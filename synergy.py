@@ -92,6 +92,54 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
     return sorted_dicts
 
+# def parse_ffa(db, matches, name, min_games, track_teams=False):
+#     """
+#     Parse given matches for a player to find synergies.
+
+#     :param db: database
+#     :param matches: all won matches by a player
+#     :param name: player name
+#     :param min_games: minimum number of games played together
+#     :param track_teams: track teams or individual teammates
+#     :return: dict of players and their games won, lost
+#     """
+#     # dict with [games played, wins] for opponents
+
+#     dicts = [{}, {}]
+#     for m in matches:
+#         for player in m['players']:
+#                 player = player["player"]
+#                 player = identify_player(db, player)["name"]
+#                 players.append(player)
+        
+#         for ign in name:
+#                 if ign.lower() in [p.lower() for p in players]:
+#                     d = 1
+            
+#                 for j in range(len(players)):
+#                     if m["outcome"] == 0:
+#                         try:
+#                             dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2] + 1]
+#                         except:
+#                             dicts[d][players[j]] = [1, 0, 1]
+#                     elif i == m["outcome"]:
+#                         try:
+#                             dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1, dicts[d][players[j]][2]]
+#                         except:
+#                             dicts[d][players[j]] = [1, 1, 0]
+#                     else:
+#                         try:
+#                             dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2]]
+#                         except:
+#                             dicts[d][players[j]] = [1, 0, 0]
+#     sorted_dicts = [{}, {}]
+#     for d in range(len(dicts)):
+#         for player in dicts[d]:
+#             # make sure min games played
+#             if dicts[d][player][0] >= min_games:
+#                 sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1], dicts[d][player][2]]
+#         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
+#     return sorted_dicts
 
 def dict_string(d):
     """

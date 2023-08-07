@@ -3,10 +3,10 @@ import datetime
 import discord
 import random
 
-GAME_MODES = ["e", "mh", "aa", "do", "dm"]
-ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm"]
+GAME_MODES = ["e", "mh", "aa", "do", "dm", "asb"]
+ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm", "asb"]
 TEAM_MODES = ["e", "mh", "aar", "aad", "do"]
-FFA_MODES = ["dm"]
+FFA_MODES = ["dm", "asb"]
 QUEUEABLE_MODES = ["e", "mh", "do"]
 
 def connect():
@@ -65,6 +65,8 @@ def check_mode(mode, server=None, short=False, channel=None):
             return "do" if short else "domination"
         elif server in conf.dm_servers:
             return "dm" if short else "deathmatch"
+        elif server in conf.asb_servers:
+            return "asb" if short else "assassinate brotherhood"
         elif channel:
             if channel in conf.e_channels:
                 return "e" if short else "escort"
@@ -74,8 +76,10 @@ def check_mode(mode, server=None, short=False, channel=None):
                 return "aa" if short else "artifact assault"
             elif channel in conf.do_channels:
                 return "do" if short else "domination"
-            elif server in conf.dm_channels:
+            elif channel in conf.dm_channels:
                 return "dm" if short else "deathmatch"
+            elif channel in conf.asb_servers:
+                return "asb" if short else "assassinate brotherhood"
             else:
                 return "escort"
         else:
@@ -96,6 +100,8 @@ def check_mode(mode, server=None, short=False, channel=None):
         return "do" if short else "domination"
     elif mode in ["dm", "deathmatch"]:
         return "dm" if short else "deathmatch"
+    elif mode in ["asb", "assassinate brotherhood"]:
+        return "asb" if short else "assassinate brotherhood"
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 
