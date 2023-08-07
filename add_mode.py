@@ -55,4 +55,4 @@ def add_aa():
     return
 
 if __name__ == "__main__":
-    add_ffa_mode("dm")
+    add_ffa_mode("asb")

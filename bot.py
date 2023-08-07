@@ -34,7 +34,7 @@ subprocess.Popen(["python3", "telegram_bot.py"])
 async def on_ready():
     print("Starting.")
 
-modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm']
+modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm', 'asb']
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
@@ -42,7 +42,8 @@ modes_dict = {
         'aad' : 'AA Defending',
         'aa' : 'Artifact Assault',
         'do' : 'Domination',
-        'dm' : 'Deathmatch'
+        'dm' : 'Deathmatch',
+        'asb': 'Assassinate Brotherhood'
         }
 
 abilities = ["Normal Disguise","Long Lasting Disguise", "Strong Disguise",
@@ -242,10 +243,12 @@ def rank_pic_big(elo):
         return "badge_1_big.png"
     if elo < 1000:
         return "badge_2_big.png"
-    if elo < 1200:
+    if elo < 1100:
         return "badge_3_big.png"
-    if elo < 1400:
+    if elo < 1200:
         return "badge_4_big.png"
+    if elo < 1400:
+        return "badge_6_big.png"
     return "badge_5_big.png"
 
 
@@ -290,7 +293,8 @@ async def lookup_user(message):
                 user_stats += "Games Played: {player_db[f'{mode}games']['total']}\n"
                 if mode in util.FFA_MODES:
                     user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
-                elif 'aa' not in mode:
+                    user_stats += f"Average Finish: {round(player_db[f'{mode}games']['finishes'] / (player_db[f'{mode}games']['total']))} \n"
+                if 'aa' not in mode:
                     embedVar.add_field(name=modes_dict[mode], value=user_stats +
                     f"K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
                      Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
