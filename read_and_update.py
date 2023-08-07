@@ -60,9 +60,9 @@ def read_and_update():
 
             #mode
             try:
-                entry_dict["mode"] = check_mode(csv_entry[0]).capitalize()
-                # the replace is a bit stupid because we use both M and MH for manhunt
-                mode_tracker[csv_entry[0].lower().replace("m", "mh")] = True
+                mode = check_mode(csv_entry[0])
+                entry_dict["mode"] = mode.capitalize()
+                mode_tracker[mode] = True
             except ValueError:
                 print("Error in the \'mode\' field!")
                 continue
