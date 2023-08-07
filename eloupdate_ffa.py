@@ -55,7 +55,7 @@ def expected_results_vs_mean(ratings: List[int]):
     return expected_outcomes
 
 
-def mmr_change(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
+def rating_change(current_mmr: int, result: float, expected_result: float, max_change: int = None, games_played=None, 
             scores: List[int] = None, stomp_ref: int = None):
     """
     Function to calculate new MMR.
@@ -162,7 +162,7 @@ def player_ratings(match: Match, db_conn, ref=None):
         player = match.players[p]
         pos = p if p > 0 and match.players[p].score == match.players[p-1].score else p+1
         result = get_result(pos, len(match.players))
-        mmr_change = mmr_change(
+        mmr_change = rating_change(
             current_mmr=ratings[p],
             result=result,
             expected_result=expected_outcomes[p],
