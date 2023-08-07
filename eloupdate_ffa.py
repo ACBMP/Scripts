@@ -178,7 +178,7 @@ def new_matches():
         if mode == "dm":
             ref = 0
         else:
-            ref = 6000
+            ref = 10000
 
         results = player_ratings(match=m, db_conn=db, ref=ref)
         
