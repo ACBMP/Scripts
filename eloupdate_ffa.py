@@ -44,8 +44,8 @@ def expected_results(ratings: List[int]):
         expected_outcomes.append(expected)
     return expected_outcomes
 
-def rating_change(current_mmr: int, result: float, expected_result: float, max_change: int, games_played: int, 
-            position: int, scores: List[int], stomp_ref: int = None):
+def rating_change(current_mmr: int, result: float, expected_result: float, games_played: int,
+            position: int, scores: List[int], stomp_ref: int = None, max_change: int = None):
     """
     Function to calculate new MMR.
 
@@ -62,7 +62,7 @@ def rating_change(current_mmr: int, result: float, expected_result: float, max_c
     if games_played > 10:
         if max_change is None:
             max_change = max_mmr_change(games_played, current_mmr)
-        return max_change * (result - expected_result) * (1 + stomp_mmr_boost(scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
+        return max_change * (result - expected_result) * (1 + stomp_mmr_boost(position, scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
     else:
         return (result * 60) - 10
 
