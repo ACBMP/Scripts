@@ -162,17 +162,20 @@ def player_ratings(match: Match, db_conn, ref=None):
         player = match.players[p]
         pos = p if p > 0 and match.players[p].score == match.players[p-1].score else p+1
         result = get_result(pos, len(match.players))
-        new_mmr = ratings[p] + mmr_change(
+        mmr_change = mmr_change(
             current_mmr=ratings[p],
             result=result,
             expected_result=expected_outcomes[p],
             games_played=(player.db_data[f"{check_mode(match.mode, short=True)}games"]["total"] + 1),
             scores=scores,
             stomp_ref=ref)
+        new_mmr = ratings[p] + mmr_change
+        # save the rating change
         results.append({
                     "player": player.dict(),
                     "pos": pos,
-                    "mmr": new_mmr
+                    "mmr": new_mmr,
+                    "mmrchange": mmr_change
                     })
     return results
 
@@ -202,7 +205,8 @@ def new_matches():
         #Updating: mmr, total games played, finishing positions, total score, kills, deaths, check highscore
         #Updating the relevant MMR
         
-        for result in results:
+        for i in range(len(results)):
+            result = results[i]
             db.players.update_one({
                     "name": result["player"]["player"]
                 }, {
@@ -224,14 +228,15 @@ def new_matches():
                     f"{mode}stats.kills": player.kills,
                     f"{mode}stats.deaths": player.deaths
                 }})
-    
+            m["players"][i]["mmrchange"] = result["mmrchange"]
+            db.matches.update_one({"_id":m["_id"]}, {"$set":{"players":False}})
             if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
                 db.players.update_one({
                     "ign": player.player
                 }, {
                     "$set": {f"{mode}stats.highscore": player.score}})
-       
-        db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
+
+        db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False, "players": m["players"]}})
         print("Match updated successfully!")
 
 if __name__=="__main__":
