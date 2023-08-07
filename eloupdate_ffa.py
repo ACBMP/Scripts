@@ -176,7 +176,7 @@ def new_matches():
             continue
 
         if mode == "dm":
-            ref = 3000
+            ref = 0
         else:
             ref = 6000
 
