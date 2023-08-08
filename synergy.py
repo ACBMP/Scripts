@@ -167,7 +167,7 @@ def dict_string_ffa(opponents: dict):
             f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
     
     for player in finish_sort:
-        finish_str += f"{player}: {opponents[player]['finish'] / opponents[player]['games']}" \
+        finish_str += f"{player}: {opponents[player]['finishes'] / opponents[player]['games']}" \
             f"(over {opponents[player]['games']} games)\n"
 
     return finish_str, winrate_str
