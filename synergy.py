@@ -156,8 +156,8 @@ def dict_string_ffa(opponents):
     """
     result_str = ""
     for player in opponents:
-        result_str += f"{player}: {round( \
-            ((opponents[player]['wins'] + opponents[player]['draws'] / 2)/ opponents[player]['games']) * 100)}% " \
+        result_str += f"{player}: " + round( \
+            ((opponents[player]['wins'] + opponents[player]['draws'] / 2)/ opponents[player]['games']) * 100)+ "% " \
             f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
     return result_str
 
