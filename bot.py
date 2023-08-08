@@ -735,8 +735,8 @@ async def sync_channels(message):
 
     roles = conf.sync_roles
     for sync_group in conf.synched_channels:
-        if x in sync_group:
-            for x in sync_group:
+        for x in sync_group:
+            if x in sync_group:
                 if x != message.channel.id:
                     content = message.content
                     channel = client.get_channel(x)
@@ -764,7 +764,6 @@ async def sync_channels(message):
                             os.remove(f)
                     else:
                         await channel.send(content)
-    return 
  
 
 @util.command_dec
