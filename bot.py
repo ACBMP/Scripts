@@ -727,42 +727,43 @@ async def user_edit(message):
 async def sync_channels(message):
 
     # since we want to replace the role pings with equivalents
-    def replace_roles(content, roles, replacement_role):
-        for r in roles:
+    def replace_roles(content, origin_guild_id, dest_guild_id):
+        for r in roles.values():
             # don't care to add a safety check
-            content = content.replace(str(r), str(replacement_role))
+            content = content.replace(str(r.get(origin_guild_id)), str(r.get(dest_guild_id)))
         return content
 
     roles = conf.sync_roles
-
-    for x in conf.synched_channels:
-        if x != message.channel.id:
-            content = message.content
-            channel = client.get_channel(x)
-            # filter the roles
-            content = replace_roles(content, roles[message.channel.guild.id], roles[channel.guild.id][0])
-            # make sure our user gets a good nick
-            nick = message.author.nick
-            if nick is None:
-                nick = message.author.name
-            content = f"**{nick}:** {content}"
-            attachments = message.attachments
-            # grab attachments and attach them, then send
-            if attachments:
-                if len(attachments) > 1:
-                    att = []
-                    for n in range(len(attachments)):
-                        att += [util.att_to_file(message, n)]
-                    await channel.send(content, files=att)
-                else:
-                    att = util.att_to_file(message)
-                    await channel.send(content, file=att)
-                # delete files after they're sent
-                files = glob.glob("sync/*")
-                for f in files:
-                    os.remove(f)
-            else:
-                await channel.send(content)
+    for sync_group in conf.synched_channels:
+        if x in sync_group:
+            for x in sync_group:
+                if x != message.channel.id:
+                    content = message.content
+                    channel = client.get_channel(x)
+                    # filter the roles
+                    content = replace_roles(content, message.channel.guild.id, channel.guild.id)
+                    # make sure our user gets a good nick
+                    nick = message.author.nick
+                    if nick is None:
+                        nick = message.author.name
+                    content = f"**{nick}:** {content}"
+                    attachments = message.attachments
+                    # grab attachments and attach them, then send
+                    if attachments:
+                        if len(attachments) > 1:
+                            att = []
+                            for n in range(len(attachments)):
+                                att += [util.att_to_file(message, n)]
+                            await channel.send(content, files=att)
+                        else:
+                            att = util.att_to_file(message)
+                            await channel.send(content, file=att)
+                        # delete files after they're sent
+                        files = glob.glob("sync/*")
+                        for f in files:
+                            os.remove(f)
+                    else:
+                        await channel.send(content)
     return 
  
 
@@ -918,7 +919,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    elif message.content.lower().startswith("an "):
+    if message.content.lower().startswith("an "):
         message.content = message.content[3:]
         # help message
         if message.content.lower().startswith("help"):
@@ -926,101 +927,79 @@ async def on_message(message):
                 await message.channel.send(embed=help_message(message))
             except UnboundLocalError:
                 await message.channel.send("Could not find the function you're looking for.")
-            return
-     
         # lookup
-        if message.content.lower().startswith("lookup"):
+        elif message.content.lower().startswith("lookup"):
             await lookup_user(message)
-            return
     
         # ladder
-        if message.content.lower().startswith("ladder"):
+        elif message.content.lower().startswith("ladder"):
             await lookup_ladder(message)
             return
 
         # synergy
-        if message.content.lower().startswith("synergy"):
+        elif message.content.lower().startswith("synergy"):
             try:
                 await lookup_synergy(message)
             except discord.errors.HTTPException as e:
                 print(e)
                 await message.channel.send("An error has occurred, you might not have enough games. " + util.find_insult())
-            return
         
         # add games
-        if message.content.lower().startswith("add "):
+        elif message.content.lower().startswith("add "):
             add_match(message)
             await message.channel.send("Game(s) added!")
-            return
-        
         #ability randomizer 
-        if message.content.lower().startswith("randomizer"):
+        elif message.content.lower().startswith("randomizer"):
             await ability_randomizer(message)
-            return            
                                    
         # print matches.txt
-        if message.content.lower() == "print":
+        elif message.content.lower() == "print":
             await print_matches(message)
-            return
 
-        if message.content.lower() in ["sanity", "check", "sanity check"]:
+        elif message.content.lower() in ["sanity", "check", "sanity check"]:
             await sanity_check_matches(message)
-            return
     
         # edit matches.txt
-        if message.content.lower().startswith("edit "):
+        elif message.content.lower().startswith("edit "):
             await edit_matches(message)
-            return
     
         # replace matches.txt content
-        if message.content.lower().startswith("replace"):
+        elif message.content.lower().startswith("replace"):
             await replace_matches(message)
-            return
     
         # update db
-        if message.content.lower().startswith("update"):
+        elif message.content.lower().startswith("update"):
             await updater(message)
-            return
    
-        if message.content.lower().startswith("ocr"):
+        elif message.content.lower().startswith("ocr"):
             await ocr_screenshot(message)
 
-        if message.content.lower().startswith("swap"):
+        elif message.content.lower().startswith("swap"):
             await swap_teams(message)
 
-        if message.content.lower().startswith("user add"):
+        elif message.content.lower().startswith("user add"):
             await user_add(message)
-            return
 
-        if message.content.lower().startswith("user edit"):
+        elif message.content.lower().startswith("user edit"):
             await user_edit(message)
-            return
 
-        if message.content.lower().startswith("compare"):
+        elif message.content.lower().startswith("compare"):
             await compare_users(message)
-            return
 
-        if message.content.lower().startswith("estimate"):
+        elif message.content.lower().startswith("estimate"):
             await estimate_change(message)
-            return
 
-        if message.content.lower().startswith("reload"):
+        elif message.content.lower().startswith("reload"):
             await reload_modules(message)
-            return
         
-        if message.content.lower() == "rename all":
+        elif message.content.lower() == "rename all":
             await rename_all(message)
-            return
      
     elif message.content == "Y":
-        await message.channel.send(f"{message.author.name} has tacoed out.")
-        return
+        await message.channel.send(f"{message.author.name} has tacoed out.")    
     
-        return
-    
-    elif message.channel.id in conf.synched_channels:
+    else:
         await sync_channels(message)
-                                  
+
 
 client.run(conf.discord_id)
-
