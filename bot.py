@@ -371,7 +371,7 @@ async def lookup_synergy(message):
         mode = "Artifact assault"
     synergies = synergy.find_synergy(player, mode, min_games, track_teams)
     embedVar = discord.Embed(title=f"{player}'s {mode.replace('assault', 'Assault')} Synergies", color=0xff00ff)
-    if len(synergies) > 1:
+    if isinstance(synergies, tuple):
         embedVar.add_field(name="Top Teammates", value=synergies[0])
         embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
     else:
