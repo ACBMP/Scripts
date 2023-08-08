@@ -369,13 +369,16 @@ async def lookup_synergy(message):
     # since there are two modes that are grouped together to AA
     if "Artifact" in mode:
         mode = "Artifact assault"
-    synergies = synergy.find_synergy(player, mode, min_games, track_teams)
     embedVar = discord.Embed(title=f"{player}'s {mode.replace('assault', 'Assault')} Synergies", color=0xff00ff)
-    if isinstance(synergies, tuple):
-        embedVar.add_field(name="Top Teammates", value=synergies[0])
+    if util.check_mode(mode, short=True) in util.FFA_MODES:
+        synergies = synergy.find_synergy_ffa(player, mode, min_games)
+        embedVar.add_field(name="Average Finish", value=synergies[0])
         embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
     else:
-        embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies)
+        synergies = synergy.find_synergy(player, mode, min_games, track_teams)
+        embedVar.add_field(name="Top Teammates", value=synergies[0])
+        embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
+        
     await message.channel.send(embed=embedVar)
 
 
