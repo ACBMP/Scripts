@@ -44,6 +44,9 @@ def update_maps():
                 stats[f'{smode}.hostwins'] = 1
             else:
                 stats[f'{smode}.hostlosses'] = 1
+            if match["host"] in [match["players"][0]["player"], match["players"][1]["player"], 
+                    match["players"][2]["player"]]:
+                stats[f'{smode}.hostpodiums'] = 1
         else:
             try:
                 # determine which team host was on
@@ -142,6 +145,24 @@ def add_new_maps():
     for k in new_maps.keys():
         maps_db.insert_one(dict({"name": identify_map(k)}, **stats))
 
+def add_mode_to_maps(mode):
+    if mode not in GAME_MODES:
+        raise ValueError("mode not recognized")
+    db = connect()
+    maps_db = db["maps"]
+    stats = {}
+    base_stats = {"kills": 0, "deaths": 0, "score": 0, "hostwins": 0, "hostlosses": 0, "games": 0, "hostrating": 1000, "players": 0}    
+    stats[mode] = base_stats
+
+    if mode == "aa":
+        stats[mode]["scored"] = 0
+        stats[mode]["hostscored"] = 0
+
+    if mode in FFA_MODES:
+        stats[mode]["hostpodiums"] = 0
+
+    for k in identify_map(get_map_keys=True):
+        maps_db.update_one(dict({"name": identify_map(k)}, **stats))
 
 def remove_maps():
     maps = {

@@ -289,10 +289,10 @@ async def lookup_user(message):
                 top_elo = round(max(top_elo, player_db[f'{mode}mmr']))
                 user_stats = f"MMR (Rank): {round(player_db[f'{mode}mmr'])} ({player_db[f'{mode}rank']})\n \
                                Peak MMR: {max(player_db[f'{mode}history']['mmrs'])}\n \
-                               Winrate: {round(player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
+                               Winrate: {round((player_db[f'{mode}games']['won'] / (player_db[f'{mode}games']['total'])) * 100)}% \n"
                 user_stats += f"Games Played: {player_db[f'{mode}games']['total']}\n"
                 if mode in util.FFA_MODES:
-                    user_stats += f"Podium Rate: {round(player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total']) * 100)}% \n"
+                    user_stats += f"Podium Rate: {round((player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total'])) * 100)}% \n"
                     user_stats += f"Average Finish: {round(player_db[f'{mode}games']['finishes'] / (player_db[f'{mode}games']['total']))} \n"
                 if 'aa' not in mode:
                     embedVar.add_field(name=modes_dict[mode], value=user_stats +
@@ -370,9 +370,12 @@ async def lookup_synergy(message):
     if "Artifact" in mode:
         mode = "Artifact assault"
     synergies = synergy.find_synergy(player, mode, min_games, track_teams)
-    embedVar = discord.Embed(title=f"{player}'s {mode.replace('ass', 'Ass')} Synergies", color=0xff00ff)
-    embedVar.add_field(name="Top Teammates", value=synergies[0])
-    embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
+    embedVar = discord.Embed(title=f"{player}'s {mode.replace('assault', 'Assault')} Synergies", color=0xff00ff)
+    if len(synergies) > 1:
+        embedVar.add_field(name="Top Teammates", value=synergies[0])
+        embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
+    else:
+        embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies)
     await message.channel.send(embed=embedVar)
 
 
