@@ -110,23 +110,21 @@ def parse_ffa(db, matches, name, min_games):
     for m in matches:
         players = []
         position = 0
-        for player in m['players']:
-                player = player["player"]
+        for i in range(len(m['players'])):
+                player = m['players'][i]["player"]
                 player = identify_player(db, player)["name"]
                 players.append(player)
                 if not opponents.get(player):
                     opponents[player] = {"wins": 0, "draws": 0, "games": 0}
-        
+
         for ign in name:
             try:
                 position = [p.lower() for p in players].index(ign.lower()) + 1
                 break
             except ValueError:
                  continue
-            
+
         for i in range(len(players)):
-            if i+1 == position:
-                continue
             opponents[players[i]]["games"] += 1
             if m["players"][i]["score"] == m["players"][position-1]["score"]:
                 opponents[players[i]]["draws"] += 1
@@ -158,8 +156,9 @@ def dict_string_ffa(opponents):
     """
     result_str = ""
     for player in opponents:
-        result_str += f"{player}: {round((opponents[player]['wins']/opponents[player]['games']) * 100)}% " \
-            f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']})\n"
+        result_str += f"{player}: {round(
+            ((opponents[player]['wins'] + opponents[player]['draws'] / 2)/ opponents[player]['games']) * 100)}% " \
+            f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
     return result_str
 
 
