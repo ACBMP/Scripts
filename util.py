@@ -54,8 +54,20 @@ def check_mode(mode, server=None, short=False, channel=None):
     :return: identified mode
     """
     # default modes for servers
-    if server and not mode:
-        if server in conf.e_servers:
+    if (channel or server) and not mode:
+        if channel in conf.e_channels:
+            return "e" if short else "escort"
+        elif channel in conf.mh_channels:
+            return "mh" if short else "manhunt"
+        elif channel in conf.aa_channels:
+            return "aa" if short else "artifact assault"
+        elif channel in conf.do_channels:
+            return "do" if short else "domination"
+        elif channel in conf.dm_channels:
+            return "dm" if short else "deathmatch"
+        elif channel in conf.asb_channels:
+            return "asb" if short else "assassinate brotherhood"
+        elif server in conf.e_servers:
             return "e" if short else "escort"
         elif server in conf.mh_servers:
             return "mh" if short else "manhunt"
@@ -67,21 +79,6 @@ def check_mode(mode, server=None, short=False, channel=None):
             return "dm" if short else "deathmatch"
         elif server in conf.asb_servers:
             return "asb" if short else "assassinate brotherhood"
-        elif channel:
-            if channel in conf.e_channels:
-                return "e" if short else "escort"
-            elif channel in conf.mh_channels:
-                return "mh" if short else "manhunt"
-            elif channel in conf.aa_channels:
-                return "aa" if short else "artifact assault"
-            elif channel in conf.do_channels:
-                return "do" if short else "domination"
-            elif channel in conf.dm_channels:
-                return "dm" if short else "deathmatch"
-            elif channel in conf.asb_servers:
-                return "asb" if short else "assassinate brotherhood"
-            else:
-                return "escort"
         else:
             return "escort"
     mode = mode.lower()
