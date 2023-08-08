@@ -16,10 +16,27 @@ do_channels = [] #ints
 aa_channels = [] #ints
 dm_channels = [] #ints
 asb_channels = [] #ints
-synched_channels = [] #ints
-sync_roles = {main_server : [],
-             : [],
-             : []} #ints everywhere
+synched_channels = [] #arrays of ints
+sync_roles = {
+    "asb": {
+        #server : #role
+    },
+    "e": {
+        #server : #role
+    },
+    "do": {
+        #server : #role
+    },
+    "aa": {
+        #server : #role
+    },
+    "mh": {
+        #server : #role
+    },
+    "dm": {
+        #server : #role
+    }
+} #ints everywhere
 twitter_authhandler = ["", ""]
 twitter_access_token = ["", ""]
 telegram_token = ""
