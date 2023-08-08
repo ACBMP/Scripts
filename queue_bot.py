@@ -47,7 +47,7 @@ async def on_ready():
 with open("queues.txt", "r") as f:
     queues = {}
     queues_users = {}
-    queues_lengths = {"e": 4, "mh": 6, "do": 8}
+    queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
     old_queues = f.read()
     old_queues = old_queues.split("; ")
     i = 0
@@ -62,6 +62,8 @@ with open("queues.txt", "r") as f:
     queues_users["mh"] = old_queues[3] if old_queues[3] != " " else []
     queues["do"] = old_queues[4] if old_queues[4] != " " else []
     queues_users["do"] = old_queues[5] if old_queues[5] != " " else []
+    queues["asb"] = old_queues[6] if old_queues[6] != " " else []
+    queues_users["asb"] = old_queues[7] if old_queues[7] != " " else []
     f.close()
 
 # change bot presence function
@@ -150,7 +152,7 @@ async def team_comps(message, ident):
 
 @util.command_dec
 async def find_lobbies(message):
-    lobby_sizes = {"e": 4, "mh": 6, "do": 8, "aa": 8}
+    lobby_sizes = {"e": 4, "mh": 6, "do": 8, "aa": 8, "asb": 6}
     channel = message.channel
     # let's just stick to default modes so people don't get confused
     msg = message.content[len("lobbies "):]
