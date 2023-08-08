@@ -19,6 +19,7 @@ def find_games(db, name, mode):
     # we only need to find matches where the player was on the winning team
     search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
     search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+    search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
     matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode}]})
     return matches, igns
 
