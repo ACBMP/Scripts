@@ -115,7 +115,7 @@ def parse_ffa(db, matches, name, min_games):
                 player = identify_player(db, player)["name"]
                 players.append(player)
                 if not opponents.get(player):
-                    opponents[player] = {"wins": 0, "draws": 0, "games": 0}
+                    opponents[player] = {"wins": 0, "draws": 0, "games": 0, "finishes": 0}
 
         for ign in name:
             try:
@@ -125,14 +125,16 @@ def parse_ffa(db, matches, name, min_games):
                  continue
 
         for i in range(len(players)):
+            opponents[players[i]]["finishes"] += position
             opponents[players[i]]["games"] += 1
             if m["players"][i]["score"] == m["players"][position-1]["score"]:
                 opponents[players[i]]["draws"] += 1
+                if i+1 < position:
+                    opponents[players[i]]["finishes"] -= 1
             elif i+1 < position:
                 opponents[players[i]]["wins"] += 1
     
     opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
-    opponents = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
     return opponents
 
 def dict_string(d):
@@ -147,19 +149,28 @@ def dict_string(d):
         val += f"{item}: {round(d[item][0] * 100)}% ({d[item][2]} / {d[item][1]} | {d[item][3]} ties)\n"
     return val
 
-def dict_string_ffa(opponents):
+def dict_string_ffa(opponents: dict):
     """
     Convert a dictionary to a properly formatted string for printing.
 
     :param d: dictionary to convert
     :return: d as formatted string
     """
-    result_str = ""
-    for player in opponents:
-        result_str += f"{player}: " + str(round( \
+    winrate_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
+    finish_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
+    winrate_str = ""
+    finish_str = ""
+
+    for player in winrate_sort:
+        winrate_str += f"{player}: " + str(round( \
             ((opponents[player]['wins'] + opponents[player]['draws'] / 2)/ opponents[player]['games']) * 100))+ "% " \
             f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
-    return result_str
+    
+    for player in finish_sort:
+        finish_str += f"{player}: {opponents[player]['finish'] / opponents[player]['games']}" \
+            f"(over {opponents[player]['games']} games)\n"
+
+    return finish_str, winrate_str
 
 
 def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
@@ -175,11 +186,24 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
     """
     db = connect()
     games, igns = find_games(db, name, mode)
-    if check_mode(mode, short=True) in FFA_MODES:
-        results = parse_ffa(db, games, igns, min_games)
-        return dict_string_ffa(results)
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
+
+def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find synergies for
+    a given player in a given mode.
+
+    :param name: player name
+    :param mode: mode to search for games of
+    :param min_games: minimum number of games played with a team(mate)
+    :param track_teams: switch between individual teammates or full teams
+    :return: string of synergies
+    """
+    db = connect()
+    games, igns = find_games(db, name, mode)
+    results = parse_ffa(db, games, igns, min_games)
+    return dict_string_ffa(results)
 
 if __name__ == "__main__":
     print("Player: Winrate (Games Won / Tied / Played)")
