@@ -369,7 +369,7 @@ async def lookup_synergy(message):
     # since there are two modes that are grouped together to AA
     if "Artifact" in mode:
         mode = "Artifact assault"
-    embedVar = discord.Embed(title=f"{player}'s {mode.capitalize()} Synergies", color=0xff00ff)
+    embedVar = discord.Embed(title=f"{player}'s {mode.title()} Synergies", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
         synergies = synergy.find_synergy_ffa(player, mode, min_games)
         embedVar.add_field(name="Average Finish", value=synergies[0])
