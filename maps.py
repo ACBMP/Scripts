@@ -162,7 +162,7 @@ def add_mode_to_maps(mode):
         stats[mode]["hostpodiums"] = 0
 
     for k in identify_map(get_map_keys=True):
-        maps_db.update_one(dict({"name": identify_map(k)}, **stats))
+        maps_db.update_one({"name": identify_map(k)}, {"$set": {**stats}})
 
 def remove_maps():
     maps = {
