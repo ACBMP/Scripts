@@ -127,9 +127,9 @@ def parse_ffa(db, matches, name, min_games):
         for i in range(len(players)):
             if i+1 == position:
                 continue
-            opponents[player]["games"] += 1
+            opponents[players[i]]["games"] += 1
             if m["players"][i]["score"] == m["players"][position-1]["score"]:
-                opponents[player]["draws"] += 1
+                opponents[players[i]]["draws"] += 1
             elif i+1 < position:
                 opponents[players[i]]["wins"] += 1
     
