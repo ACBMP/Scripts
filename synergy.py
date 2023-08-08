@@ -133,7 +133,7 @@ def parse_ffa(db, matches, name, min_games):
             elif i+1 < position:
                 opponents[players[i]]["wins"] += 1
     
-    opponents = dict(filter(lambda _,v: v["games"] >= min_games, opponents))
+    opponents = dict(filter(lambda p: p[1]["games"] >= min_games, opponents.items()))
     opponents = dict(sorted(opponents.items(), key=lambda item: item["wins"]/item["games"], reverse=True))
     return opponents
 
