@@ -157,7 +157,7 @@ def dict_string_ffa(opponents: dict):
     :return: d as formatted string
     """
     winrate_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
-    finish_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
+    finish_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"]))
     winrate_str = ""
     finish_str = ""
 
@@ -167,7 +167,7 @@ def dict_string_ffa(opponents: dict):
             f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
     
     for player in finish_sort:
-        finish_str += f"{player}: {opponents[player]['finishes'] / opponents[player]['games']}" \
+        finish_str += f"{player}: {round(opponents[player]['finishes'] / opponents[player]['games'], 2)} " \
             f"(over {opponents[player]['games']} games)\n"
 
     return finish_str, winrate_str
