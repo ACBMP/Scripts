@@ -933,7 +933,6 @@ async def on_message(message):
         # ladder
         elif message.content.lower().startswith("ladder"):
             await lookup_ladder(message)
-            return
 
         # synergy
         elif message.content.lower().startswith("synergy"):
@@ -947,6 +946,7 @@ async def on_message(message):
         elif message.content.lower().startswith("add "):
             add_match(message)
             await message.channel.send("Game(s) added!")
+
         #ability randomizer 
         elif message.content.lower().startswith("randomizer"):
             await ability_randomizer(message)
@@ -998,7 +998,8 @@ async def on_message(message):
         await message.channel.send(f"{message.author.name} has tacoed out.")    
     
     else:
-        await sync_channels(message)
+        #await sync_channels(message)
+        pass
 
 
 client.run(conf.discord_id)
