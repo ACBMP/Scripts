@@ -25,12 +25,13 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     if game.lower() == "acb":
         # these are for 6-man lobbies only atm
         scale = img.width / 1280
-        left = 230 * scale
-        top = 148 * scale
-        right = 525 * scale
-        bottom = 420 + (25 * abs(6 - players)) * scale
+        left = 226 * scale
+        top = 145 * scale
+        width = 546 * scale
+        height = players * 26 * scale
         binarize = [120, 145] # highlight, rest
-        img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
+        img = img.std.CropAbs(left=left, top=top, width=width, height=height)
+        print(img.width, img.height)
         blue_v = [255, 0]
         common = {
                 "$S": "$5",
