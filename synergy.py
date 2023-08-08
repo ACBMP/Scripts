@@ -113,7 +113,7 @@ def parse_ffa(db, matches, name, min_games):
                 player = player["player"]
                 player = identify_player(db, player)["name"]
                 players.append(player)
-                if not opponents[player]:
+                if not opponents.get(player):
                     opponents[player] = {"wins": 0, "draws": 0, "games": 0}
         
         for ign in name:
