@@ -133,12 +133,9 @@ def parse_ffa(db, matches, name, min_games):
             elif i+1 < position:
                 opponents[players[i]]["wins"] += 1
     
-    for player in opponents:
-        # make sure min games played
-        if opponents[player]["games"] < min_games:
-            opponents.pop(player)
-    sorted_opponents = dict(sorted(opponents.items(), key=lambda item: item["wins"]/item["games"], reverse=True))
-    return sorted_opponents
+    opponents = dict(filter(lambda _,v: v["games"] >= min_games, opponents))
+    opponents = dict(sorted(opponents.items(), key=lambda item: item["wins"]/item["games"], reverse=True))
+    return opponents
 
 def dict_string(d):
     """
