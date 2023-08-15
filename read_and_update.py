@@ -142,10 +142,10 @@ def main():
             else:
                 rmodes.append(m)
     ranks.main(rmodes)
-    for key in mkeys:
-        if modes[key]:
-            if key in ["e", "mh"]:
-                tweet.tweet(key)
+#    for key in mkeys:
+#        if modes[key]:
+#            if key in ["e", "mh"]:
+#                tweet.tweet(key)
 
 if __name__=="__main__":
     main()
