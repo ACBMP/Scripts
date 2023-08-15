@@ -138,6 +138,15 @@ def get_last_game(player, mode):
     return last_match["date"]
 
 
+def force_update(mode):
+    db = connect()
+    today = date.today().strftime("%y-%m-%d")
+    db.players.update_many({}, {"$set": {f"{mode}sessionssinceplayed": 0}})
+    for p in db.players.find({}):
+        mmr_update(today, db, p, mode)
+    print("Force updated " + mode)
+    return
+
 if __name__=="__main__":
     update()
     #print(get_last_game("Dellpit", "Manhunt"))
