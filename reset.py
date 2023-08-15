@@ -1,12 +1,16 @@
 from util import connect, check_mode
-import history
+import historyupdate as history
 
 def reset_stats(mode):
     db = connect()
     mmr = 800
 #    history = {"dates": [], "mmrs": [800]}
     games = {"total": 0, "won": 0, "lost": 0}
+    if mode in ["dm", "asb"]:
+        games["podium"] = games["finished"] = 0
     stats = {"highscore": 0, "kills": 0, "deaths": 0, "totalscore": 0}
+    if mode in ["aar", "aad"]:
+        stats["scored"] = stats["conceded"] = 0
     rank = 0
     rankchange = 0
     db.players.update_many({}, {"$set": {f"{mode}mmr": mmr, f"{mode}games": games,
@@ -45,11 +49,9 @@ def reset_new(first, last, insert=None):
 
 
 if __name__ == "__main__":
-    reset_stats("e")
-    reset_stats("mh")
-    reset_stats("aar")
-    reset_stats("aad")
-    history.update()
+    for m in ["e", "mh", "aar", "aad", "do", "asb"]:
+        reset_stats(m)
+        history.force_update(m)
 #    reset_new("61954c54703aef997af74a47", "61954c54703aef997af74a50",
 #            {"61954c54703aef997af74a4c": {"Dellpit": [4200, 5, 6], "Tha Fazz": [3800, 6, 6],
 #                "DevelSpirit": [4200, 6, 5], "Ted95On": [3300, 5, 5]}})
