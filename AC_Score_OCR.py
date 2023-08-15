@@ -42,6 +42,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "DevelSpnt": "DevelSpirit",
                 "DevelSpint": "DevelSpirit",
                 "DaokO": "Daok0",
+                "Daoko": "Daok0",
                 "piesiol": "piesio1",
                 "Mrtirox": "MrEirox",
                 "MtEirox": "MrEirox",
