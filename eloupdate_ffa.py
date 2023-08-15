@@ -23,7 +23,7 @@ class Player(BaseModel):
         return self.get_db_data(db_conn)[f"{check_mode(mode, short=True)}mmr"]
 
 class Match(BaseModel):
-    players: List[Player]
+    players: List[Player] = None
     new: bool
     mode: str
 
@@ -174,6 +174,9 @@ def new_matches():
         mode = check_mode(match.mode, short=True)
         if mode not in FFA_MODES:
             continue
+
+        if not match.players:
+            raise ValueError(f"match for mode {mode} must have players field")
 
         if mode == "dm":
             ref = 0
