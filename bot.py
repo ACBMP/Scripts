@@ -655,21 +655,29 @@ async def user_add(message):
             "aarmmr":starting_mmr,
             "aadmmr":starting_mmr,
             "dommr":starting_mmr,
+            "dmmmr":starting_mmr,
+            "asbmmr":starting_mmr,
             "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
             "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "dohistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "dmhistory":{"dates":[d], "mmrs":[starting_mmr]},
+            "asbhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "egames":{"total":int(0), "won":int(0), "lost":int(0)},
             "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
             "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
             "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
             "dogames":{"total":int(0), "won":int(0), "lost":int(0)},
+            "dmgames":{"total":int(0), "won":int(0), "lost":int(0), "podium":int(0), "finishes":int(0)},
+            "asbgames":{"total":int(0), "won":int(0), "lost":int(0), "podium":int(0), "finishes":int(0)},
             "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
             "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
             "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
             "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
             "dostats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
+            "dmstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
+            "asbstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
             "erank": 0,
             "erankchange": 0,
             "mhrank": 0,
@@ -680,6 +688,10 @@ async def user_add(message):
             "aadrankchange": 0,
             "dorankchange": 0,
             "dorank": 0,
+            "dmrank": 0,
+            "dmrankchange": 0,
+            "asbrank": 0,
+            "asbrankchange": 0,
             "discord_id":discord_id}
             )
         await message.channel.send("Successfully added user.")
@@ -998,7 +1010,7 @@ async def on_message(message):
         await message.channel.send(f"{message.author.name} has tacoed out.")    
     
     else:
-        #await sync_channels(message)
+        await sync_channels(message)
         pass
 
 
