@@ -882,6 +882,17 @@ async def estimate_change(message):
 
 @util.permission_locked
 @util.command_dec
+async def restore_backup(message):
+    path = "/home/dell/Match_Update/dump/"
+    dumps = os.listdir(path)
+    paths = [os.path.join(path, basename) for basename in files]
+    newest = max(paths, key=os.path.getctime)
+    os.system(f"mongorestore --drop --nsInclude=public.* {path}{newest}/")
+    await message.channel.send("Restored backup.")
+
+
+@util.permission_locked
+@util.command_dec
 async def reload_modules(message):
     import importlib
     for module in sys.modules.values():
@@ -1000,6 +1011,9 @@ async def on_message(message):
         elif message.content.lower().startswith("estimate"):
             await estimate_change(message)
 
+        elif message.content.lower().startswith("restore"):
+            await restore_backup(message)
+        
         elif message.content.lower().startswith("reload"):
             await reload_modules(message)
         
