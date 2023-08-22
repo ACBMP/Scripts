@@ -885,7 +885,7 @@ async def estimate_change(message):
 async def restore_backup(message):
     path = "/home/dell/Match_Update/dump/"
     dumps = os.listdir(path)
-    paths = [os.path.join(path, basename) for basename in files]
+    paths = [os.path.join(path, basename) for basename in dumps]
     newest = max(paths, key=os.path.getctime)
     os.system(f"mongorestore --drop --nsInclude=public.* {path}{newest}/")
     await message.channel.send("Restored backup.")
