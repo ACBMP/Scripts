@@ -887,7 +887,7 @@ async def restore_backup(message):
     dumps = os.listdir(path)
     paths = [os.path.join(path, basename) for basename in dumps]
     newest = max(paths, key=os.path.getctime)
-    os.system(f"mongorestore --drop --nsInclude=public.* {path}{newest}/")
+    os.system(f"mongorestore --drop --nsInclude=public.* {newest}/")
     await message.channel.send("Restored backup.")
 
 
