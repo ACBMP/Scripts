@@ -7,7 +7,7 @@ GAME_MODES = ["e", "mh", "aa", "do", "dm", "asb"]
 ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm", "asb"]
 TEAM_MODES = ["e", "mh", "aar", "aad", "do"]
 FFA_MODES = ["dm", "asb"]
-QUEUEABLE_MODES = ["e", "mh", "do"]
+QUEUEABLE_MODES = ["e", "mh", "do", "asb"]
 
 def connect():
     """

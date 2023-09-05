@@ -42,29 +42,33 @@ async def on_ready():
     await update_presence()
     print("Starting.")
 
-# we save the queues here as simple arrays since we don't expect to scale
-# read out the queues from the queues file that saves state for restarts
-with open("queues.txt", "r") as f:
-    queues = {}
-    queues_users = {}
-    queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
-    old_queues = f.read()
-    old_queues = old_queues.split("; ")
-    i = 0
-    for q in old_queues:
-        old_queues[i] = old_queues[i].split(", ")
-        if old_queues[i] == [""]:
-            old_queues[i] = []
-        i += 1
-    queues["e"] = old_queues[0] if old_queues[0] != " " else []
-    queues_users["e"] = old_queues[1] if old_queues[1] != " " else []
-    queues["mh"] = old_queues[2] if old_queues[2] != " " else []
-    queues_users["mh"] = old_queues[3] if old_queues[3] != " " else []
-    queues["do"] = old_queues[4] if old_queues[4] != " " else []
-    queues_users["do"] = old_queues[5] if old_queues[5] != " " else []
-    queues["asb"] = old_queues[6] if old_queues[6] != " " else []
-    queues_users["asb"] = old_queues[7] if old_queues[7] != " " else []
-    f.close()
+queues = {}
+queues_users = {}
+queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
+
+## we save the queues here as simple arrays since we don't expect to scale
+## read out the queues from the queues file that saves state for restarts
+#with open("queues.txt", "r") as f:
+#    queues = {}
+#    queues_users = {}
+#    queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
+#    old_queues = f.read()
+#    old_queues = old_queues.split("; ")
+#    i = 0
+#    for q in old_queues:
+#        old_queues[i] = old_queues[i].split(", ")
+#        if old_queues[i] == [""]:
+#            old_queues[i] = []
+#        i += 1
+#    queues["e"] = old_queues[0] if old_queues[0] != " " else []
+#    queues_users["e"] = old_queues[1] if old_queues[1] != " " else []
+#    queues["mh"] = old_queues[2] if old_queues[2] != " " else []
+#    queues_users["mh"] = old_queues[3] if old_queues[3] != " " else []
+#    queues["do"] = old_queues[4] if old_queues[4] != " " else []
+#    queues_users["do"] = old_queues[5] if old_queues[5] != " " else []
+#    queues["asb"] = old_queues[6] if old_queues[6] != " " else []
+#    queues_users["asb"] = old_queues[7] if old_queues[7] != " " else []
+#    f.close()
 
 # change bot presence function
 # it just appends queues if there's someone in one
@@ -460,21 +464,21 @@ async def on_message(message):
 
 client.run(conf.discord_id)
 
-# once the client stops we need to save current queue progress
-# this doesn't save the queue removal jobs currently so unfortunately users need to do this manually
-def stop_func(sig, frame):
-    print("Stopping.")
-    # these just join all the values in the different queues
-    queues_joined = []
-    for q in queues:
-        queues_joined.append(", ".join(queues[q]))
-        queues_joined.append(", ".join(queues_users[q]))
-    with open("queues.txt", "w") as f:
-        f.write("; ".join(queues_joined))
-        f.close()
-
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, stop_func)
-signal.pause()
-
+## once the client stops we need to save current queue progress
+## this doesn't save the queue removal jobs currently so unfortunately users need to do this manually
+#def stop_func(sig, frame):
+#    print("Stopping.")
+#    # these just join all the values in the different queues
+#    queues_joined = []
+#    for q in queues:
+#        queues_joined.append(", ".join(queues[q]))
+#        queues_joined.append(", ".join(queues_users[q]))
+#    with open("queues.txt", "w") as f:
+#        f.write("; ".join(queues_joined))
+#        f.close()
+#
+#    sys.exit(0)
+#
+#signal.signal(signal.SIGINT, stop_func)
+#signal.pause()
+#

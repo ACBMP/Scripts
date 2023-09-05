@@ -30,7 +30,7 @@ def main(modes=None):
                         c = 0
                     else:
                         c = p[f"{mode}rank"] - r
-                    c = p[f"{mode}rank"] - r
+                    #c = p[f"{mode}rank"] - r
                     db.players.update_one({"_id":p["_id"]}, {"$set":{f"{mode}rankchange":c, f"{mode}rank":r}})
                     n += 1
             r += 1 + n
