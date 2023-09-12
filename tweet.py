@@ -54,7 +54,7 @@ all of these are to generate frames and with that tables
 def rank_frame(mode, table):
     db = connect()
 
-    players = db.players.find({f"{mode}games.total": {"$gte":10}})
+    players = db.players.find({f"{mode}games.total": {"$gte":10}, "hidden": False})
     p_sorted = sorted(players, key=lambda player: player[f"{mode}rank"], reverse=False)
     
     
@@ -89,7 +89,7 @@ def stat_frame(stat, mode, table):
     """
     db = connect()
 
-    players = db.players.find({f"{mode}games.total": {"$gte":10}})
+    players = db.players.find({f"{mode}games.total": {"$gte":10}, "hidden": False})
     if stat == "Highscore":
         fstat = lambda p: p[f"{mode}stats"]["highscore"]
     elif stat == "Winrate":
@@ -156,7 +156,7 @@ def tweet(mode):
     api = tweepy.API(auth)
 
     # find players at rank 1 and high rank change to determine tweet
-    hichange = db.players.find({f"{mode}rankchange" : {"$gte" : 2}})
+    hichange = db.players.find({f"{mode}rankchange" : {"$gte" : 2}, "hidden": False})
 
     first = db.players.find({f"{mode}rank" : 1})
 
