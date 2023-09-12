@@ -13,7 +13,7 @@ def main(modes=None):
 
     for mode in modes:
         db = connect()
-        players = db.players.find({f"{mode}games.total": {"$gte":10}})
+        players = db.players.find({f"{mode}games.total": {"$gte":10}, "hidden": False})
         p_sorted = sorted(players, key=lambda player: round(player[f"{mode}mmr"]), reverse=True)
         r = 1
         n = -1
@@ -36,7 +36,7 @@ def main(modes=None):
             r += 1 + n
             n = -1
     
-        p_inactive = db.players.find({f"{mode}games.total":{"$lt":10}})
+        p_inactive = db.players.find({f"{mode}games.total":{"$lt":10}, "hidden": False})
         for x in p_inactive:
             db.players.update_one({"_id":x["_id"]}, {"$set":{f"{mode}rankchange":0}})
             db.players.update_one({"_id":x["_id"]}, {"$set":{f"{mode}rank":0}})

@@ -271,6 +271,9 @@ async def lookup_user(message):
     if player_db is None:
         embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
         embedVar.add_field(name=util.find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
+    elif player_db["hidden"] == True and str(message.author.id) != player_db["discord_id"]:
+        embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
+        embedVar.add_field(name=util.find_insult(), value="The user you have tried to look up has opted to rename hidden.")
     else:
         # embed title is player name and their country flag as an emoji
         import flag
@@ -692,7 +695,8 @@ async def user_add(message):
             "dmrankchange": 0,
             "asbrank": 0,
             "asbrankchange": 0,
-            "discord_id":discord_id}
+            "discord_id": discord_id,
+            "hidden": False}
             )
         await message.channel.send("Successfully added user.")
     except:
