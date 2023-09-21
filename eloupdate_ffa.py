@@ -215,7 +215,7 @@ def new_matches():
             db.matches.update_one({"_id":m["_id"]}, {"$set":{"players":False}})
             if player.get_db_data(db)[f"{mode}stats"]["highscore"] < player.score:
                 db.players.update_one({
-                    "ign": player.player
+                    "name": player.player
                 }, {
                     "$set": {f"{mode}stats.highscore": player.score}})
 
