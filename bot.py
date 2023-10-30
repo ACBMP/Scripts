@@ -69,7 +69,7 @@ async def ability_randomizer(message):
     aset = ", ".join(random.sample(abilities, k=2))
     aset += "\n" + ", ".join(random.sample(Perks, k=2))
     aset += "\n" + random.choice(Kill_Streak)
-    await message.channel.send(aset + "\n" + random.choice(Loss_Streak))
+    await sync_channels(aset + "\n" + random.choice(Loss_Streak), message)
     return
 
 
@@ -81,17 +81,17 @@ async def send_long_message(content, channel):
     if content[-1] == "\n":
         content = content[:-1]
     elif len(content) < 2000:
-        await channel.send(content)
+        await sync_channels(content, channel_id=channel.id, server_id=channel.guild.id, nick="Assassins' Network")
         return
     line_split = content.split("\n")
     line = ""
     for i in range(len(line_split)):
         newline = line + "\n" + line_split[i]
         if len(newline) > 2000:
-            await channel.send(line)
+            await sync_channels(line, channel_id=channel.id, server_id=channel.guild.id, nick="Assassins' Network")
             line = ""
         line += "\n" + line_split[i]
-    await channel.send(line)
+    await sync_channels(line, channel_id=channel.id, server_id=channel.guild.id, nick="Assassins' Network")
     return
 
 
@@ -319,7 +319,7 @@ async def lookup_user(message):
                                  Avg Concedes: {round(player_db[f'{mode}stats']['conceded'] / player_db[f'{mode}games']['total'], 2)}",
                                  inline=False)
         embedVar.set_image(url="https://assassins.network/static/badges/" + rank_pic_big(top_elo))
-    await message.channel.send(embed=embedVar)
+    await sync_channels(message=message, embed=embedVar)
     return
 
 # WIP
@@ -342,7 +342,7 @@ async def lookup_ladder(message):
     embedVar = discord.Embed(title=util.check_mode(mode).title() + " Leaderboard",
             url=f"https://assassins.network/{mode_link}", color=0xff00ff)
     embedVar.set_image(url=f"attachment://{fname}")
-    await message.channel.send(embed=embedVar, file=table)
+    await sync_channels(message=message, embed=embedVar, attachments=[table])
 
 
 @util.command_dec
@@ -382,7 +382,7 @@ async def lookup_synergy(message):
         embedVar.add_field(name="Top Teammates", value=synergies[0])
         embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
         
-    await message.channel.send(embed=embedVar)
+    await sync_channels(message=message, embed=embedVar)
 
 
 # add a match to the matches.txt file
@@ -435,7 +435,7 @@ async def edit_matches(message):
     with open("matches.txt", "w") as f:
         f.write(msg)
         f.close()
-    await message.channel.send("Game(s) edited!")
+    await sync_channels("Game(s) edited!", message)
     return
 
 
@@ -453,7 +453,7 @@ async def replace_matches(message):
     with open("matches.txt", "w") as f:
         f.write(c)
         f.close()
-    await message.channel.send(f"Replaced every instance of {msg[0]} with {msg[1]}!")
+    await sync_channels(f"Replaced every instance of {msg[0]} with {msg[1]}!", message)
     return
 
 
@@ -472,11 +472,11 @@ async def updater(message):
         #rau.read_and_update()
         #rau.eloupdate.new_matches()
         #rau.historyupdate.update()
-        await message.channel.send("Successfully updated the leaderboards!")
+        await sync_channels("Successfully updated the leaderboards!", message)
     except OutcomeError as e:
-        await message.channel.send("Error! " + e)
+        await sync_channels("Error! " + e, message)
     except:
-        await message.channel.send("An error has occurred, please message an administrator.")
+        await sync_channels("An error has occurred, please message an administrator.", message)
 
 
 
@@ -491,10 +491,10 @@ async def check_remake(message):
     msg = message.content.split(" ")[1:]
     # check that the message includes only the scores time left and players
     if len(msg) > 6:
-        await message.channel.send("I did not understand that. " + util.find_insult())
+        await sync_channels("I did not understand that. " + util.find_insult(), message)
         return
     elif len(msg) < 4:
-        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult())
+        await sync_channels("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult(), message)
         return
     # auto set mode if not given
     elif len(msg) == 4:
@@ -521,18 +521,18 @@ async def check_remake(message):
             s_diff = escort(time, players)
             if abs(score_1 - score_2) / max(score_1, score_2) > s_diff:
                 s_diff = round(s_diff)
-                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+                await sync_channels(f"No remake is necessary; score difference is above the threshold ({s_diff}).", message)
             else:
-                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
+                await sync_channels(f"A remake is necessary; score difference is below the threshold ({s_diff}).", message)
         else:
             s_diff = manhunt(time, players)
             if abs(score_1 - score_2) > s_diff:
                 s_diff = round(s_diff)
-                await message.channel.send(f"No remake is necessary; score difference is above the threshold ({s_diff}).")
+                await sync_channels(f"No remake is necessary; score difference is above the threshold ({s_diff}).", message)
             else:
-                await message.channel.send(f"A remake is necessary; score difference is below the threshold ({s_diff}).")
+                await sync_channels(f"A remake is necessary; score difference is below the threshold ({s_diff}).", message)
     except:
-        await message.channel.send("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult())
+        await sync_channels("Did not understand input, expect AN remake score_1 score_2 time_left players_per_team [mode]. " + util.find_insult(), message)
         return
 
     return
@@ -605,10 +605,10 @@ async def ocr_screenshot(message):
             result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
         if correction:
             result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
-        await message.channel.send(result)
+        await sync_channels(result, message)
         return
     else:
-        await message.channel.send("Could not find attachment.")
+        await sync_channels("Could not find attachment.", message)
         return
 
 
@@ -624,7 +624,7 @@ async def swap_teams(message):
     t1 = items[3:3 + int(items[1])]
     t2 = items[3 + int(items[1]):]
     out = ", ".join(items[0:2] + [str(outcome)] + t2 + t1)
-    await message.channel.send(out)
+    await sync_channels(out, message)
     return
 
 # add users to the db
@@ -698,9 +698,9 @@ async def user_add(message):
             "discord_id": discord_id,
             "hidden": False}
             )
-        await message.channel.send("Successfully added user.")
+        await sync_channels("Successfully added user.", message)
     except:
-        await message.channel.send("An error has occured.")
+        await sync_channels("An error has occured.", message)
 
 
 @util.permission_locked
@@ -717,7 +717,7 @@ async def user_edit(message):
     all_keys = player.keys()
     key = info[1]
     if key not in all_keys:
-        await message.channel.send(f"Improper key specified! Possible keys are: {', '.join(all_keys)}.")
+        await sync_channels(f"Improper key specified! Possible keys are: {', '.join(all_keys)}.", message)
         return
     # kinda iffy to do this but there's a reason why it's permission locked
     value = eval(info[2])
@@ -736,11 +736,18 @@ async def user_edit(message):
         # update host in match history as well
         db.matches.update_many({"host": name}, {"$set": {"host": value}})
     db.players.update_one({"_id": player["_id"]}, {"$set": {key: value}})
-    await message.channel.send(f"Successfully edited {player['name']}.")
+    await sync_channels(f"Successfully edited {player['name']}.", message)
     return
 
 
-async def sync_channels(message):
+async def sync_channels(content=None, message=None, channel_id=None, server_id=None, nick=None, attachments=None, embed=None, bot_response=True):
+
+    if message:
+        channel_id = message.channel.id
+        server_id = message.channel.guild.id
+        nick = message.author.name
+    if bot_response:
+        nick = "Assassins' Network"
 
     # since we want to replace the role pings with equivalents
     def replace_roles(content, origin_guild_id, dest_guild_id):
@@ -749,37 +756,44 @@ async def sync_channels(message):
             content = content.replace(str(r.get(origin_guild_id)), str(r.get(dest_guild_id)))
         return content
 
+    sent = False
     roles = conf.sync_roles
     for sync_group in conf.synched_channels:
-        if message.channel.id in sync_group:
+        if channel_id in sync_group:
+            sent = True
             for x in sync_group:
-                if x != message.channel.id:
-                    content = message.content
+                if x != channel_id or bot_response:
                     channel = client.get_channel(x)
-                    # filter the roles
-                    content = replace_roles(content, message.channel.guild.id, channel.guild.id)
-                    # make sure our user gets a good nick
-                    nick = message.author.nick
-                    if nick is None:
-                        nick = message.author.name
-                    content = f"**{nick}:** {content}"
-                    attachments = message.attachments
-                    # grab attachments and attach them, then send
-                    if attachments:
-                        if len(attachments) > 1:
-                            att = []
-                            for n in range(len(attachments)):
-                                att += [util.att_to_file(message, n)]
-                            await channel.send(content, files=att)
-                        else:
-                            att = util.att_to_file(message)
-                            await channel.send(content, file=att)
-                        # delete files after they're sent
-                        files = glob.glob("sync/*")
-                        for f in files:
-                            os.remove(f)
+                    if embed:
+                        await channel.send(embed=embed)
                     else:
-                        await channel.send(content)
+                        # filter the roles
+                        content = replace_roles(content, server_id, channel.guild.id)
+                        # make sure our user gets a good nick
+                        content = f"**{nick}:** {content}"
+                        # grab attachments and attach them, then send
+                        if attachments:
+                            if len(attachments) > 1:
+                                att = []
+                                for n in range(len(attachments)):
+                                    att += [util.att_to_file(message, n)]
+                                await channel.send(content, files=att)
+                            else:
+                                att = util.att_to_file(message)
+                                await channel.send(content, file=att)
+                            # delete files after they're sent
+                            files = glob.glob("sync/*")
+                            for f in files:
+                                os.remove(f)
+                        else:
+                            await channel.send(content)
+    if bot_response and not sent:
+        channel = client.get_channel(channel_id)
+        if embed:
+            await channel.send(embed=embed)
+            return
+        await channel.send(content)
+    return
  
 
 @util.command_dec
@@ -793,7 +807,7 @@ async def compare_users(message):
     mode = util.check_mode(mode, message.guild.id, short=True, channel=message.channel.id)
     teams_str = content.split(" vs ")
     if len(teams_str) < 2:
-        await message.channel.send("Missing a second team. " + util.find_insult())
+        await sync_channels("Missing a second team. " + util.find_insult(), message)
         return
     teams = [[], []]
     for i in range(2):
@@ -808,13 +822,13 @@ async def compare_users(message):
                         f"{mode}mmr": int(players[j])
                     }
                 except ValueError:
-                    await message.channel.send(f"I've never heard of {players[j]}. {util.find_insult()}")
+                    await sync_channels(f"I've never heard of {players[j]}. {util.find_insult()}", message)
                     return
         teams[i] = players
     chance = elostats.compare_players(teams[0], teams[1], mode, verbose=True)
     chance_p = round(chance[0] * 100, 2)
     teams = [[p["name"] for p in team] for team in teams]
-    await message.channel.send(f"The chance of {', '.join(teams[0])} ({round(chance[1][0])} MMR) beating {', '.join(teams[1])} ({round(chance[1][1])} MMR) in {modes_dict[mode]} is {chance_p}%.")
+    await sync_channels(f"The chance of {', '.join(teams[0])} ({round(chance[1][0])} MMR) beating {', '.join(teams[1])} ({round(chance[1][1])} MMR) in {modes_dict[mode]} is {chance_p}%.", message)
     return
 
 
@@ -880,7 +894,7 @@ async def estimate_change(message):
     embedVar.add_field(name="Team 1 Win", value=w, inline=True)
     embedVar.add_field(name="Tie", value=t, inline=True)
     embedVar.add_field(name="Team 2 Win", value=l, inline=True)
-    await message.channel.send(embed=embedVar)
+    await sync_channels(embed=embedVar, message=message)
     return
 
 
@@ -892,7 +906,7 @@ async def restore_backup(message):
     paths = [os.path.join(path, basename) for basename in dumps]
     newest = max(paths, key=os.path.getctime)
     os.system(f"mongorestore --drop --nsInclude=public.* {newest}/")
-    await message.channel.send("Restored backup.")
+    await sync_channels("Restored backup.", message)
 
 
 @util.permission_locked
@@ -906,7 +920,7 @@ async def reload_modules(message):
                 print(f"Reloaded module: {module.__name__}")
         except:
             pass
-    await message.channel.send("Successfully reloaded modules.")
+    await sync_channels("Successfully reloaded modules.", message)
     return
 
 @client.event
@@ -923,7 +937,7 @@ async def on_member_join(member):
         else:
             print(f"Couldn't identify user {member.id}")
             channel = client.get_channel(conf.main_channel)
-            await channel.send(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will add you to the database.")
+            await sync_channels(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will add you to the database.", message)
     return
 
 @util.permission_locked
@@ -946,13 +960,15 @@ async def on_message(message):
         return
     
     if message.content.lower().startswith("an "):
+        await sync_channels(message.content, message, bot_response=False)
+
         message.content = message.content[3:]
         # help message
         if message.content.lower().startswith("help"):
             try:
-                await message.channel.send(embed=help_message(message))
+                await sync_channels(message=message, embed=help_message(message))
             except UnboundLocalError:
-                await message.channel.send("Could not find the function you're looking for.")
+                await sync_channels("Could not find the function you're looking for.", message)
         # lookup
         elif message.content.lower().startswith("lookup"):
             await lookup_user(message)
@@ -967,12 +983,12 @@ async def on_message(message):
                 await lookup_synergy(message)
             except discord.errors.HTTPException as e:
                 print(e)
-                await message.channel.send("An error has occurred, you might not have enough games. " + util.find_insult())
+                await sync_channels("An error has occurred, you might not have enough games. " + util.find_insult(), message)
         
         # add games
         elif message.content.lower().startswith("add "):
             add_match(message)
-            await message.channel.send("Game(s) added!")
+            await synch_channels("Game(s) added!", message)
 
         #ability randomizer 
         elif message.content.lower().startswith("randomizer"):
@@ -1025,10 +1041,10 @@ async def on_message(message):
             await rename_all(message)
      
     elif message.content == "Y":
-        await message.channel.send(f"{message.author.name} has tacoed out.")    
+        await sync_channels(f"{message.author.name} has tacoed out.", message)
     
     else:
-        await sync_channels(message)
+        await sync_channels(message.content, message, bot_response=False)
         pass
 
 
