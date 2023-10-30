@@ -42,8 +42,8 @@ async def on_ready():
     await update_presence()
     print("Starting.")
 
-queues = {}
-queues_users = {}
+queues = {"e": [], "mh": [], "do": [], "asb": []}
+queues_users = {"e": [], "mh": [], "do": [], "asb": []}
 queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
 
 ## we save the queues here as simple arrays since we don't expect to scale
