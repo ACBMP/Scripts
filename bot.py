@@ -960,7 +960,7 @@ async def on_message(message):
         return
     
     if message.content.lower().startswith("an "):
-        await sync_channels(message.content, message, bot_response=False)
+#        await sync_channels(message.content, message, bot_response=False)
 
         message.content = message.content[3:]
         # help message
