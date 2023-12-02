@@ -42,6 +42,63 @@ async def on_ready():
     await update_presence()
     print("Starting.")
 
+
+async def sync_channels(content=None, message=None, channel_id=None, server_id=None, nick=None, attachments=None, embed=None, bot_response=True):
+
+    if message:
+        channel_id = message.channel.id
+        server_id = message.channel.guild.id
+        nick = message.author.name
+    if bot_response:
+        nick = "Assassins' Network"
+
+    # since we want to replace the role pings with equivalents
+    def replace_roles(content, origin_guild_id, dest_guild_id):
+        for r in roles.values():
+            # don't care to add a safety check
+            content = content.replace(str(r.get(origin_guild_id)), str(r.get(dest_guild_id)))
+        return content
+
+    sent = False
+    roles = conf.sync_roles
+    for sync_group in conf.synched_channels:
+        if channel_id in sync_group:
+            sent = True
+            for x in sync_group:
+                if x != channel_id or bot_response:
+                    channel = client.get_channel(x)
+                    if embed:
+                        await channel.send(embed=embed)
+                    else:
+                        # filter the roles
+                        content = replace_roles(content, server_id, channel.guild.id)
+                        # make sure our user gets a good nick
+                        content = f"**{nick}:** {content}"
+                        # grab attachments and attach them, then send
+                        if attachments:
+                            if len(attachments) > 1:
+                                att = []
+                                for n in range(len(attachments)):
+                                    att += [util.att_to_file(message, n)]
+                                await channel.send(content, files=att)
+                            else:
+                                att = util.att_to_file(message)
+                                await channel.send(content, file=att)
+                            # delete files after they're sent
+                            files = glob.glob("sync/*")
+                            for f in files:
+                                os.remove(f)
+                        else:
+                            await channel.send(content)
+    if bot_response and not sent:
+        channel = client.get_channel(channel_id)
+        if embed:
+            await channel.send(embed=embed)
+            return
+        await channel.send(content)
+    return
+ 
+
 queues = {"e": [], "mh": [], "do": [], "asb": []}
 queues_users = {"e": [], "mh": [], "do": [], "asb": []}
 queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
@@ -143,14 +200,14 @@ async def team_comps(message, ident):
                 for gp in group_players:
                     players.append(gp)
         matchup = team_finder(players, mode, r_factor, groups=groups)
-        await channel.send(matchup)
+        await sync_channels(matchup, message)
     # otherwise we try to grab the mode's queue and use that
     else:
         try:
             matchup = team_finder(queues[mode], mode, r_factor)
-            await channel.send(matchup)
+            await sync_channels(matchup, message)
         except:
-            await channel.send("That didn't work, idiot. " + util.find_insult())
+            await sync_channels("That didn't work, idiot. " + util.find_insult(), message)
     return
 
 
@@ -169,7 +226,7 @@ async def find_lobbies(message):
     lobbies = teams.find_lobbies(msg.split(", "), mode, lobby_sizes[mode])
     lobbies = [", ".join(l) for l in lobbies]
     lobbies_text = "\n".join(lobbies)
-    await channel.send("Suggested lobbies:\n" + lobbies_text)
+    await sync_channels("Suggested lobbies:\n" + lobbies_text, message)
     return
 
 
@@ -179,10 +236,10 @@ async def queue_rm(mode, user, player, channel):
     try:
         queues[mode].remove(player)
         queues_users[mode].remove(user.mention)
-        await channel.send(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
+        await sync_channels(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}", channel_id=channel.id, server_id=channel.guild.id)
         await update_presence()
-    except:
-        pass
+    except Exception as e:
+        print(e)
     return
 
 
@@ -210,7 +267,7 @@ async def play_command(msg, user, channel, gid):
         try:
             length = float(length)
         except:
-            await channel.send("Did not recognize given playtime length.")
+            await sync_channels("Did not recognize given playtime length.", message)
             return
     else:
         length = 3 # hours
@@ -222,7 +279,7 @@ async def play_command(msg, user, channel, gid):
         try:
             start = float(start)
         except:
-            await channel.send("Did not recognize given starting playtime.")
+            await sync_channels("Did not recognize given starting playtime.", channel_id=channel.id, server_id=gid, nick=user.name)
             return
     else:
         start = 0 # now
@@ -253,14 +310,14 @@ async def play_command(msg, user, channel, gid):
     if not player:
         player_db = db.players.find_one({"discord_id" : str(user.id)})
         if not player_db:
-            await channel.send("I don't know you. " + util.find_insult())
+            await sync_channels("I don't know you. " + util.find_insult(), channel_id=channel.id, server_id=gid, nick=user.name)
             return
         player = player_db["name"]
     else:
         try:
             player_db = util.identify_player(db, player)
         except ValueError as e:
-            await channel.send(e)
+            await sync_channels(e, channel_id=channel.id, server_id=gid, nick=user.name)
             return
 
     # remove from queue before re-adding
@@ -272,7 +329,7 @@ async def play_command(msg, user, channel, gid):
         elif player + f"_{mode}_remove" == i.id:
             scheduler.remove_job(player + f"_{mode}_remove")
             # this is only necessary for the remove command because it will always be included
-            await channel.send(f"{player} has been re-scheduled to queue up.")
+            await sync_channels(f"{player} has been re-scheduled to queue up.", channel_id=channel.id, server_id=gid, nick=user.name)
 
     # the part where people are added to the queue
     async def queue():
@@ -281,16 +338,16 @@ async def play_command(msg, user, channel, gid):
         await update_presence()
         if len(queues[mode]) == queues_lengths[mode]:
             matchup = team_finder(queues[mode], mode=mode, random=0)
-            await channel.send(", ".join(queues_users[mode]) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup)
+            await sync_channels(", ".join(queues_users[mode]) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup, channel_id=channel.id, server_id=gid, nick=user.name)
             for p in queues[mode]:
                 try:
                     telegram_bot.notify_player(p, modes_dict[mode])
                 except:
                     pass
         elif len(queues[mode]) < queues_lengths[mode]:
-            await channel.send(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}")
+            await sync_channels(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}", channel_id=channel.id, server_id=gid, nick=user.name)
         else:
-            await channel.send(f"We're already enough for {modes_dict[mode]}.")
+            await sync_channels(f"We're already enough for {modes_dict[mode]}.", channel_id=channel.id, server_id=gid, nick=user.name)
         return
 
     # if a start time was specified we add a job to the scheduler
@@ -299,9 +356,9 @@ async def play_command(msg, user, channel, gid):
         try: 
             end_time_add = datetime.isoformat(datetime.now() + timedelta(seconds = 1, hours = start))
             scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + f"_{mode}_start")
-            await channel.send(f"Will add {player} to the queue in {start} hour(s).")
+            await sync_channels(f"Will add {player} to the queue in {start} hour(s).", channel_id=channel.id, server_id=gid, nick=user.name)
         except:
-            await channel.send(f"Did not recognize given start time or user already in queue.")
+            await sync_channels(f"Did not recognize given start time or user already in queue.", channel_id=channel.id, server_id=gid, nick=user.name)
             return
     else:
         await queue()
@@ -326,13 +383,13 @@ async def queue_rm_command(msg, user, channel):
     if not msg:
         player_db = db.players.find_one({"discord_id" : str(user.id)})
         if not player_db:
-            await channel.send("I don't know you. " + util.find_insult())
+            await sync_channels("I don't know you. " + util.find_insult(), channel_id=channel.id, server_id=channel.guild.id, nick=user.name)
             return
     else:
         try:
             player_db = util.identify_player(db, player)
         except ValueError as e:
-            await channel.send(e)
+            await sync_channels(e, channel_id=channel.id, server_id=channel.guild.id, nick=user.name)
             return
 
     player = player_db["name"]
@@ -340,7 +397,7 @@ async def queue_rm_command(msg, user, channel):
     try:
         for mode in queues.keys():
             scheduler.remove_job(player + f"_{mode}_start")
-            await channel.send(f"Successfully removed {player} from the {modes_dict[mode]} queue.")
+            await sync_channels(f"Successfully removed {player} from the {modes_dict[mode]} queue.", channel_id=channel.id, server_id=channel.guild.id, nick=user.name)
     except:
         for i in queues.keys():
             try:
@@ -401,7 +458,7 @@ async def print_queue(message):
         futures = ""
         current = ", ".join(queues[mode])
     response = f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {current}"
-    await message.channel.send(response + futures)
+    await sync_channels(response + futures, message)
     return
 
 
@@ -449,7 +506,7 @@ async def on_message(message):
             try:
                 await queue_rm_command(msg, user, channel)
             except:
-                await channel.send("Did not find you in a queue. " + util.find_insult())
+                await sync_channels("Did not find you in a queue. " + util.find_insult(), message)
             return
     
         # print current queue
