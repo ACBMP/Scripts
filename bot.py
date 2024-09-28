@@ -133,6 +133,8 @@ AN replace ORIGINAL with REPLACEMENT```"""
 AN print```"""
     update_help = """If you have the Assassins' Network role, you can update the matches in the database using\n```css
 AN update```Note that improperly formatted matches won't be added. If this occurs, please contact Dell."""
+    missing_help = """To add missing data to an old match, use\n```css
+AN missing OLD_MATCH_DATA, NEW_KEY: NEW_VALUE```"""
     user_add_help = """If you have the Assassins' Network role, you can add users to the database using\n```css
 AN user add NAME; IGN[1, IGN2, ...]; LINK; COUNTRY; PLATFORM[1, PLATFORM2, ...]; @USER```"""
     user_edit_help = """If you have the Assassins' Network role, you can edit users in the database using\n```css
@@ -185,6 +187,8 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
             return discord.Embed(title=":memo: Add Matches", description=add_help, color=0xff00fe)
         elif msg == "replace":
             return discord.Embed(title=":crayon: Replace Match Content", description=replace_help, color=0xff00fe)
+        elif msg == "missing":
+            return discord.Embed(title=":question: Add Missing Data", description=missing_help, color=0xff00fe)
         elif msg == "print":
             return discord.Embed(title=":printer: Print Matches", description=print_help, color=0xff00fe)
         elif msg == "ladder":
@@ -209,6 +213,7 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
          embedVar.add_field(name=":printer: Print Matches", value="AN print", inline=True)
          embedVar.add_field(name=":confused: Sanity Check", value="AN sanity", inline=True)
          embedVar.add_field(name=":crayon: Replace Match Content", value="AN replace", inline=True)
+         embedVar.add_field(name=":question: Add Missing Data", value="AN missing", inline=True)
          embedVar.add_field(name=":ladder: View Leaderboard", value="AN ladder", inline=True)
          embedVar.set_footer(text="For more information, use AN help COMMAND.")
 
@@ -407,7 +412,10 @@ def add_match(message):
 # print the matches.txt file
 @util.command_dec
 async def print_matches(message):
-    with open("matches.txt", "r") as f:
+    fname = conf.RAU_FILE_NAME
+    if "missing" in message.content:
+        fname = conf.RAE_FILE_NAME
+    with open(fname, "r") as f:
         content = f.read()
         await send_long_message(content, message.channel)
 #        try:
@@ -436,6 +444,28 @@ async def edit_matches(message):
         f.write(msg)
         f.close()
     await sync_channels("Game(s) edited!", message)
+    return
+
+
+@util.command_dec
+async def add_missing(message):
+    # database backup
+    os.system(f"mongodump -d public -o dump/dump_{str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))}")
+    msg = message.content.replace("missing ", "")
+    # if the file content is # we overwrite
+    # otherwise we append
+    with open(conf.RAE_FILE_NAME, "r") as f:
+        if "#" in f.readline():
+            mode = "w"
+        else:
+            mode = "a"
+        f.close()
+    with open(conf.RAE_FILE_NAME, mode) as f:
+        f.write(msg + "\n")
+        f.close()
+    import read_and_update as rau
+    rau.read_and_edit()
+    await sync_channels("Missing data added!", message)
     return
 
 
@@ -770,7 +800,8 @@ async def sync_channels(content=None, message=None, channel_id=None, server_id=N
                         # filter the roles
                         content = replace_roles(content, server_id, channel.guild.id)
                         # make sure our user gets a good nick
-                        content = f"**{nick}:** {content}"
+                        if not bot_response:
+                            content = f"**{nick}:** {content}"
                         # grab attachments and attach them, then send
                         if attachments:
                             if len(attachments) > 1:
@@ -1015,6 +1046,10 @@ async def on_message(message):
    
         elif message.content.lower().startswith("ocr"):
             await ocr_screenshot(message)
+
+        # add missing content
+        elif message.content.lower().startswith("missing"):
+            await add_missing(message)
 
         elif message.content.lower().startswith("swap"):
             await swap_teams(message)

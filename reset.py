@@ -47,11 +47,17 @@ def reset_new(first, last, insert=None):
             db.matches.update_one({"_id": ObjectId(hex(v)[2:])}, {"$set": {"new": True}})
 
 
+def reset_all_matches():
+    db = connect()
+    db.matches.update_many({}, {"$set": {"new": True, "inhist": True}})
+    print("Reset matches")
+    return
 
 if __name__ == "__main__":
-    for m in ["e", "mh", "aar", "aad", "do", "asb"]:
-        reset_stats(m)
-        history.force_update(m)
+#    for m in ["e", "mh", "aar", "aad", "do", "asb"]:
+#        reset_stats(m)
+    reset_all_matches()
+#        history.force_update(m)
 #    reset_new("61954c54703aef997af74a47", "61954c54703aef997af74a50",
 #            {"61954c54703aef997af74a4c": {"Dellpit": [4200, 5, 6], "Tha Fazz": [3800, 6, 6],
 #                "DevelSpirit": [4200, 6, 5], "Ted95On": [3300, 5, 5]}})

@@ -61,7 +61,9 @@ def most_games(mode=None):
     else:
         matches = db.matches.find()
     stats = {}
+    j = 0
     for m in matches:
+        j += 1
         for i in [1, 2]:
             for p in m[f"team{i}"]:
                 player = identify_player(db, p["player"])["name"]
@@ -69,6 +71,7 @@ def most_games(mode=None):
                     stats[player] += 1
                 except:
                     stats[player] = 1
+    print(f"Total {mode} games: {j}")
     other = {}
     for k in stats.keys():
         try:
@@ -78,7 +81,7 @@ def most_games(mode=None):
     sort = sorted(other)[::-1]
     i = 1
     for k in sort:
-        print(f"{i}. {k} game(s): {other[k]}")
+        print(f"{i}. {k} game(s): {other[k]} ({round(k / j * 100, 2)}%)")
         i += 1
     return
 
@@ -124,9 +127,30 @@ def average_elos():
         print(check_mode(mode).title(), "average elo:", np.mean(elos), "| number of players:", len(elos))
     return
 
+
+def team_winrate(mode="Escort"):
+    db = connect()
+    n = db.matches.find({"mode": mode, "corrected": True}).count()
+    for t in [1, 2]:
+        w = db.matches.find({"mode": mode, "corrected": True, "outcome": t}).count()
+        print(f"Team {t} win rate: {round(w / n * 100)}% ({w}/{n})")
+    return
+
+
+def team_winrate_map(m, mode="Escort"):
+    db = connect()
+    n = db.matches.find({"mode": mode, "corrected": True, "map": m}).count()
+    for t in [1, 2]:
+        w = db.matches.find({"mode": mode, "corrected": True, "outcome": t, "map": m}).count()
+        print(f"Team {t} win rate: {round(w / n * 100)}% ({w}/{n})")
+    return
+
 if __name__ == "__main__":
-    average_elos()
-    #most_games("Manhunt")
+    #team_winrate()
+    most_games("Escort")
+    most_games("Manhunt")
+    most_games("Domination")
+    most_games("Artifact assault")
     #countries()
     #stomp("Escort")
 #    most_games("Artifact assault")

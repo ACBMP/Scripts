@@ -2,7 +2,7 @@ import pandas as pd
 from pymongo import MongoClient
 from util import GAME_MODES, check_mode
 
-# I don't remember where this is from but it's not mind
+# I don't remember where this is from but it's not mine
 
 def _connect_mongo(host, port, username, password, db):
     """ A util for making a connection to mongo """
@@ -34,8 +34,9 @@ def read_mongo(db, collection, query={}, host='localhost', port=27017, username=
     return df
 
 if __name__ == '__main__':
-    for m in GAME_MODES:
+    for m in ["e"]:#GAME_MODES:
         mode = check_mode(m, short=False)
-        df = read_mongo('public', 'matches', {'mode': m}, 'localhost', 27017)
+        df = read_mongo('public', 'matches', {'mode': mode.title()}, 'localhost', 27017)
         df.to_csv(f"/home/dell/AN_Flask/static/matches_{m.lower().replace(' ', '_')}.csv", index=False)
+#        df.to_csv(f"matches_{m.lower().replace(' ', '_')}.csv", index=False)
 
