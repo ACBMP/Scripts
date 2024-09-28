@@ -31,7 +31,6 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         height = players * 26 * scale
         binarize = [120, 145] # highlight, rest
         img = img.std.CropAbs(left=left, top=top, width=width, height=height)
-        print(img.width, img.height)
         blue_v = [255, 0]
         common = {
                 "$S": "$5",

@@ -1,13 +1,14 @@
 from util import *
 import re
 
-def find_games(db, name, mode):
+def find_games(db, name, mode, game_map=None):
     """
     Find all games by a player in a given mode.
 
     :param db: database
     :param name: player name
     :param mode: mode to search for games in
+    :param game_map: maps to search for
     :return: matches and teammates' IGNs
     """
     data = identify_player(db, name)
@@ -16,11 +17,18 @@ def find_games(db, name, mode):
     if type(igns) == str:
         igns = [igns]
     igns += [name]
-    # we only need to find matches where the player was on the winning team
-    search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
-    search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
-    search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
-    matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode}]})
+    if game_map:
+        # we only need to find matches where the player was on the winning team
+        search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
+        search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+        search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
+        matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode, "map": game_map}]})
+    else:
+        # we only need to find matches where the player was on the winning team
+        search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
+        search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+        search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
+        matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode}]})
     return matches, igns
 
 
@@ -173,7 +181,22 @@ def dict_string_ffa(opponents: dict):
     return finish_str, winrate_str
 
 
-def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
+def own_winrate(name, mode="Manhunt", game_maps=None):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find one player's
+    winrate on a map
+    :param name: player name
+    :param mode: mode to search for games of
+    :return: string of synergies
+    """
+    db = connect()
+    games, igns = find_games(db, name, mode, game_maps)
+    results = parse_matches(db, games, igns, 1, False)
+    d = results[1][name]
+    return d[0], f"{name}: {round(d[0] * 100)}% ({d[2]} / {d[1]} | {d[3]} ties)"
+
+
+def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None):
     """
     Wrapper around find_games, parse_matches, dict_string to find synergies for
     a given player in a given mode.
@@ -185,7 +208,7 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False):
     :return: string of synergies
     """
     db = connect()
-    games, igns = find_games(db, name, mode)
+    games, igns = find_games(db, name, mode, game_maps)
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
 
@@ -206,11 +229,17 @@ def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
     return dict_string_ffa(results)
 
 if __name__ == "__main__":
-    print("Player: Winrate (Games Won / Tied / Played)")
-    for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit"]:
-        print("Finding synergy for:", x)
-        synergies = find_synergy(x, "Escort", min_games=5)
-        print("Top teammates:")
-        print(synergies[0])
-        print("Top opponents:")
-        print(synergies[1])
+    for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
+        print(m)
+        s = []
+        #print("Player: Winrate (Games Won / Tied / Played)")
+        for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit", "Jelko"]:
+            s.append(own_winrate(x, "Escort", game_maps=m))
+            #print("Finding synergy for:", x)
+            #synergies = find_synergy(x, "Escort", min_games=1, game_maps=m)
+            #print("Top teammates:")
+            #print(synergies[0])
+            #print("Top opponents:")
+            #print(synergies[1])
+        for i in sorted(s, reverse=True):
+            print(i[1])

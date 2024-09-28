@@ -256,3 +256,26 @@ if __name__ == "__main__":
     add_badge("Qutra", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Cota", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Ariiro", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
+
+    season = 6
+    
+    add_badge("Edi", "2024-03-26", "1st", "AA Defending", season)
+    add_badge("Onyxies", "2024-03-26", "2nd", "AA Defending", season)
+    add_badge("piesio1", "2024-03-26", "3rd", "AA Defending", season)
+    add_badge("robin331", "2024-03-26", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+
+    add_badge("Sugarfree", "2024-03-26", "1st", "AA Running", season)
+    add_badge("Reaper19111", "2024-03-26", "2nd", "AA Running", season)
+    add_badge("D4", "2024-03-26", "3rd", "AA Running", season)
+    add_badge("GamerPrince98", "2024-03-26", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+
+    add_badge("Jelko", "2024-03-26", "1st", "Assassinate", season)
+    add_badge("Lime232", "2024-03-26", "2nd", "Assassinate", season)
+    add_badge("Ruslan", "2024-03-26", "3rd", "Assassinate", season)
+
+    add_badge("Dellpit", "2024-03-26", "1st", "Escort", season)
+    add_badge("Sugarfree", "2024-03-26", "2nd", "Escort", season)
+    add_badge("DevelSpirit", "2024-03-26", "3rd", "Escort", season)
+    add_badge("Tha Fazz", "2024-03-26", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
+    add_badge("Lunaire.-", "2024-03-26", "Rookie", "all", season, f"Season {season} Rookie of the Season")
+
