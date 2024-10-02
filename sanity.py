@@ -93,6 +93,7 @@ def sanity_check(data):
             # check for $ delim count
             if gamers[j].count("$") != num_delim:
                 out += f"Incorrect $ delim count detected for {gamers[j]} in:\n{game}\n"
+                continue
             player = gamers[j].split("$")
 
             # check if player in db
