@@ -46,7 +46,7 @@ def new_R(R, S, E, K=None, N=None, t1=None, t2=None, ref=None):
 def R_change(R, S, E, N, t1, t2, ref=None):
     """
     Calculate rating change.
-    
+
     :param R: current MMR
     :param S: outcome; 0 for loss, 1 for win, 0.5 for tie
     :param E: expected win chance
@@ -112,7 +112,7 @@ def score(t1, t2, ref=None):
         # bad way to implement no score ref
         except ZeroDivisionError:
             return 0
-    
+
 def w_mean(ratings, ratings_o):
     """
     Weighted arithmetic mean.
@@ -157,11 +157,11 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
 
     # team sizes
     l = len(team_1)
-    
+
     # make sure team_1 and team_2 have same length
     if l != len(team_2):
         raise ValueError("team_1 and team_2 must have the same length!")
-    
+
     # set S value according to outcome
     if outcome == 1:
         S = [1, 0]
@@ -172,7 +172,7 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     else:
         raise ValueError("outcome must be 1 for team_1, 2 for team_2, or 0 for a tie!")
 
-    # calculate total rating for each team 
+    # calculate total rating for each team
     R_old_1 = []
     R_old_2 = []
     # disgusting
@@ -188,11 +188,11 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
             R_old_1.append(team_1[i][f"{mode}mmr"])
             R_old_2.append(team_2[i][f"{mode}mmr"])
 
-    
+
     # calculate expected outcome for each team
     E_1 = E([w_mean(R_old_1, R_old_2)[0], w_mean(R_old_2, R_old_1)[0]])
     E_2 = 1 - E_1
-    
+
     result = []
     # update values in database
     teams = [team_1, team_2]
@@ -293,7 +293,7 @@ def new_matches():
                 for i in range(len(m[f"team{team}"])):
                     if i > 1:
                         role = "d"
-                    # set role value on match 
+                    # set role value on match
                     found = False
                     j = 0
                     # go thru players until we find the right player
@@ -324,16 +324,28 @@ def new_matches():
             elif s[0] != s[1]:
                 raise OutcomeError("outcome 0 contradicts scoreline: {s[0]} - {s[1]}")
 
-        # disable reference stomp for domination since points don't matter there and we don't currently check the bar
+        # domination stomp is just checking the bar percentage
         if m["mode"] == "Domination":
-            ref = 0
+            if m.has_key("bar_percentage"):
+                if m["outcome"] > 0 and m["bar_percentage"] == 100:
+                    if m["outcome"] == 1:
+                        t[0] = 1
+                        t[1] = 0
+                    else:
+                        t[0] = 0
+                        t[1] = 1
+                    ref = 1
+                else:
+                    ref = 0
+            else:
+                ref = 0
         else:
             ref = None
 
         result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault", ref=ref)
-        
+
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
-        
+
         team_stat = [[0, 0], [0, 0]]
         if m["outcome"] == 1:
             team_stat = [[1, 0], [0, 1]]
@@ -367,8 +379,8 @@ def new_matches():
                                 f"{mode}stats.deaths": player_["deaths"]
                                 }}
                             )
-    
-    
+
+
                     # hack please remove
                     try:
                         if player_db[f"{mode}stats"]["highscore"] < player_["score"]:
@@ -414,11 +426,11 @@ def new_matches():
                             resultentry["mmr"]
                             }}
                         )
-       
+
         db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
         print("Match updated successfully!")
 
-    
+
     return
 
 if __name__=="__main__":
