@@ -1019,7 +1019,7 @@ async def on_message(message):
         # add games
         elif message.content.lower().startswith("add "):
             add_match(message)
-            await synch_channels("Game(s) added!", message)
+            await sync_channels("Game(s) added!", message)
 
         #ability randomizer 
         elif message.content.lower().startswith("randomizer"):
