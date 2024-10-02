@@ -417,6 +417,8 @@ async def print_matches(message):
         fname = conf.RAE_FILE_NAME
     with open(fname, "r") as f:
         content = f.read()
+        if content == "#\n":
+            content = "No matches currently queued."
         await send_long_message(content, message.channel)
 #        try:
 #            await message.channel.send(content)
