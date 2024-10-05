@@ -326,7 +326,7 @@ def new_matches():
 
         # domination stomp is just checking the bar percentage
         if m["mode"] == "Domination":
-            if m.has_key("bar_percentage"):
+            if "bar_percentage" in m.keys():
                 if m["outcome"] > 0 and m["bar_percentage"] == 100:
                     if m["outcome"] == 1:
                         t[0] = 1

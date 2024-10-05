@@ -20,6 +20,6 @@ if __name__ == "__main__":
         lines = f.read().split("\n")
         title = lines[0]
         post = "\n".join(lines[1:])
-        remove_post(title, post)
+        add_post(title, post)
         f.close()
 

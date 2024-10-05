@@ -86,6 +86,91 @@ def most_games(mode=None):
     return
 
 
+def team_avg(stat, mode=None):
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    games = {}
+    stats = {}
+    j = 0
+    for m in matches:
+        j += 1
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                s = 0
+                for p_except in m[f"team{i}"]:
+                    if p_except != p:
+                        s += p_except[stat]
+                s /= len(m[f"team{i}"]) - 1
+                if player in games:
+                    games[player] += 1
+                    stats[player] += s
+                else:
+                    games[player] = 1
+                    stats[player] = s
+    for k, v in stats.items():
+        stats[k] = v / games[k]
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        try:
+            other[stats[k]] += ", " + k + f" ({games[k]} games)"
+        except:
+            other[stats[k]] = k + f" ({games[k]} games)"
+    sort = sorted(other)[::-1]
+    i = 1
+    for k in sort:
+        print(f"{i}. {round(k, 3)} teammate average {stat}: {other[k]}")
+        i += 1
+    return
+
+
+def team_streaks_avg(mode=None, opponents=False):
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    games = {}
+    stats = {}
+    j = 0
+    for m in matches:
+        j += 1
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                s = 0
+                for p_ in m[f"team{i if not opponents else i % 2 + 1}"]:
+                    s += p_["kills"] // 5
+                try:
+                    games[player] += 1
+                    stats[player] += s
+                except:
+                    games[player] = 1
+                    stats[player] = s
+    for k, v in stats.items():
+        stats[k] = v / games[k]
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        try:
+            other[stats[k]] += ", " + k + f" ({games[k]} games)"
+        except:
+            other[stats[k]] = k + f" ({games[k]} games)"
+    sort = sorted(other)
+    if not opponents:
+        sort = sort[::-1]
+    i = 1
+    st = "opponents" if opponents else "team"
+    for k in sort:
+        print(f"{i}. {round(k, 3)} {st} average streaks: {other[k]}")
+        i += 1
+    return
+
+
 def stomp(mode="Manhunt"):
     db = connect()
     matches = db.matches.find({"mode": mode})
@@ -146,11 +231,14 @@ def team_winrate_map(m, mode="Escort"):
     return
 
 if __name__ == "__main__":
+    team_streaks_avg("Escort")
+    # team_streaks_avg("Escort", True)
+    # team_avg("kills", "Escort")
     #team_winrate()
-    most_games("Escort")
-    most_games("Manhunt")
-    most_games("Domination")
-    most_games("Artifact assault")
+    # most_games("Escort")
+    # most_games("Manhunt")
+    # most_games("Domination")
+    # most_games("Artifact assault")
     #countries()
     #stomp("Escort")
 #    most_games("Artifact assault")
