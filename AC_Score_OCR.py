@@ -19,6 +19,9 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     """
     players = int(players)
     img = core.ffms2.Source(screenshot)
+    # img = core.imwri.Read(screenshot)
+    # img = img.resize.Bicubic(1920, 1080)
+    s = img
     if type(img) == list:
         img = img[0]
     img = img.resize.Point(format=vs.GRAY8, matrix_s="709")
@@ -32,6 +35,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         binarize = [120, 145] # highlight, rest
         img = img.std.CropAbs(left=left, top=top, width=width, height=height)
         blue_v = [255, 0]
+        extra_crop = 0
+        map_name = None
         common = {
                 "$S": "$5",
                 "$g": "$9",
@@ -88,6 +93,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
         img = core.std.StackVertical([t, b])
         blue_v = [0, 255]
+        extra_crop = 0
+        map_name = None
         common = {
                 "piesiol": "piesio1",
                 "piesio[": "piesio1",
@@ -113,22 +120,34 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 }
     elif game.lower() == "ac4":
         scale = img.width / 1920
+        left = 904 * scale
+        top = [525 * scale, 754 * scale]
+        right = 150 * scale
+        bottom = [401 * scale, 172 * scale]
+        binarize = [140] * 2
         # although supported post-game screenshots tend to perform worse
-        if not post_game:
-            left = 650 * scale
-            top = [660 * scale, 890 * scale]
-            right = 486 * scale
-            bottom = [267 * scale, 39 * scale]
-            binarize = [140, 90]
-        else:
-            left = 906 * scale
-            top = [526 * scale, 755 * scale]
-            right = 196 * scale
-            bottom = [402 * scale, 174 * scale]
-            binarize = [150, 130]
-        t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
-        b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
+        # if not post_game:
+        #     left = 650 * scale
+        #     top = [660 * scale, 890 * scale]
+        #     right = 486 * scale
+        #     bottom = [267 * scale, 39 * scale]
+        #     binarize = [160, 135]
+        # else:
+        #     left = 906 * scale
+        #     top = [526 * scale, 755 * scale]
+        #     right = 196 * scale
+        #     bottom = [402 * scale, 174 * scale]
+        #     binarize = [150, 130]
+        map_name = img.std.Crop(top=162, left=200, right=1294, bottom=890)
+        v1 = img.std.Crop(left=left, right=648)
+        v2 = img.std.Crop(left=1290, right=466)
+        v3 = img.std.Crop(left=1474, right=298)
+        v4 = img.std.Crop(left=1628, right=right)
+        img = core.std.StackHorizontal([v1, v2, v3, v4])
+        t = img.std.Crop(top=top[0], bottom=bottom[0])
+        b = img.std.Crop(top=top[1], bottom=bottom[1])
         img = core.std.StackVertical([t, b])
+        extra_crop = 10
         blue_v = [0, 255]
         common = {
                 "She$Who": "She_Who",
@@ -154,41 +173,43 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 }
     else:
         return OCR(screenshot, "acb", players)
-   
+
     # upscaling helps lol
     # too high -> OOM
     img = img.resize.Spline16(img.width * 3, img.height * 3)
-    
+
     # can't use a sophisticated denoising algorithm so just use this to reduce noise & ringing
-    img = img.std.Convolution(matrix=[1, 2, 1, 2, 4, 2, 1, 2, 1]) 
-    
+    img = img.std.Convolution(matrix=[1, 2, 1, 2, 4, 2, 1, 2, 1])
+
     # split players
     img_arr = []
     m = players
     for i in range(1, m + 1):
-        img_arr.append(img.std.CropAbs(top=img.height / m * (i - 1), width=img.width, height=img.height / players))
-    
+        img_arr.append(img.std.CropAbs(top=img.height / m * (i - 1) + int(extra_crop * scale), width=img.width, height=img.height / players - int(2 * extra_crop * scale)))
+
     img = img_arr[0]
     for i in img_arr[1:]:
         img += i
-        
+
     # invert if main player (the one taking the screenshot) and binarize
     def check_invert(n, f, c):
         if f.props.PlaneStatsMin > 75:
             return c.std.Binarize(binarize[0], v0=blue_v[0], v1=blue_v[1])
         else:
             return c.std.Binarize(binarize[1])
-    
+
     img = img.std.FrameEval(partial(check_invert, c=img), img.std.PlaneStats())
-      
+
     # and finally a quick sharpen (not that importnat tbh)
     img = img.warp.AWarpSharp2()
     # alternatively (this is less than ideal)
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
 
     # the actual OCR
-    img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ "])
-    
+    img = img.ocr.Recognize(language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"])
+    if map_name is not None:
+        map_name = map_name.ocr.Recognize(language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"])
+
     # print OCR results onto frame
     def print_subs(n, f, c, result_f):
         # prepare AN format for each player
@@ -199,26 +220,29 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
             result = result.replace(m, common[m])
         result_f.append(result)
         return c#.sub.Subtitle(result, style="sans-serif,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1")
-    
+
     # prepare list which will store all the results
     result_f = []
-    
+
     # progress update
     def __vs_out_updated(c, t):
         if c == t:
             print("Frame: {}/{}".format(c, t), end="\n")
         else:
             print("Frame: {}/{}".format(c, t), end="\r")
-    
-    
+
+
     # run script
     with open(os.devnull, 'wb') as f:
+        if map_name is not None:
+            map_name = map_name.std.FrameEval(partial(print_subs, c=map_name, result_f=result_f), map_name)
+            map_name.output(f, progress_update=__vs_out_updated)
         processed = img.std.FrameEval(partial(print_subs, c=img, result_f=result_f), img)
         processed.output(f, progress_update=__vs_out_updated)
-    
+
     # remove n from earlier and join
     out = ", ".join([p[1:] for p in sorted(result_f)]).replace("$O", "$0")
-    return re.sub("[\[].*?[\]]", "", out)
+    return re.sub("[\\[].*?[\\]]", "", out)#, img, s
 
 
 def correct_score(match: str, correction: int, team: int):
@@ -252,6 +276,4 @@ def correct_score(match: str, correction: int, team: int):
 
 
 if __name__ == "__main__":
-    #print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
-    print(OCR("edi1.png", "ac4", 8))
-
+    print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
