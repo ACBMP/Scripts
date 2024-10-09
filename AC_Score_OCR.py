@@ -137,11 +137,20 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "EI$Pig": "El_Pig",
                 "E|$Pig": "El_Pig",
                 "The$Shmush": "The_Shmush",
+                "$The_Shmush": "The_Shmush",
                 "Iltoxic": "iltoxic",
                 "iItoxic": "iltoxic",
                 "i|toxic": "iltoxic",
                 "Lunaire$.-": "Lunaire.-",
-                "Arunl991": "Arun1991"
+                "Arunl991": "Arun1991",
+                "yOssi100": "y0ssi100",
+                "KirkkoMain69": "KirikoMain69",
+                "KirlkoMain69": "KirikoMain69",
+                "katswya": "Katsvya",
+                "katsvya": "Katsvya",
+                "$Xanthe$x": "Xanthex",
+                "$Xanthex": "Xanthex",
+                "chrlstlanC": "Chr1st1anC"
                 }
     else:
         return OCR(screenshot, "acb", players)
