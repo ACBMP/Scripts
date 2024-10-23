@@ -138,11 +138,11 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
         #     right = 196 * scale
         #     bottom = [402 * scale, 174 * scale]
         #     binarize = [150, 130]
-        map_name = img.std.Crop(top=162, left=200, right=1294, bottom=890)
-        v1 = img.std.Crop(left=left, right=648)
-        v2 = img.std.Crop(left=1290, right=466)
-        v3 = img.std.Crop(left=1474, right=298)
-        v4 = img.std.Crop(left=1628, right=right)
+        map_name = img.std.Crop(top=162 * scale, left=200 * scale, right=1294 * scale, bottom=890 * scale)
+        v1 = img.std.Crop(left=left, right=648 * scale)
+        v2 = img.std.Crop(left=1290 * scale, right=466 * scale)
+        v3 = img.std.Crop(left=1474 * scale, right=298 * scale)
+        v4 = img.std.Crop(left=1628 * scale, right=right)
         img = core.std.StackHorizontal([v1, v2, v3, v4])
         t = img.std.Crop(top=top[0], bottom=bottom[0])
         b = img.std.Crop(top=top[1], bottom=bottom[1])
@@ -206,9 +206,9 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
     #img = img.std.Convolution(matrix=[0, -1, 0, -1, 5, -1 , 0, -1, 0])
 
     # the actual OCR
-    img = img.ocr.Recognize(language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"])
+    img = img.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"])
     if map_name is not None:
-        map_name = map_name.ocr.Recognize(language="eng", options=["tessedit_char_whitelist", "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"])
+        map_name = map_name.ocr.Recognize(datapath="/home/dell/tessdata/", language="eng", options=["tessedit_char_whitelist", "1234ABCDEFGHIJKLMNOPQRSTUVWXYZ"])
 
     # print OCR results onto frame
     def print_subs(n, f, c, result_f):
