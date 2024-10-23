@@ -1,4 +1,5 @@
 from util import *
+import numpy as np
 
 def worst_game(mode):
     db = connect()
@@ -50,7 +51,66 @@ def best_avg(mode, stat):
         other[stats[k] / games[k]] = k
     sort = sorted(other)
     for k in sort:
-        print(f"{other[k]}: {k} average {stat}s ({stats[other[k]]} {stat}, {games[other[k]]} games)")
+        print(f"{other[k]}: {round(k, 2)} average {stat}s ({round(stats[other[k]], 2)} {stat}, {games[other[k]]} games)")
+    return
+
+
+def points_per_stat(mode, stat="kills"):
+    db = connect()
+    matches = db.matches.find({"mode": mode})
+    stats = {}
+    games = {}
+    for m in matches:
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                try:
+                    s = p["score"] / p[stat]
+                except ZeroDivisionError:
+                    continue
+                if player in stats:
+                    stats[player] += s
+                    games[player] += 1
+                else:
+                    stats[player] = s
+                    games[player] = 1
+
+    other = {}
+    for k in stats.keys():
+        other[stats[k] / games[k]] = k
+    sort = sorted(other)
+    for k in sort:
+        if games[other[k]] >= 10:
+            print(f"{other[k]}: {round(k, 2)} average points per {stat} ({games[other[k]]} games)")
+    return
+
+def score_per_round(kills, per_5, streak):
+    return kills * (per_5 - streak) / 5 + streak * (kills // 5)
+
+def approx_round_score(mode="Manhunt", avg_score=lambda k: score_per_round(k, 3000, 750), roundname="def", games_thr=100):
+    db = connect()
+    matches = db.matches.find({"mode": mode})
+    stats = {}
+    games = {}
+    for m in matches:
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                s = p["score"] - avg_score(p["kills"])
+                if player in stats:
+                    stats[player] += s
+                    games[player] += 1
+                else:
+                    stats[player] = s
+                    games[player] = 1
+
+    other = {}
+    for k in stats.keys():
+        other[stats[k] / games[k]] = k
+    sort = sorted(other)
+    for k in sort:
+        if games[other[k]] >= games_thr:
+            print(f"{other[k]}: {round(k, 2)} avg approx {roundname} ({games[other[k]]} games)")
     return
 
 
@@ -82,6 +142,46 @@ def most_games(mode=None):
     i = 1
     for k in sort:
         print(f"{i}. {k} game(s): {other[k]} ({round(k / j * 100, 2)}%)")
+        i += 1
+    return
+
+
+def most_games_stat(mode=None, stat="kills", check=lambda x: x >= 10):
+    print(f"{stat}")
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    stats = {}
+    games = {}
+    j = 0
+    for m in matches:
+        j += 1
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                if player in games:
+                    games[player] += 1
+                else:
+                    games[player] = 1
+                if check(p[stat]):
+                #    print(m)
+                    if player in stats:
+                        stats[player] += 1
+                    else:
+                        stats[player] = 1
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        try:
+            other[stats[k]] += [k]
+        except:
+            other[stats[k]] = [k]
+    sort = sorted(other)[::-1]
+    i = 1
+    for k in sort:
+        print(f"{i}. {k} game(s): {', '.join(other[k])} ({', '.join([str(round(k / games[i] * 100, 2)) + '%' for i in other[k]])})")
         i += 1
     return
 
@@ -124,6 +224,138 @@ def team_avg(stat, mode=None):
     i = 1
     for k in sort:
         print(f"{i}. {round(k, 3)} teammate average {stat}: {other[k]}")
+        i += 1
+    return
+
+
+def lobby_score(mode, games_thr = 100):
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    games = {}
+    stats = {}
+    j = 0
+    for m in matches:
+        j += 1
+        scores = [0, 0]
+        for i in [1, 2]:
+            scores[i - 1] += np.sum([p["score"] for p in m[f"team{i}"]])
+        s = abs(scores[0] - scores[1])
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                player = identify_player(db, p["player"])["name"]
+                if player in games:
+                    games[player] += 1
+                    stats[player] += s
+                else:
+                    games[player] = 1
+                    stats[player] = s
+    for k, v in stats.items():
+        stats[k] = v / games[k]
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        if games[k] >= games_thr:
+            try:
+                other[stats[k]] += ", " + k + f" ({games[k]} games)"
+            except:
+                other[stats[k]] = k + f" ({games[k]} games)"
+    sort = sorted(other)[::-1]
+    i = 1
+    for k in sort:
+        print(f"{i}. {round(k, 3)} {mode} average score diff: {other[k]}")
+        i += 1
+    return
+
+
+def lobby_mmr(mode, games_thr = 100):
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    games = {}
+    stats = {}
+    j = 0
+    for m in matches:
+        j += 1
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                mmrs = []
+                player = identify_player(db, p["player"])["name"]
+                for k in [1, 2]:
+                    for p_except in m[f"team{k}"]:
+                        # if p_except != p:
+                            # mmrs.append(identify_player(db, p_except["player"])[f"{check_mode(mode, short=True)}mmr"])
+                        mmrs.append(identify_player(db, p_except["player"])[f"{check_mode(mode, short=True)}mmr"])
+                s = np.std(mmrs)
+                if player in games:
+                    games[player] += 1
+                    stats[player] += s
+                else:
+                    games[player] = 1
+                    stats[player] = s
+    for k, v in stats.items():
+        stats[k] = v / games[k]
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        if games[k] >= games_thr:
+            try:
+                other[stats[k]] += ", " + k + f" ({games[k]} games)"
+            except:
+                other[stats[k]] = k + f" ({games[k]} games)"
+    sort = sorted(other)[::-1]
+    i = 1
+    for k in sort:
+        print(f"{i}. {round(k, 3)} {mode} lobby MMR standard deviation: {other[k]}")
+        i += 1
+    return
+
+
+def lobby_number_games(mode, games_thr = 100):
+    db = connect()
+    if mode:
+        matches = db.matches.find({"mode": mode})
+    else:
+        matches = db.matches.find()
+    games = {}
+    stats = {}
+    j = 0
+    for m in matches:
+        j += 1
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                mmrs = []
+                player = identify_player(db, p["player"])["name"]
+                for k in [1, 2]:
+                    for p_except in m[f"team{k}"]:
+                        if p_except != p:
+                            mmrs.append(identify_player(db, p_except["player"])[f"{check_mode(mode, short=True)}games"]["total"])
+                        # mmrs.append(identify_player(db, p_except["player"])[f"{check_mode(mode, short=True)}games"]["total"])
+                s = any([i <= games_thr for i in mmrs])# np.mean(mmrs)
+                if player in games:
+                    games[player] += 1
+                    stats[player] += s
+                else:
+                    games[player] = 1
+                    stats[player] = s
+    # for k, v in stats.items():
+    #     stats[k] = v / games[k]
+    print(f"Total {mode} games: {j}")
+    other = {}
+    for k in stats.keys():
+        if games[k] >= games_thr:
+            try:
+                other[stats[k]] += ", " + k + f" ({games[k]} games)"
+            except:
+                other[stats[k]] = k + f" ({games[k]} games)"
+    sort = sorted(other)[::-1]
+    i = 1
+    for k in sort:
+        print(f"{i}. {round(k, 3)} {mode} games with new player(s): {other[k]}")
         i += 1
     return
 
@@ -231,7 +463,15 @@ def team_winrate_map(m, mode="Escort"):
     return
 
 if __name__ == "__main__":
-    team_streaks_avg("Escort")
+    # lobby_mmr("Manhunt")
+    lobby_score("Manhunt")
+    # lobby_number_games("Escort", 200)
+    # approx_round_score("Manhunt")
+    # approx_round_score("Escort", lambda k: score_per_round(k, 2000, 250), "offense")
+#    points_per_stat("Escort", "kills")
+    #most_games_stat("Escort", "kills", check=lambda x: x >= 8)
+    #most_games_stat("Manhunt", stat="deaths", check=lambda x: x < 5)
+    # team_streaks_avg("Escort")
     # team_streaks_avg("Escort", True)
     # team_avg("kills", "Escort")
     #team_winrate()
