@@ -34,7 +34,7 @@ def read_mongo(db, collection, query={}, host='localhost', port=27017, username=
     return df
 
 if __name__ == '__main__':
-    for m in ["e"]:#GAME_MODES:
+    for m in GAME_MODES:
         mode = check_mode(m, short=False)
         df = read_mongo('public', 'matches', {'mode': mode.title()}, 'localhost', 27017)
         df.to_csv(f"/home/dell/AN_Flask/static/matches_{m.lower().replace(' ', '_')}.csv", index=False)

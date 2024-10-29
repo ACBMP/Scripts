@@ -1,7 +1,11 @@
 from util import *
 import re
+from datetime import datetime
 
-def find_games(db, name, mode, game_map=None):
+def date_convert(date):
+    return datetime.strptime(date, "%Y-%m-%d")
+
+def find_games(db, name, mode, game_map=None, date_range=None):
     """
     Find all games by a player in a given mode.
 
@@ -9,6 +13,7 @@ def find_games(db, name, mode, game_map=None):
     :param name: player name
     :param mode: mode to search for games in
     :param game_map: maps to search for
+    :param date_range: tuple of start and end date
     :return: matches and teammates' IGNs
     """
     data = identify_player(db, name)
@@ -29,6 +34,13 @@ def find_games(db, name, mode, game_map=None):
         search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
         search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
         matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode}]})
+    filtered_matches = []
+    if date_range:
+        for match in matches:
+            if "date" in match:
+                if date_convert(date_range[0]) <= date_convert(match["date"]) <= date_convert(date_range[1]):
+                    filtered_matches.append(match)
+        return filtered_matches, igns
     return matches, igns
 
 
@@ -141,7 +153,7 @@ def parse_ffa(db, matches, name, min_games):
                     opponents[players[i]]["finishes"] -= 1
             elif i+1 < position:
                 opponents[players[i]]["wins"] += 1
-    
+
     opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
     return opponents
 
@@ -173,7 +185,7 @@ def dict_string_ffa(opponents: dict):
         winrate_str += f"{player}: " + str(round( \
             ((opponents[player]['wins'] + opponents[player]['draws'] / 2)/ opponents[player]['games']) * 100))+ "% " \
             f"({opponents[player]['wins']} / {opponents[player]['games']} | {opponents[player]['draws']} ties)\n"
-    
+
     for player in finish_sort:
         finish_str += f"{player}: {round(opponents[player]['finishes'] / opponents[player]['games'], 2)} " \
             f"(over {opponents[player]['games']} games)\n"
@@ -196,7 +208,7 @@ def own_winrate(name, mode="Manhunt", game_maps=None):
     return d[0], f"{name}: {round(d[0] * 100)}% ({d[2]} / {d[1]} | {d[3]} ties)"
 
 
-def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None):
+def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None, date_range=None):
     """
     Wrapper around find_games, parse_matches, dict_string to find synergies for
     a given player in a given mode.
@@ -205,10 +217,12 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_map
     :param mode: mode to search for games of
     :param min_games: minimum number of games played with a team(mate)
     :param track_teams: switch between individual teammates or full teams
+    :param game_maps: maps to search for
+    :param date_range: tuple of start and end date
     :return: string of synergies
     """
     db = connect()
-    games, igns = find_games(db, name, mode, game_maps)
+    games, igns = find_games(db, name, mode, game_maps, date_range)
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
 
@@ -229,17 +243,21 @@ def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
     return dict_string_ffa(results)
 
 if __name__ == "__main__":
+    # mode = "Domination"
+    mode = "Escort"
+    # for m in ["Palenque", "Havana", "Tampa Bay", "Kingston", "Virginian Plantation"]:
     for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
         print(m)
         s = []
-        #print("Player: Winrate (Games Won / Tied / Played)")
+        # print("Player: Winrate (Games Won / Tied / Played)")
+        # for x in ["Shmush", "Lunaire.-", "Edi", "Xanthex", "Lars", "Christian", "Cota", "Gummy", "Katsvya"]:
         for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit", "Jelko"]:
-            s.append(own_winrate(x, "Escort", game_maps=m))
-            #print("Finding synergy for:", x)
-            #synergies = find_synergy(x, "Escort", min_games=1, game_maps=m)
-            #print("Top teammates:")
-            #print(synergies[0])
-            #print("Top opponents:")
-            #print(synergies[1])
+            s.append(own_winrate(x, mode, game_maps=m))
+            # print("Finding synergy for:", x)
+            # synergies = find_synergy(x, mode, min_games=5, game_maps=m, date_range=("2022-01-01", "2024-01-01"))
+            # print("Top teammates:")
+            # print(synergies[0])
+            # print("Top opponents:")
+            # print(synergies[1])
         for i in sorted(s, reverse=True):
             print(i[1])
