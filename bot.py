@@ -236,7 +236,7 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
             embedVar.add_field(name=":chess_pawn: Add Users", value="AN user add", inline=True)
             embedVar.add_field(name=":performing_arts: Edit Users", value="AN user edit", inline=True)
             embedVar.add_field(name=":arrows_clockwise: Reload Modules", value="AN reload", inline=True)
-    
+
     return embedVar
 
 
@@ -365,12 +365,15 @@ async def lookup_synergy(message):
     # this is so primitive I'm sorry
     min_games = 5
     track_teams = False
+    date_range = None
     if len(content) > 1:
         mode = content[1]
         if len(content) > 2:
             min_games = int(content[2])
-            if len(content) == 4:
-                track_teams = content[3]
+            if len(content) > 3:
+                track_teams = (content[3] in ("true", "True"))
+                if len(content) > 4:
+                    date_range = (content[4], content[5])
     else:
         mode = None
     mode = util.check_mode(mode, message.guild.id, short=False, channel=message.channel.id).capitalize()
@@ -383,10 +386,10 @@ async def lookup_synergy(message):
         embedVar.add_field(name="Average Finish", value=synergies[0])
         embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
     else:
-        synergies = synergy.find_synergy(player, mode, min_games, track_teams)
+        synergies = synergy.find_synergy(player, mode, min_games, track_teams, None, date_range)
         embedVar.add_field(name="Top Teammates", value=synergies[0])
         embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
-        
+
     await sync_channels(message=message, embed=embedVar)
 
 
@@ -596,7 +599,7 @@ async def ocr_screenshot(message):
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
-    
+
     # check if post game (for AC4)
     if "post" in msg:
         post = True
@@ -610,7 +613,7 @@ async def ocr_screenshot(message):
     if "+" in message.content:
         correction = msg[-2:]
         msg = msg[:-2]
-    
+
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
         players = msg[1]
@@ -827,7 +830,7 @@ async def sync_channels(content=None, message=None, channel_id=None, server_id=N
             return
         await channel.send(content)
     return
- 
+
 
 @util.command_dec
 async def compare_users(message):
@@ -991,7 +994,7 @@ async def rename_all(message):
 async def on_message(message):
     if message.author == client.user:
         return
-    
+
     if message.content.lower().startswith("an "):
 #        await sync_channels(message.content, message, bot_response=False)
 
@@ -1005,7 +1008,7 @@ async def on_message(message):
         # lookup
         elif message.content.lower().startswith("lookup"):
             await lookup_user(message)
-    
+
         # ladder
         elif message.content.lower().startswith("ladder"):
             await lookup_ladder(message)
@@ -1017,35 +1020,35 @@ async def on_message(message):
             except discord.errors.HTTPException as e:
                 print(e)
                 await sync_channels("An error has occurred, you might not have enough games. " + util.find_insult(), message)
-        
+
         # add games
         elif message.content.lower().startswith("add "):
             add_match(message)
             await sync_channels("Game(s) added!", message)
 
-        #ability randomizer 
+        #ability randomizer
         elif message.content.lower().startswith("randomizer"):
             await ability_randomizer(message)
-                                   
+
         # print matches.txt
         elif message.content.lower() == "print":
             await print_matches(message)
 
         elif message.content.lower() in ["sanity", "check", "sanity check"]:
             await sanity_check_matches(message)
-    
+
         # edit matches.txt
         elif message.content.lower().startswith("edit "):
             await edit_matches(message)
-    
+
         # replace matches.txt content
         elif message.content.lower().startswith("replace"):
             await replace_matches(message)
-    
+
         # update db
         elif message.content.lower().startswith("update"):
             await updater(message)
-   
+
         elif message.content.lower().startswith("ocr"):
             await ocr_screenshot(message)
 
@@ -1070,16 +1073,16 @@ async def on_message(message):
 
         elif message.content.lower().startswith("restore"):
             await restore_backup(message)
-        
+
         elif message.content.lower().startswith("reload"):
             await reload_modules(message)
-        
+
         elif message.content.lower() == "rename all":
             await rename_all(message)
-     
+
     elif message.content == "Y":
         await sync_channels(f"{message.author.name} has tacoed out.", message)
-    
+
     else:
         await sync_channels(message.content, message, bot_response=False)
         pass
