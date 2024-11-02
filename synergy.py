@@ -113,6 +113,76 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
     return sorted_dicts
 
+
+def parse_matches_elo(db, matches, name, min_games, mode, track_teams=False):
+    """
+    Parse given matches for a player to find synergies using MMR and outcome.
+
+    :param db: database
+    :param matches: all won matches by a player
+    :param name: player name
+    :param min_games: minimum number of games played together
+    :param mode: game mode
+    :param track_teams: track teams or individual teammates
+    :return: dict of players/teams and their games won, lost
+    """
+    import eloupdate as elo
+    # dict with [games played, wins] for [opponents, teammates]
+    dicts = [{}, {}]
+    mode = check_mode(mode, short=True)
+    if mode == "do":
+        ref = 0
+    else:
+        ref = None
+    for m in matches:
+        ratings = [[identify_player(db, m[f"team{i}"][j]["player"])[f"{mode}mmr"] for j in range(len(m[f"team{i}"]))] for i in [1, 2]]
+        scores = [sum(m[f"team{i}"][j]["score"] for j in range(len(m[f"team{i}"]))) for i in [1, 2]]
+        expected = []
+        expected.append(elo.E([elo.w_mean(ratings[0], ratings[1])[0], elo.w_mean(ratings[1], ratings[0])[0]]))
+        expected.append(1 - expected[0])
+        if m["outcome"] == 1:
+            S = [1, 0]
+        elif m["outcome"] == 2:
+            S = [0, 1]
+        elif m["outcome"] == 0:
+            S = [.5, .5]
+        # calculate for first team and later check player's team
+        rating_change = elo.R_change(R=0, S=S[0], E=expected[0], N=50, t1=scores[0], t2=scores[1], ref=ref)
+        for i in [1, 2]:
+            team = m[f"team{i}"]
+            players = []
+            for player in team:
+                player = player["player"]
+                player = identify_player(db, player)["name"]
+                players.append(player)
+            # check whether player is on team
+            d = 0
+            for ign in name:
+                if ign in players:
+                    d = 1
+            if i == 2:
+                rating_change *= -1
+            if track_teams:
+                players = ", ".join(sorted(players))
+                try:
+                    dicts[d][players] = [dicts[d][players][0] + 1, dicts[d][players][1] + rating_change]
+                except:
+                    dicts[d][players] = [1, rating_change]
+            else:
+                for j in range(len(players)):
+                    try:
+                        dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + rating_change]
+                    except:
+                        dicts[d][players[j]] = [1, rating_change]
+    sorted_dicts = [{}, {}]
+    for d in range(len(dicts)):
+        for player in dicts[d]:
+            # make sure min games played
+            if dicts[d][player][0] >= min_games:
+                sorted_dicts[d][player] = [dicts[d][player][0], dicts[d][player][1] / dicts[d][player][0]]
+        sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][1], reverse=True))
+    return sorted_dicts
+
 def parse_ffa(db, matches, name, min_games):
     """
     Parse given matches for a player to find synergies.
@@ -156,6 +226,19 @@ def parse_ffa(db, matches, name, min_games):
 
     opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
     return opponents
+
+def dict_string_elo(d):
+    """
+    Convert a dictionary to a properly formatted string for printing.
+
+    :param d: dictionary to convert
+    :return: d as formatted string
+    """
+    val = ""
+    for item in d:
+        val += f"{item}: {round(d[item][1], 2)} MMR ({d[item][0]} games)\n"
+    return val
+
 
 def dict_string(d):
     """
@@ -208,7 +291,7 @@ def own_winrate(name, mode="Manhunt", game_maps=None):
     return d[0], f"{name}: {round(d[0] * 100)}% ({d[2]} / {d[1]} | {d[3]} ties)"
 
 
-def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None, date_range=None):
+def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None, date_range=None, elo=False):
     """
     Wrapper around find_games, parse_matches, dict_string to find synergies for
     a given player in a given mode.
@@ -223,6 +306,9 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_map
     """
     db = connect()
     games, igns = find_games(db, name, mode, game_maps, date_range)
+    if elo:
+        results = parse_matches_elo(db, games, igns, min_games, mode, track_teams)
+        return dict_string_elo(results[1]), dict_string_elo(results[0])
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
 
@@ -244,20 +330,24 @@ def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
 
 if __name__ == "__main__":
     # mode = "Domination"
-    mode = "Escort"
+    # mode = "Escort"
+    mode = "Manhunt"
     # for m in ["Palenque", "Havana", "Tampa Bay", "Kingston", "Virginian Plantation"]:
-    for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
+    # for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
+    for m in ["Castel Gandolfo"]:
         print(m)
         s = []
         # print("Player: Winrate (Games Won / Tied / Played)")
         # for x in ["Shmush", "Lunaire.-", "Edi", "Xanthex", "Lars", "Christian", "Cota", "Gummy", "Katsvya"]:
         for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit", "Jelko"]:
-            s.append(own_winrate(x, mode, game_maps=m))
-            # print("Finding synergy for:", x)
-            # synergies = find_synergy(x, mode, min_games=5, game_maps=m, date_range=("2022-01-01", "2024-01-01"))
-            # print("Top teammates:")
-            # print(synergies[0])
-            # print("Top opponents:")
-            # print(synergies[1])
+        # for x in ["Dellpit", "Tha Fazz"]:
+            # s.append(own_winrate(x, mode, game_maps=m))
+            print("Finding synergy for:", x)
+            # synergies = find_synergy(x, mode, min_games=5, game_maps=None, date_range=("2020-01-01", "2024-01-01"), elo=True)
+            synergies = find_synergy(x, mode, min_games=15, game_maps=None, date_range=None, elo=True)
+            print("Top teammates:")
+            print(synergies[0])
+            print("Top opponents:")
+            print(synergies[1])
         for i in sorted(s, reverse=True):
             print(i[1])
