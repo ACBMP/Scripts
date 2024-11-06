@@ -185,7 +185,7 @@ def main():
         return sanity_check(read_file("matches.txt"))
     except Exception as e:
         print(e)
-        return "Something must be very messed up in your input, sanity failed."
+        return f"Something must be very messed up in your input, sanity failed.\n{e}"
 
 
 if __name__ == "__main__":
