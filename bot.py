@@ -643,7 +643,7 @@ async def ocr_screenshot(message):
                 result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
             if correction:
                 result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
-            result = f'{mode}, {players/2}, 1, {result}'
+            result = f'{mode}, {int(players/2)}, 1, {result}'
             results.append(result)
             await sync_channels(result, message)
         return
