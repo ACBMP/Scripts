@@ -646,7 +646,7 @@ async def ocr_screenshot(message):
             result = f'{mode}, {players/2}, 1, {result}'
             results.append(result)
             await sync_channels(result, message)
-            return
+        return
     else:
         await sync_channels("Could not find attachment.", message)
         return
