@@ -581,20 +581,25 @@ async def ocr_screenshot(message):
     def guild_params():
         if message.guild.id in conf.e_servers:
             game = "acb"
+            mode = 'e'
             players = 4
         elif message.guild.id in conf.mh_servers:
             game = "acb"
+            mode = 'mh'
             players = 6
         elif message.guild.id in conf.aa_servers:
             game = "acr"
+            mode = 'aa'
             players = 8
         elif message.guild.id in conf.do_servers:
             game = "ac4"
+            mode = 'do'
             players = 8
         else:
             game = "acb"
+            mode = 'mh'
             players = 6
-        return game, players
+        return game, players, mode
 
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
@@ -629,17 +634,20 @@ async def ocr_screenshot(message):
         game, players = guild_params()
     # download the image and save to folder then send the results of the OCR script
     if message.attachments:
-        img = requests.get(message.attachments[0].url)
-        fname = f"screenshots/{str(datetime.now())}.png"
-        with open(fname, "wb") as f:
-            f.write(img.content)
-        try:
-            result = AC_Score_OCR.OCR(fname, game, players, post)
-        except Exception as e:
-            print(e)
-            result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
-        if correction:
-            result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
+        result = []
+        for attachment in message.attachments:
+            img = requests.get(attachment.url)
+            fname = f"screenshots/{str(datetime.now())}.png"
+            with open(fname, "wb") as f:
+                f.write(img.content)
+            try:
+                result = AC_Score_OCR.OCR(fname, game, players, post)
+                result = f', {result}'
+            except Exception as e:
+                print(e)
+                result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
+            if correction:
+                result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
         await sync_channels(result, message)
         return
     else:
