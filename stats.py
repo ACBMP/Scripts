@@ -186,7 +186,7 @@ def most_games_stat(mode=None, stat="kills", check=lambda x: x >= 10):
     return
 
 
-def team_avg(stat, mode=None):
+def team_avg(stat, mode=None, opponents=False, include_self=False):
     db = connect()
     if mode:
         matches = db.matches.find({"mode": mode})
@@ -201,10 +201,16 @@ def team_avg(stat, mode=None):
             for p in m[f"team{i}"]:
                 player = identify_player(db, p["player"])["name"]
                 s = 0
-                for p_except in m[f"team{i}"]:
-                    if p_except != p:
+                for p_except in m[f"team{i if not opponents else i % 2 + 1}"]:
+                    if include_self:
                         s += p_except[stat]
-                s /= len(m[f"team{i}"]) - 1
+                    else:
+                        if p_except != p:
+                            s += p_except[stat]
+                div = len(m[f"team{i}"])
+                if not include_self:
+                    div -= 1
+                s /= div
                 if player in games:
                     games[player] += 1
                     stats[player] += s
@@ -220,10 +226,15 @@ def team_avg(stat, mode=None):
             other[stats[k]] += ", " + k + f" ({games[k]} games)"
         except:
             other[stats[k]] = k + f" ({games[k]} games)"
-    sort = sorted(other)[::-1]
+    sort = sorted(other)
+    if not opponents:
+        sort = sort[::-1]
     i = 1
+    st = "team"
+    if opponents:
+        st = "opponents"
     for k in sort:
-        print(f"{i}. {round(k, 3)} teammate average {stat}: {other[k]}")
+        print(f"{i}. {round(k, 3)} {st} average {stat}: {other[k]}")
         i += 1
     return
 
@@ -462,9 +473,37 @@ def team_winrate_map(m, mode="Escort"):
         print(f"Team {t} win rate: {round(w / n * 100)}% ({w}/{n})")
     return
 
+def map_kd(mode="Domination"):
+    db = connect()
+    matches = db.matches.find({"mode": mode})
+    k = {}
+    d = {}
+    n = {}
+    for match in matches:
+        if "map" not in match:
+            continue
+        else:
+            m = match["map"]
+        for t in [1, 2]:
+            if match["map"] in k:
+                k[m][t - 1] += sum([match[f"team{t}"][i]["kills"] for i in range(len(match[f"team{t}"]))])
+                d[m][t - 1] += sum([match[f"team{t}"][i]["deaths"] for i in range(len(match[f"team{t}"]))])
+                n[m] += 0.5
+            else:
+                k[m] = [sum([match[f"team{t}"][i]["kills"] for i in range(len(match[f"team{t}"]))]), 0]
+                d[m] = [sum([match[f"team{t}"][i]["deaths"] for i in range(len(match[f"team{t}"]))]), 0]
+                n[m] = 0.5
+    for m in k:
+        print(m)
+        print(f"winner K/D: {round(k[m][0] / d[m][0], 3)}")
+        print(f"loser K/D: {round(k[m][1] / d[m][1], 3)}")
+        print(f"{int(n[m])} games\n")
+    return
+
 if __name__ == "__main__":
+    map_kd()
     # lobby_mmr("Manhunt")
-    lobby_score("Manhunt")
+    # lobby_score("Manhunt")
     # lobby_number_games("Escort", 200)
     # approx_round_score("Manhunt")
     # approx_round_score("Escort", lambda k: score_per_round(k, 2000, 250), "offense")
@@ -473,7 +512,7 @@ if __name__ == "__main__":
     #most_games_stat("Manhunt", stat="deaths", check=lambda x: x < 5)
     # team_streaks_avg("Escort")
     # team_streaks_avg("Escort", True)
-    # team_avg("kills", "Escort")
+    # team_avg("score", "Manhunt", opponents=True, include_self=True)
     #team_winrate()
     # most_games("Escort")
     # most_games("Manhunt")
