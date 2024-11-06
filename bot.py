@@ -576,30 +576,24 @@ async def check_remake(message):
 # the OCR function
 @util.command_dec
 async def ocr_screenshot(message):
-
     # function to grab params from guild IDs
     def guild_params():
         if message.guild.id in conf.e_servers:
             game = "acb"
-            mode = 'e'
             players = 4
         elif message.guild.id in conf.mh_servers:
             game = "acb"
-            mode = 'mh'
             players = 6
         elif message.guild.id in conf.aa_servers:
             game = "acr"
-            mode = 'aa'
             players = 8
         elif message.guild.id in conf.do_servers:
             game = "ac4"
-            mode = 'do'
             players = 8
         else:
             game = "acb"
-            mode = 'mh'
             players = 6
-        return game, players, mode
+        return game, players
 
     msg = message.content.lower()
     msg = msg.replace("ocr ", "").replace("ocr", "")
@@ -633,8 +627,10 @@ async def ocr_screenshot(message):
     else:
         game, players = guild_params()
     # download the image and save to folder then send the results of the OCR script
+    mode = 'DO' if game.lower()=='ac4' else 'E'
+
     if message.attachments:
-        result = []
+        results = []
         for attachment in message.attachments:
             img = requests.get(attachment.url)
             fname = f"screenshots/{str(datetime.now())}.png"
@@ -642,17 +638,19 @@ async def ocr_screenshot(message):
                 f.write(img.content)
             try:
                 result = AC_Score_OCR.OCR(fname, game, players, post)
-                result = f', {result}'
             except Exception as e:
                 print(e)
                 result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
             if correction:
                 result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
-        await sync_channels(result, message)
-        return
+            result = f'{mode}, {players/2}, 1, {result}'
+            results.append(result)
+            await sync_channels(result, message)
+            return
     else:
         await sync_channels("Could not find attachment.", message)
         return
+
 
 
 @util.command_dec
