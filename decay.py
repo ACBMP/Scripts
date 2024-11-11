@@ -1,6 +1,6 @@
 from util import *
 from datetime import datetime, date
-from historyupdate import mmr_update
+import historyupdate
 import ranks
 
 def introduce_num_sessions():
@@ -47,9 +47,9 @@ def decay_all(mode):
     # number of days since last session
     days_threshold = 7
     # amount to be subtracted from decay
-    decay_amount = 5
+    decay_base = 20
     # mmr after which decay sets in and lowest value you can decay to
-    decay_threshold = 1000
+    decay_threshold = 900
     # how often the decay should be applied
     decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
@@ -61,28 +61,37 @@ def decay_all(mode):
     # global spread decay pool
     decay_pool = 0
     # go through the players and make sure their last day played is also > threshold
+
+    last_match = db.players.find_one({f'{mode}sessionssinceplayed': 0})[f'{mode}history']["dates"][-1]
+    last_match = datetime.strptime(last_day, "%y-%m-%d")
+    now = datetime.now()
+    diff_to_last_match = now - last_match
+
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
         last_day = datetime.strptime(last_day, "%y-%m-%d")
-        diff_play = datetime.now() - last_day
-        if diff_play.days > days_threshold and diff_play.days >= decay_interval:
+        diff_play = now - last_day
+        
+        if diff_play.days >= days_threshold and diff_play.days >= decay_interval and \
+                diff_play.days > diff_to_last_match.days:
+            decay = decay_base * p[f'{mode}sessionssinceplayed'] / sessions_threshold
+            decay = min(decay, p[f"{mode}mmr"] - decay_threshold)
             db.players.update_one({"_id": p["_id"]},
                     {"$set": 
-                        {f"{mode}mmr": max(p[f"{mode}mmr"] - decay_amount, decay_threshold),
-                        f"{mode}lastdecay": datetime.now().strftime("%Y-%m-%d"),
-                        # require one session to be played in between decays
-                        f"{mode}sessionssinceplayed": sessions_threshold - 1}
+                        {f"{mode}mmr": p[f"{mode}mmr"] - decay,
+                        f"{mode}lastdecay": datetime.now().strftime("%Y-%m-%d")}
                         })
             # to refresh the mmr
             p = db.players.find_one({"_id": p["_id"]})
             # update the player's mmr history
-            mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
+            historyupdate.mmr_update(date.today().strftime("%y-%m-%d"), db, p, mode)
             # add to pool and decayed players
-            decay_pool += decay_amount
+            decay_pool += decay
             print(f"Decayed {p['name']}.")
     if decay_pool:
         spread_decay(mode, decay_pool, players)
         ranks.main([mode])
+        # historyupdate.force_update(mode)
     return
 
 
