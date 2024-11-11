@@ -63,7 +63,7 @@ def decay_all(mode):
     # go through the players and make sure their last day played is also > threshold
 
     last_match = db.players.find_one({f'{mode}sessionssinceplayed': 0})[f'{mode}history']["dates"][-1]
-    last_match = datetime.strptime(last_day, "%y-%m-%d")
+    last_match = datetime.strptime(last_match, "%y-%m-%d")
     now = datetime.now()
     diff_to_last_match = now - last_match
 
