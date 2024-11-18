@@ -891,12 +891,16 @@ async def estimate_change(message):
     elif " vs " in content:
         ts = content.split(" vs ")
     else:
-        await sync_channels("team splitting token ' vs ' missing." + util.find_insult(), message)
+        await sync_channels("team splitting token ' vs ' missing. " + util.find_insult(), message)
         return
     
     embedVar = discord.Embed(title="Rating Change Estimates", url = "https://assassins.network/elo", color = 0xff00ff)
     ts = [ts[i].split(", ") for i in [0, 1]]
-    ts = [teams.extract_players(t, mode) for t in ts]
+    try:
+        ts = [teams.extract_players(t, mode) for t in ts]
+    except Exception as e:
+        await sync_channels(f"There's an error with your input ({e}). {util.find_insult()}", message)
+        return  
     team_ratings = [[p[f"{mode}mmr"] for p in ts[i]] for i in [0, 1]]
     if mode in util.FFA_MODES:
         import eloupdate_ffa as ffaelo
@@ -909,34 +913,38 @@ async def estimate_change(message):
         lobby_ratings = team_ratings[0] + team_ratings[1]
         fake_scores = [1 for _ in lobby_ratings]
         expected = ffaelo.expected_results(lobby_ratings)[0]
-        expected_pos = 1
-        expected_pos_result = ffaelo.get_result(pos, total_players)
         changes = []
         for pos in range(1, total_players+1):
             result = ffaelo.get_result(pos, total_players)
-            if abs(result-expected) < expected_pos_result:
-                expected_pos = pos
-                expected_pos_result = result
             changes.append(ffaelo.rating_change(
                 player[f'{mode}mmr'],
-                result, expected, player[f'{mode}games'],
+                result, expected, player[f'{mode}games']["total"],
                 pos, fake_scores
             ))
-        opp_ratings = np.array(team_ratings[1])
-        opposition_rating = round((opp_ratings.mean() + np.median(opp_ratings))/2, 1)
         
-        # display 
-        embedVar.add_field("Player", value=f"{player['name'] (player[f'{mode}mmr'])}\n" \
-                           f"Average Expected Finish: **{ffaelo.pos_to_str(expected_pos)}**", inline=False)
-        embedVar.add_field("Opposition", value="\n".join([f"{o['name'] (o[f'{mode}mmr'])}" for o in ts[1]]) + "\n" + \
-                           f"**Estimated opposition strength: {opposition_rating}**"
-                           ,inline=False)
-        results = ''
+        expected_pos = round((1-expected)*total_players, 0)
+        opp_ratings = np.array(team_ratings[1])
+        opposition_rating = (opp_ratings.mean() + np.median(opp_ratings)) / 2
+        
+        # display
+        player_display =\
+            f"""{player['name']} ({round(player[f'{mode}mmr'], 1)})
+                Average Expected Finish: **{ffaelo.pos_to_str(expected_pos)}**"""
+        opp_display = "\n".join([f"{o['name']} ({round(o[f'{mode}mmr'], 1)})" for o in ts[1]]) + \
+                    f"\n**Estimated opposition strength: {round(opposition_rating, 1)}**"
+        
+        embedVar.add_field(name="Player", value=player_display, inline=False)
+        embedVar.add_field(name="Opposition", value=opp_display, inline=False)
+        
+        results = []
         for pos in range(1, total_players+1):
-            result = f'{ffaelo.pos_to_str(pos)}: {changes[pos-1]}'
+            change = round(changes[pos-1], 1)
+            change = f"+{change}" if change > 0 else change
+            result = f'{ffaelo.pos_to_str(pos)}: {change}'
             if pos <= 3:
                 result = f'**{result}**'
-        embedVar.add_field(name="Possible results", value=results, inline=False)
+            results.append(result)
+        embedVar.add_field(name="Possible results", value='\n'.join(results), inline=False)
 
     # get team elos
     else:
@@ -1025,7 +1033,7 @@ async def on_member_join(member):
         else:
             print(f"Couldn't identify user {member.id}")
             channel = client.get_channel(conf.main_channel)
-            await sync_channels(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will add you to the database.", message)
+            await sync_channels(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will add you to the database.")
     return
 
 @util.permission_locked
