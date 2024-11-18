@@ -18,6 +18,7 @@ import sanity
 import synergy
 import elostats
 import subprocess
+import numpy as np
 import telegram_bot
 from add_badges import readable_badges
 
@@ -876,8 +877,6 @@ async def compare_users(message):
 
 #@util.command_dec
 async def estimate_change(message):
-    import eloupdate as elo
-    db = util.connect()
     content = message.content[9:]
     # identify mode
     mode = None
@@ -889,55 +888,102 @@ async def estimate_change(message):
     # extract players and team comps
     if " vs. " in content:
         ts = content.split(" vs. ")
-    else:
+    elif " vs " in content:
         ts = content.split(" vs ")
+    else:
+        await sync_channels("team splitting token ' vs ' missing." + util.find_insult(), message)
+        return
+    
+    embedVar = discord.Embed(title="Rating Change Estimates", url = "https://assassins.network/elo", color = 0xff00ff)
     ts = [ts[i].split(", ") for i in [0, 1]]
     ts = [teams.extract_players(t, mode) for t in ts]
     team_ratings = [[p[f"{mode}mmr"] for p in ts[i]] for i in [0, 1]]
+    if mode in util.FFA_MODES:
+        import eloupdate_ffa as ffaelo
+        if len(ts[0]) > 1:
+            await sync_channels("Only 1 player should be to the left of 'vs'" + util.find_insult(), message)
+            return
+        player = ts[0][0]
+        # calculate shit we need
+        total_players = len(ts[1]) + 1
+        lobby_ratings = team_ratings[0] + team_ratings[1]
+        fake_scores = [1 for _ in lobby_ratings]
+        expected = ffaelo.expected_results(lobby_ratings)[0]
+        expected_pos = 1
+        expected_pos_result = ffaelo.get_result(pos, total_players)
+        changes = []
+        for pos in range(1, total_players+1):
+            result = ffaelo.get_result(pos, total_players)
+            if abs(result-expected) < expected_pos_result:
+                expected_pos = pos
+                expected_pos_result = result
+            changes.append(ffaelo.rating_change(
+                player[f'{mode}mmr'],
+                result, expected, player[f'{mode}games'],
+                pos, fake_scores
+            ))
+        opp_ratings = np.array(team_ratings[1])
+        opposition_rating = round((opp_ratings.mean() + np.median(opp_ratings))/2, 1)
+        
+        # display 
+        embedVar.add_field("Player", value=f"{player['name'] (player[f'{mode}mmr'])}\n" \
+                           f"Average Expected Finish: **{ffaelo.pos_to_str(expected_pos)}**", inline=False)
+        embedVar.add_field("Opposition", value="\n".join([f"{o['name'] (o[f'{mode}mmr'])}" for o in ts[1]]) + "\n" + \
+                           f"**Estimated opposition strength: {opposition_rating}**"
+                           ,inline=False)
+        results = ''
+        for pos in range(1, total_players+1):
+            result = f'{ffaelo.pos_to_str(pos)}: {changes[pos-1]}'
+            if pos <= 3:
+                result = f'**{result}**'
+        embedVar.add_field(name="Possible results", value=results, inline=False)
+
     # get team elos
-    team_ratings = [elo.w_mean(team_ratings[0], team_ratings[1])[0], elo.w_mean(team_ratings[1], team_ratings[0])[0]]
-    # get expected outcome
-    expect = elo.E(team_ratings)
-    expect = [expect, 1 - expect]
-    if expect[0] == 0.5:
-        expect_outcome = "Tie"
-    elif expect[0] > 0.5:
-        expect_outcome = f"Team 1 - {round(expect[0] * 100)}%"
     else:
-        expect_outcome = f"Team 2 - {round(expect[1] * 100)}%"
-    # get rating changes
-    changes = {ts[i][j]["name"]: [round(elo.R_change(ts[i][j][f"{mode}mmr"], S, expect[i], ts[i][j][f"{mode}games"]["total"] + 1, 0, 0, 0), 2) for S in [0, 0.5, 1]] for i in [0, 1] for j in range(len(ts[0]))}
-    outputs = [[f"{k}: {'+' if changes[k][i] > 0 else ''}{changes[k][i]}" for i in [0, 1, 2]] for k in changes.keys()]
-    embedVar = discord.Embed(title="Rating Change Estimates", url = "https://assassins.network/elo", color = 0xff00ff)
-    # strings with names of all players in teams and their ratings
-    names = ["\n".join([f'{ts[i][j]["name"]} ({round(ts[i][j][f"{mode}mmr"], 2)} MMR)' for j in range(len(ts[0]))]) for i in [0, 1]]
-    # team string with names and team rating
-    team_str = [f"{names[i]}\nTeam Rating: **{round(team_ratings[i], 2)}**" for i in [0, 1]]
-    embedVar.add_field(name="Team 1", value=team_str[0], inline=False)
-    embedVar.add_field(name="Team 2", value=team_str[1], inline=False)
-    embedVar.add_field(name="Expected Winner", value=expect_outcome, inline=False)
-    team_size = len(ts[0])
-    # team 1 perspective
-    w = t = l = ""
-    for i in range(len(outputs)):
-        # a line break between teams
-        if i == team_size:
-            w += "\n"
-            t += "\n"
-            l += "\n"
-        t += outputs[i][1] + "\n"
-        # check whether we're at t1 or t2 w
-        if i < team_size:
-            w += outputs[i][2] + "\n"
-            l += outputs[i][0] + "\n"
+        import eloupdate as elo
+        team_ratings = [elo.w_mean(team_ratings[0], team_ratings[1])[0], elo.w_mean(team_ratings[1], team_ratings[0])[0]]
+        # get expected outcome
+        expect = elo.E(team_ratings)
+        expect = [expect, 1 - expect]
+        if expect[0] == 0.5:
+            expect_outcome = "Tie"
+        elif expect[0] > 0.5:
+            expect_outcome = f"Team 1 - {round(expect[0] * 100)}%"
         else:
-            w += outputs[i][0] + "\n"
-            l += outputs[i][2] + "\n"
-    embedVar.add_field(name="Team 1 Win", value=w, inline=True)
-    embedVar.add_field(name="Tie", value=t, inline=True)
-    embedVar.add_field(name="Team 2 Win", value=l, inline=True)
+            expect_outcome = f"Team 2 - {round(expect[1] * 100)}%"
+        # get rating changes
+        changes = {ts[i][j]["name"]: [round(elo.R_change(ts[i][j][f"{mode}mmr"], S, expect[i], ts[i][j][f"{mode}games"]["total"] + 1, 0, 0, 0), 2) for S in [0, 0.5, 1]] for i in [0, 1] for j in range(len(ts[0]))}
+        outputs = [[f"{k}: {'+' if changes[k][i] > 0 else ''}{changes[k][i]}" for i in [0, 1, 2]] for k in changes.keys()]
+        # strings with names of all players in teams and their ratings
+        names = ["\n".join([f'{ts[i][j]["name"]} ({round(ts[i][j][f"{mode}mmr"], 2)} MMR)' for j in range(len(ts[0]))]) for i in [0, 1]]
+        # team string with names and team rating
+        team_str = [f"{names[i]}\nTeam Rating: **{round(team_ratings[i], 2)}**" for i in [0, 1]]
+        embedVar.add_field(name="Team 1", value=team_str[0], inline=False)
+        embedVar.add_field(name="Team 2", value=team_str[1], inline=False)
+        embedVar.add_field(name="Expected Winner", value=expect_outcome, inline=False)
+        team_size = len(ts[0])
+        # team 1 perspective
+        w = t = l = ""
+        for i in range(len(outputs)):
+            # a line break between teams
+            if i == team_size:
+                w += "\n"
+                t += "\n"
+                l += "\n"
+            t += outputs[i][1] + "\n"
+            # check whether we're at t1 or t2 w
+            if i < team_size:
+                w += outputs[i][2] + "\n"
+                l += outputs[i][0] + "\n"
+            else:
+                w += outputs[i][0] + "\n"
+                l += outputs[i][2] + "\n"
+        embedVar.add_field(name="Team 1 Win", value=w, inline=True)
+        embedVar.add_field(name="Tie", value=t, inline=True)
+        embedVar.add_field(name="Team 2 Win", value=l, inline=True)
     await sync_channels(embed=embedVar, message=message)
     return
+
 
 
 @util.permission_locked
