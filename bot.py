@@ -922,7 +922,7 @@ async def estimate_change(message):
                 pos, fake_scores
             ))
         
-        expected_pos = round((1-expected)*total_players, 0)
+        expected_pos = round(total_players - expected*(total_players-1), 0)
         opp_ratings = np.array(team_ratings[1])
         opposition_rating = (opp_ratings.mean() + np.median(opp_ratings)) / 2
         
