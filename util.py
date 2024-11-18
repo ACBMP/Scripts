@@ -129,7 +129,8 @@ insults = ["You suck.", "Even fouadix speaks English better than you.",
         "Let's not do that again.", "I just want to punch myself in the fucking face.", "Really fucking hilarious.",
         "Dude, I'ma slaughter your entire family if you ever do that again.", "Oh man, I hate you.", "u r getting scummy",
         "If only you could fuck up the escort never.", "Welcome to TCG.", "You turbotrolled more than Omse.",
-        "Do your fucking job I can't do mine.", "You go in, I'm not even there, and then you wonder waroi waroi."]
+        "Do your fucking job I can't do mine.", "You go in, I'm not even there, and then you wonder waroi waroi.",
+        "Even Edi is more sylish than you."]
 
 def find_insult():
     """
