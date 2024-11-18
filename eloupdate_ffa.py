@@ -28,8 +28,6 @@ class Match(BaseModel):
     mode: str
 
 def pos_to_str(pos: int):
-    if pos < 1 or pos > 8:
-        raise ValueError("position must be 1-8")
     if pos == 1:
         return '1st'
     if pos == 2:

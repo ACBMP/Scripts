@@ -922,14 +922,14 @@ async def estimate_change(message):
                 pos, fake_scores
             ))
         
-        expected_pos = round((1-expected)*total_players, 0)
+        expected_pos = (1-expected)*total_players
         opp_ratings = np.array(team_ratings[1])
         opposition_rating = (opp_ratings.mean() + np.median(opp_ratings)) / 2
         
         # display
         player_display =\
             f"""{player['name']} ({round(player[f'{mode}mmr'], 1)})
-                Average Expected Finish: **{ffaelo.pos_to_str(expected_pos)}**"""
+                Average Expected Finish: **{ffaelo.pos_to_str(round(expected_pos))}** ({round(expected_pos, 2)})"""
         opp_display = "\n".join([f"{o['name']} ({round(o[f'{mode}mmr'], 1)})" for o in ts[1]]) + \
                     f"\n**Estimated opposition strength: {round(opposition_rating, 1)}**"
         
