@@ -27,6 +27,17 @@ class Match(BaseModel):
     new: bool
     mode: str
 
+def pos_to_str(pos: int):
+    if pos < 1 or pos > 8:
+        raise ValueError("position must be 1-8")
+    if pos == 1:
+        return '1st'
+    if pos == 2:
+        return '2nd'
+    if pos == 3:
+        return '3rd'
+    return f'{pos}th'
+
 def expected_results(ratings: List[int]):
     """
     Expected win chance based on MMRs.
@@ -35,13 +46,11 @@ def expected_results(ratings: List[int]):
     """
     expected_outcomes = []
     for player in range(len(ratings)):
-        expected = 0
         p_rating = ratings[player]
-        for opponent in range(len(ratings)):
-            if opponent != player:
-                o_rating = ratings[opponent]
-                expected += ((1 + 10 ** ((o_rating - p_rating) / 400)) ** -1) * 1/(len(ratings)-1)
-        expected_outcomes.append(expected)
+        o_ratings = np.array(ratings[:player] + ratings[player+1:])
+        o_rating = (o_ratings.mean() + np.median(o_ratings))/2
+        expected = (1 + 10 ** ((o_rating - p_rating) / 400)) ** -1
+        expected_outcomes.append(float(expected))
     return expected_outcomes
 
 def rating_change(current_mmr: int, result: float, expected_result: float, games_played: int,
