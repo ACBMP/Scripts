@@ -20,6 +20,8 @@ import elostats
 import subprocess
 import numpy as np
 import telegram_bot
+from itertools import combinations
+from functools import reduce
 from add_badges import readable_badges
 
 # Members intent
@@ -913,7 +915,9 @@ async def estimate_change(message):
         lobby_ratings = team_ratings[0] + team_ratings[1]
         fake_scores = [1 for _ in lobby_ratings]
         expected = ffaelo.expected_results(lobby_ratings)[0]
+        chances = [ffaelo.expected_results([player[f'{mode}mmr'], o_rating])[0] for o_rating in team_ratings[1]]
         changes = []
+        pos_chances = []
         for pos in range(1, total_players+1):
             result = ffaelo.get_result(pos, total_players)
             changes.append(ffaelo.rating_change(
@@ -921,6 +925,13 @@ async def estimate_change(message):
                 result, expected, player[f'{mode}games']["total"],
                 pos, fake_scores
             ))
+            players_to_beat = total_players-pos
+            win_combos = combinations(chances, players_to_beat)
+            possible_chances = [reduce(lambda x,y : x*y, combo) if combo else 0 for combo in win_combos]
+            chance = np.mean(np.array(possible_chances))
+            not_above_chance = (1-sum(pos_chances[:pos-1]))
+            chance = chance * not_above_chance if chance else not_above_chance
+            pos_chances.append(chance)
         
         expected_pos = total_players - expected*(total_players-1)
         opp_ratings = np.array(team_ratings[1])
@@ -929,7 +940,7 @@ async def estimate_change(message):
         # display
         player_display =\
             f"""{player['name']} ({round(player[f'{mode}mmr'], 1)})
-                Average Expected Finish: **{ffaelo.pos_to_str(round(expected_pos))}** ({round(expected_pos, 2)})"""
+            Average Expected Finish: **{ffaelo.pos_to_str(round(expected_pos))}** ({round(expected_pos, 2)})"""
         opp_display = "\n".join([f"{o['name']} ({round(o[f'{mode}mmr'], 1)})" for o in ts[1]]) + \
                     f"\n**Estimated opposition strength: {round(opposition_rating, 1)}**"
         
@@ -940,7 +951,8 @@ async def estimate_change(message):
         for pos in range(1, total_players+1):
             change = round(changes[pos-1], 1)
             change = f"+{change}" if change > 0 else change
-            result = f'{ffaelo.pos_to_str(pos)}: {change}'
+            chance = round(pos_chances[pos-1] * 100, 1)
+            result = f'{ffaelo.pos_to_str(pos)} ({chance}% chance): {change}'
             if pos <= 3:
                 result = f'**{result}**'
             results.append(result)
