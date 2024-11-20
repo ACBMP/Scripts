@@ -69,7 +69,7 @@ def rating_change(current_mmr: int, result: float, expected_result: float, games
     if games_played > 10:
         if max_change is None:
             max_change = max_mmr_change(games_played, current_mmr)
-        return max_change * (result - expected_result) * (1 + stomp_mmr_boost(position, scores, stomp_ref)) + result # trying to inflate by adding 1 to every win
+        return max_change * (result - expected_result) * stomp_mmr_modifier(position, scores, stomp_ref) + result # for inflation
     else:
         return (result * 60) - 10
 
@@ -88,7 +88,7 @@ def max_mmr_change(total_games, current_mmr):
         return 40
     return 20
 
-def stomp_mmr_boost(position:int, scores: List[int], ref_score: int = None):
+def stomp_mmr_modifier(position:int, scores: List[int], ref_score: int = None):
     """
     Score difference MMR boost.
     This is used to make sure closer games count less than stomps.
@@ -100,18 +100,18 @@ def stomp_mmr_boost(position:int, scores: List[int], ref_score: int = None):
     the score is.
 
     :param scores: tuple/list of scores
-    :param ref_score: reference score, 0 to return 0
+    :param ref_score: reference score, 0 to return 1
     :return: boost amount
     """
     avg_score = sum(scores) / len(scores)
 
     if ref_score is None:
-        ref_score = avg_score / 2
+        ref_score = avg_score
     
     if ref_score == 0:
-        return 0
+        return 1
 
-    return abs(scores[position-1] - avg_score) / ref_score
+    return 1 + (abs(scores[position-1] - avg_score) / ref_score)
 
 
 def get_result(position: int, players: int):
