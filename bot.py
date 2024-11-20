@@ -20,7 +20,7 @@ import elostats
 import subprocess
 import numpy as np
 import telegram_bot
-import math
+from scipy.special import binom
 from add_badges import readable_badges
 
 # Members intent
@@ -927,8 +927,8 @@ async def estimate_change(message):
             
             beating = total_players-pos
             beat_by = total_players-1-beating
-            placing_chance = (expected**beating)*math.comb(total_players-1, beating)
-            placing_chance *= ((1-expected)**beat_by)*math.comb((total_players-1)-beating, beat_by)
+            placing_chance = (expected**beating)*binom(total_players-1, beating)
+            placing_chance *= ((1-expected)**beat_by)*binom((total_players-1)-beating, beat_by)
             pos_chances.append(placing_chance)
 
         
