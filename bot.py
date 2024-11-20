@@ -951,7 +951,7 @@ async def estimate_change(message):
             change = round(changes[pos-1], 1)
             change = f"+{change}" if change > 0 else change
             chance = round(pos_chances[pos-1] * 100, 1)
-            result = f'{ffaelo.pos_to_str(pos)} ({chance}% chance): {change}'
+            result = f'{ffaelo.pos_to_str(pos)} ({chance}%): {change}'
             if pos <= 3:
                 result = f'**{result}**'
             results.append(result)
