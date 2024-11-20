@@ -20,8 +20,7 @@ import elostats
 import subprocess
 import numpy as np
 import telegram_bot
-from itertools import combinations
-from functools import reduce
+from math import comb
 from add_badges import readable_badges
 
 # Members intent
@@ -915,9 +914,9 @@ async def estimate_change(message):
         lobby_ratings = team_ratings[0] + team_ratings[1]
         fake_scores = [1 for _ in lobby_ratings]
         expected = ffaelo.expected_results(lobby_ratings)[0]
-        chances = [ffaelo.expected_results([player[f'{mode}mmr'], o_rating])[0] for o_rating in team_ratings[1]]
         changes = []
         pos_chances = []
+
         for pos in range(1, total_players+1):
             result = ffaelo.get_result(pos, total_players)
             changes.append(ffaelo.rating_change(
@@ -925,13 +924,13 @@ async def estimate_change(message):
                 result, expected, player[f'{mode}games']["total"],
                 pos, fake_scores
             ))
-            players_to_beat = total_players-pos
-            win_combos = combinations(chances, players_to_beat)
-            possible_chances = [reduce(lambda x,y : x*y, combo) if combo else 0 for combo in win_combos]
-            chance = np.mean(np.array(possible_chances))
-            not_above_chance = (1-sum(pos_chances[:pos-1]))
-            chance = chance * not_above_chance if chance else not_above_chance
-            pos_chances.append(chance)
+            
+            beating = total_players-pos
+            beat_by = total_players-1-beating
+            placing_chance = (expected**beating)*comb(total_players-1, beating)
+            placing_chance *= ((1-expected)**beat_by)*comb((total_players-1)-beating, beat_by)
+            pos_chances.append(placing_chance)
+
         
         expected_pos = total_players - expected*(total_players-1)
         opp_ratings = np.array(team_ratings[1])
