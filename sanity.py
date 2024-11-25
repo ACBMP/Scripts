@@ -12,8 +12,10 @@ def read_file(fname="matches.txt"):
         f.close()
     return data
 
+class SanityError(Exception):
+    pass
 
-def sanity_check(data):
+def sanity_check(data, max_err = 0):
     """
     Sanity check for data to e.g. prevent a losing team from being marked as
     having won a match.
@@ -27,6 +29,7 @@ def sanity_check(data):
     games = data.split("\n")
     db = connect()
     out = ""
+    errs = 0
     for game in games:
         try:
             # filter out empty lines (these don't matter anyway)
@@ -49,18 +52,19 @@ def sanity_check(data):
                         try:
                             host_player = identify_player(db, temp[1])
                         except:
-                            out += f"Unknown map or host detected in:\n{game}\n"
+                            raise SanityError(f"Unknown map or host detected in:\n{game}\n")
+
             mode = str(mode).lower()
             # sanity check mode
             if mode not in GAME_MODES:
-                out += f"Unknown mode {mode} detected in:\n{game}\n"
-
+                raise SanityError(f"Unknown mode {mode} detected in:\n{game}\n")
+                errs += 1
             # sanity check map name
             if map_name:
                 try:
                     identify_map(map_name)
                 except:
-                    out += f"Unknown map detected in:\n{game}\n"
+                    raise SanityError(f"Unknown map detected in:\n{game}\n")
 
             num_delim = 3
             all_gamers = []
@@ -73,7 +77,7 @@ def sanity_check(data):
 
                 # check for missing players or commas
                 if len(gamers) != num_players * 2:
-                    out += f"Formatting error or missing player found in:\n{game}\n"
+                    raise SanityError(f"Formatting error or missing player found in:\n{game}\n")
 
                 # load player data
                 score = [0, 0]
@@ -93,19 +97,18 @@ def sanity_check(data):
             for j in range(len(gamers)):
                 # check for $ delim count
                 if gamers[j].count("$") != num_delim:
-                    out += f"Incorrect $ delim count detected for {gamers[j]} in:\n{game}\n"
-                    continue
+                    raise SanityError(f"Incorrect $ delim count detected for {gamers[j]} in:\n{game}\n")
                 player = gamers[j].split("$")
 
                 # check if player in db
                 try:
                     player[0] = identify_player(db, player[0])["name"]
                 except ValueError as e:
-                    out += str(e).replace("insert_player: p", "P") + ":\n" + game + "\n"
+                    raise SanityError(str(e).replace("insert_player: p", "P") + ":\n" + game + "\n")
 
                 # check for duplicate players
                 if player[0] in all_gamers:
-                    out += f"Duplicate player {player[0]} detected in:\n{game}\n"
+                    raise SanityError(f"Duplicate player {player[0]} detected in:\n{game}\n")
                 else:
                     all_gamers.append(player[0])
 
@@ -117,16 +120,16 @@ def sanity_check(data):
                         else:
                             score += int(player[1])
                     except ValueError:
-                        out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
+                        raise SanityError(f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n")
                 else:
                     try:
                         score[i] += int(player[4])
                     except ValueError:
-                        out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
+                        raise SanityError(f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n")
 
                 # check if score is reasonable
                 if int(player[1]) > 20000:
-                    out += f"Unusually high score detected in:\n{game.replace(player[1], f'**{player[1]}**')}\n" 
+                    raise SanityError(f"Unusually high score detected in:\n{game.replace(player[1], f'**{player[1]}**')}\n")
                 # sum k/d
                 try:
                     if mode not in FFA_MODES:
@@ -134,14 +137,14 @@ def sanity_check(data):
                     else:
                         kills += int(player[2])
                 except ValueError:
-                    out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
+                    raise SanityError(f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n")
                 try:
                     if mode not in FFA_MODES:
                         deaths[i] += int(player[3])
                     else:
                         deaths += int(player[3])
                 except ValueError:
-                    out += f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n"
+                    raise SanityError(f"Detected nonnumerical input for {gamers[j]} in:\n{game}\n")
 
                 if mode not in FFA_MODES:
                     # switch to next team
@@ -153,10 +156,9 @@ def sanity_check(data):
                 try:
                     identify_player(db, host_player)
                     if host_player not in all_gamers:
-                        out += f"{host_player} is host yet not found in player list for {game}"
+                        raise SanityError(f"{host_player} is host yet not found in player list for {game}")
                 except:
-                    out += f"Unknown host detected in:\n{game}\n"
-
+                    raise SanityError(f"Unknown host detected in:\n{game}\n")
             # k/d check unfortunately doesn't work for console escort
             if mode != "e":
                 if mode not in FFA_MODES:
@@ -164,18 +166,23 @@ def sanity_check(data):
                     for i in range(2):
                         # mildly retarded
                         if kills[i] != deaths[(i + 1) % 2]:
-                            out += f"Incorrect kill (team {i + 1})/death (team {(i + 1) % 3}) count detected in:\n{game}\n"
+                            raise SanityError(f"Incorrect kill (team {i + 1})/death (team {(i + 1) % 3}) count detected in:\n{game}\n")
                 elif kills != deaths:
-                    out += f"Incorrect kill/death count detected in:\n{game}\n"
+                    raise SanityError(f"Incorrect kill/death count detected in:\n{game}\n")
 
             # sanity check score and outcome
             if mode not in FFA_MODES and mode != "do":
                 if outcome > 0:
                     if max(score) != score[outcome - 1]:
-                        out += f"Incorrect score/outcome detected in:\n{game}\n"
+                        raise SanityError(f"Incorrect score/outcome detected in:\n{game}\n")
                 else:
                     if score[0] != score[1]:
-                        out += f"Incorrect score/outcome detected in:\n{game}\n"
+                        raise SanityError(f"Incorrect score/outcome detected in:\n{game}\n")
+        except SanityError as se:
+            out += str(se)
+            errs += 1
+            if max_err != 0 and errs >= max_err:
+                return out
         except Exception as e:
             return f"Game\n{game}\nis seriously messed up ({e}). {find_insult()}"
     if out:
@@ -183,8 +190,8 @@ def sanity_check(data):
     return "No errors detected"
 
 
-def main():
-    return sanity_check(read_file("matches.txt"))
+def main(max_err: int = 0):
+    return sanity_check(read_file("matches.txt"), max_err)
 
 
 if __name__ == "__main__":
