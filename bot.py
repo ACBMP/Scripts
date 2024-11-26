@@ -610,10 +610,20 @@ async def ocr_screenshot(message):
     else:
         post = False
 
+    if "ffa" in message.content:
+        ffa = True
+        msg.remove("ffa")
+        if msg == []:
+            msg = ['']
+    else:
+        ffa = False
+
     correction = False
     if "+" in message.content:
         correction = msg[-2:]
         msg = msg[:-2]
+
+    
 
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
@@ -639,7 +649,7 @@ async def ocr_screenshot(message):
             with open(fname, "wb") as f:
                 f.write(img.content)
             try:
-                result = AC_Score_OCR.OCR(fname, game, players, post)
+                result = AC_Score_OCR.OCR(fname, game, players, post, ffa)
             except Exception as e:
                 print(e)
                 result = "Sorry, something went wrong with your screenshot. We recommend using mpv to take screenshots."
