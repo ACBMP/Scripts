@@ -7,7 +7,7 @@ import re
 
 os.environ['LC_ALL'] = 'C'
 
-def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
+def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: bool = False):
     """
     Screenshot OCR function using VapourSynth and Tesseract.
 
@@ -113,23 +113,32 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 }
     elif game.lower() == "ac4":
         scale = img.width / 1920
-        # although supported post-game screenshots tend to perform worse
-        if not post_game:
-            left = 650 * scale
-            top = [660 * scale, 890 * scale]
-            right = 486 * scale
-            bottom = [267 * scale, 39 * scale]
-            binarize = [140, 90]
-        else:
-            left = 906 * scale
-            top = [526 * scale, 755 * scale]
-            right = 196 * scale
-            bottom = [402 * scale, 174 * scale]
-            binarize = [150, 130]
-        t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
-        b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
-        img = core.std.StackVertical([t, b])
         blue_v = [0, 255]
+        if not ffa:
+            # although supported post-game screenshots tend to perform worse
+            if not post_game:
+                left = 650 * scale
+                top = [660 * scale, 890 * scale]
+                right = 486 * scale
+                bottom = [267 * scale, 39 * scale]
+                binarize = [140, 90]
+            else:
+                left = 906 * scale
+                top = [526 * scale, 755 * scale]
+                right = 196 * scale
+                bottom = [402 * scale, 174 * scale]
+                binarize = [150, 130]
+            t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
+            b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
+            img = core.std.StackVertical([t, b])
+        else:
+            left = 650 * scale
+            top = 698 * scale
+            right = 196 * scale
+            bottom = 174 * scale
+            binarize = [140, 90]
+            img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
+            blue_v = [255, 0]
         common = {
                 "She$Who": "She_Who",
                 "Who$Knows": "Who_Knows",
@@ -150,7 +159,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False):
                 "katsvya": "Katsvya",
                 "$Xanthe$x": "Xanthex",
                 "$Xanthex": "Xanthex",
-                "chrlstlanC": "Chr1st1anC"
+                "chrlstlanC": "Chr1st1anC",
+                "Arun0G": "ArunOG"
                 }
     else:
         return OCR(screenshot, "acb", players)
