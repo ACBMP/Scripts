@@ -133,7 +133,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
             img = core.std.StackVertical([t, b])
         else:
             left = 650 * scale
-            top = 660 * scale
+            top = 670 * scale
             right = 486 * scale
             bottom = 90 * scale
             binarize = [140, 90]
@@ -261,9 +261,12 @@ def correct_score(match: str, correction: int, team: int):
     return ", ".join(teams)
 
 
+def main():
+    return OCR("test.jpg", "ac4", 8, False, True)
+
 if __name__ == "__main__":
     #print(OCR("screenshots/2021-07-12 21:13:01.853292.png", "acb", 6))
-    print(OCR("edi1.png", "ac4", 8))
+    main()
 
 # import vapoursynth as vs
 # core = vs.core
