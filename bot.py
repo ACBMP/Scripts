@@ -643,7 +643,10 @@ async def ocr_screenshot(message):
     else:
         game, players = guild_params()
     # download the image and save to folder then send the results of the OCR script
-    mode = 'DO' if game.lower()=='ac4' else 'E'
+    if not ffa:
+        mode = 'DO' if game.lower()=='ac4' else 'E'
+    else:
+        mode = 'DM' if game.lower()=='ac4' else 'ASB'
 
     if message.attachments:
         results = []
@@ -661,7 +664,7 @@ async def ocr_screenshot(message):
             os.remove(fname)
             if correction:
                 result = AC_Score_OCR.correct_score(result, correction[0], correction[1])
-            result = f'{mode}, {int(players/2)}, 1, {result}'
+            result = f'{mode}, {int(players/2)}, 1, {result}' if not ffa else f'{mode}, {result}'
             results.append(result)
             await sync_channels(result, message)
         return
