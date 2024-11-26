@@ -385,8 +385,8 @@ async def lookup_synergy(message):
     embedVar = discord.Embed(title=f"{player}'s {mode.title()} Synergies", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
         synergies = synergy.find_synergy_ffa(player, mode, min_games)
-        embedVar.add_field(name="Average Finish", value=synergies[0])
-        embedVar.add_field(name="Top Opponents (Opponent's Winrate)", value=synergies[1])
+        embedVar.add_field(name="Average Finish (with them in lobby)", value=synergies[0])
+        embedVar.add_field(name="Chance to beat", value=synergies[1])
     else:
         synergies = synergy.find_synergy(player, mode, min_games, track_teams, None, date_range)
         embedVar.add_field(name="Top Teammates", value=synergies[0])
