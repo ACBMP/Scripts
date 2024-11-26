@@ -135,7 +135,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
             left = 650 * scale
             top = 660 * scale
             right = 486 * scale
-            bottom = 39 * scale
+            bottom = 90 * scale
             binarize = [140, 90]
             img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
             blue_v = [255, 0]
