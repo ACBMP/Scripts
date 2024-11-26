@@ -181,7 +181,7 @@ def sanity_check(data, max_err = 0):
         except SanityError as se:
             out += str(se)
             errs += 1
-            if max_err != 0 and errs >= max_err:
+            if max_err > 0 and errs >= max_err:
                 return out
         except Exception as e:
             return f"Game\n{game}\nis seriously messed up ({e}). {find_insult()}"
