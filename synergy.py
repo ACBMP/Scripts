@@ -221,7 +221,7 @@ def parse_ffa(db, matches, name, min_games):
                 opponents[players[i]]["draws"] += 1
                 if i+1 < position:
                     opponents[players[i]]["finishes"] -= 1
-            elif i+1 < position:
+            elif position < i+1:
                 opponents[players[i]]["wins"] += 1
 
     opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
@@ -260,7 +260,7 @@ def dict_string_ffa(opponents: dict):
     :return: d as formatted string
     """
     winrate_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
-    finish_sort = dict(sorted(opponents.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"]))
+    finish_sort = dict(sorted(opponents.items(), key=lambda item: item[1]["finishes"]/item[1]["games"]))
     winrate_str = ""
     finish_str = ""
 
