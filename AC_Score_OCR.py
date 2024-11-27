@@ -134,7 +134,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
             img = core.std.StackVertical([t, b])
         else:
             left = 650 * scale
-            top = 670 * scale_y
+            top = 682 * scale_y
             right = 486 * scale
             bottom = 90 * scale_y
             binarize = [140, 90]
