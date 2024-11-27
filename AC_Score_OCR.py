@@ -113,29 +113,30 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
                 }
     elif game.lower() == "ac4":
         scale = img.width / 1920
+        scale_y = img.height / 1080
         blue_v = [0, 255]
         if not ffa:
             # although supported post-game screenshots tend to perform worse
             if not post_game:
                 left = 650 * scale
-                top = [660 * scale, 890 * scale]
+                top = [660 * scale_y, 890 * scale_y]
                 right = 486 * scale
-                bottom = [267 * scale, 39 * scale]
+                bottom = [267 * scale_y, 39 * scale_y]
                 binarize = [140, 90]
             else:
                 left = 906 * scale
-                top = [526 * scale, 755 * scale]
+                top = [526 * scale_y, 755 * scale_y]
                 right = 196 * scale
-                bottom = [402 * scale, 174 * scale]
+                bottom = [402 * scale_y, 174 * scale_y]
                 binarize = [150, 130]
             t = img.std.Crop(left=left, top=top[0], right=right, bottom=bottom[0])
             b = img.std.Crop(left=left, top=top[1], right=right, bottom=bottom[1])
             img = core.std.StackVertical([t, b])
         else:
             left = 650 * scale
-            top = 670 * scale
+            top = 670 * scale_y
             right = 486 * scale
-            bottom = 90 * scale
+            bottom = 90 * scale_y
             binarize = [140, 90]
             img = img.std.Crop(left=left, top=top, right=right, bottom=bottom)
             blue_v = [255, 0]
