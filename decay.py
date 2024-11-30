@@ -47,7 +47,7 @@ def decay_all(mode):
     # number of days since last session
     days_threshold = 7
     # amount to be subtracted from decay
-    decay_base = 20
+    decay_base = 10
     # mmr after which decay sets in and lowest value you can decay to
     decay_threshold = 900
     # how often the decay should be applied
