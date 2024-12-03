@@ -440,7 +440,7 @@ async def sanity_check_matches(message):
     sanity check matches for errors
     """
     try:
-        max_err = int(message.split("sanity ")[1])
+        max_err = int(message.content.split("sanity ")[1])
     except Exception:
         max_err = 0
     await send_long_message(sanity.main(max_err), message.channel)

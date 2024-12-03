@@ -166,9 +166,9 @@ def sanity_check(data, max_err = 0):
                     for i in range(2):
                         # mildly retarded
                         if kills[i] != deaths[(i + 1) % 2]:
-                            raise SanityError(f"Incorrect kill (team {i + 1})/death (team {(i + 1) % 3}) count detected in:\n{game}\n")
+                            raise SanityError(f"Incorrect kills({kills[i]}) (team {i + 1})/deaths({deaths[(i+1)%2]}) (team {(i + 1) % 3}) count detected in:\n{game}\n")
                 elif kills != deaths:
-                    raise SanityError(f"Incorrect kill/death count detected in:\n{game}\n")
+                    raise SanityError(f"Incorrect kills({kills}/deaths({deaths}) count detected in:\n{game}\n")
 
             # sanity check score and outcome
             if mode not in FFA_MODES and mode != "do":
