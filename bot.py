@@ -1124,7 +1124,7 @@ async def on_message(message):
         elif message.content.lower() == "print":
             await print_matches(message)
 
-        elif message.content.lower() in ["sanity", "check", "sanity check"]:
+        elif message.content.lower().startswith("sanity"):
             await sanity_check_matches(message)
 
         # edit matches.txt
