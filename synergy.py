@@ -314,7 +314,42 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_map
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
 
+
 # region map synergy
+
+def find_games_w_map(db, name, mode, date_range=None):
+    """
+    Find all games by a player in a given mode.
+
+    :param db: database
+    :param name: player name
+    :param mode: mode to search for games in
+    :param game_map: maps to search for
+    :param date_range: tuple of start and end date
+    :return: matches and teammates' IGNs
+    """
+    data = identify_player(db, name)
+    # load and search for all igns plus name so we don't get empty match histories
+    igns = data["ign"]
+    if type(igns) == str:
+        igns = [igns]
+    igns += [name]
+
+    # we only need to find matches where the player was on the winning team
+    search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
+    search += [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+    search += [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
+    matches = db.matches.find({"$and": [{"$or": search}, {"mode": mode, "map": {"$ne": None}}]})
+
+    filtered_matches = []
+    if date_range:
+        for match in matches:
+            if "date" in match:
+                if date_convert(date_range[0]) <= date_convert(match["date"]) <= date_convert(date_range[1]):
+                    filtered_matches.append(match)
+        return filtered_matches, igns
+    return matches, igns
+
 def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     """
     Wrapper around find_games, parse_matches, dict_string to find synergies for
@@ -329,7 +364,7 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     :return: string of synergies
     """
     db = connect()
-    games, igns = find_games(db, name, mode, date_range=date_range)
+    games, igns = find_games_w_map(db, name, mode, date_range=date_range)
     results = map_parse(games, igns, min_games)
 
     winrate_sort = dict(sorted(results.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
