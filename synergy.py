@@ -426,7 +426,7 @@ def map_ffa_synergy(name, mode="Deathmatch", min_games=25, date_range=None):
     results = map_parse(games, name, min_games, ffa=True)
 
     winrate_sort = dict(sorted(results.items(), 
-        key=lambda item: item[1]["finishes"]/item[1]["games"], reverse=True))
+        key=lambda item: item[1]["finishes"]/item[1]["games"]))
     statline_sort = dict(sorted(results.items(), key=lambda item: item[1]["score"]/item[1]["games"], reverse=True))
     winrate_str = ""
     stats_str = ""
