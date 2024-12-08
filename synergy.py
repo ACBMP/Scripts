@@ -312,6 +312,128 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_map
     results = parse_matches(db, games, igns, min_games, track_teams)
     return dict_string(results[1]), dict_string(results[0])
 
+# region map synergy
+def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find synergies for
+    a given player in a given mode.
+
+    :param name: player name
+    :param mode: mode to search for games of
+    :param min_games: minimum number of games played with a team(mate)
+    :param track_teams: switch between individual teammates or full teams
+    :param game_maps: maps to search for
+    :param date_range: tuple of start and end date
+    :return: string of synergies
+    """
+    db = connect()
+    games, igns = find_games(db, name, mode, date_range=date_range)
+    results = parse_matches(db, games, igns, min_games)
+
+    winrate_sort = dict(sorted(results.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
+    statline_sort = dict(sorted(results.items(), key=lambda item: 
+        (item[1]["score"]/item[1]["games"]) if mode in ['Manhunt', 'Escort'] else (item[1]['kills']/item[1]['deaths'])))
+    winrate_str = ""
+    stats_str = ""
+
+    for gmap in winrate_sort:
+        winrate_str += f"{gmap}: " + str(round( \
+            ((results[gmap]['wins'] + results[gmap]['draws'] / 2)/ results[gmap]['games']) * 100))+ "% " \
+            f"({results[gmap]['wins']} / {results[gmap]['games']} | {results[gmap]['draws']} ties)\n"
+
+    for gmap in statline_sort:
+        stats_str += f"{gmap}: {round(results[gmap]['score'] / results[gmap]['games'])}, "\
+            f"{results[gmap]['kills']/results[gmap]['deaths']} " \
+            f"(avg score, k/d over {gmap[gmap]['games']} games)\n"
+
+    return stats_str, winrate_str
+
+def map_parse_ffa(db, matches, name, min_games):
+    maps = {}
+    for m in matches:
+        position = 0
+        if not m['map'] in maps:
+            maps[m['map']] = {
+                "wins": 0,
+                "draws": 0,
+                "games": 0,
+                "finishes": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+            }
+        for i in range(len(m['players'])):
+                player = m['players'][i]["player"]
+                player = identify_player(db, player)["name"]
+                players.append(player)
+                if not opponents.get(player):
+                    opponents[player] = {"wins": 0, "draws": 0, "games": 0, "finishes": 0}
+
+        for ign in name:
+            try:
+                position = [p.lower() for p in players].index(ign.lower()) + 1
+                break
+            except ValueError:
+                 continue
+
+        for i in range(len(players)):
+            opponents[players[i]]["finishes"] += position
+            opponents[players[i]]["games"] += 1
+            if m["players"][i]["score"] == m["players"][position-1]["score"]:
+                opponents[players[i]]["draws"] += 1
+                if i+1 < position:
+                    opponents[players[i]]["finishes"] -= 1
+            elif position < i+1:
+                opponents[players[i]]["wins"] += 1
+
+    opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
+    return opponents
+
+def map_parse(matches, name, min_games):
+    maps = {}
+    for m in matches:
+        if not m['map'] in maps:
+            maps[m['map']] = {
+                "wins": 0,
+                "draws": 0,
+                "games": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+            }
+
+        team = None
+        for ign in name:
+            if ign in m['team1']:
+                team = 1
+                i = m['team1'].index(ign)
+            elif ign in m['team2']:
+                team = 2
+                i = m['team2'].index(ign)
+            if team:
+                break
+        
+        res = {
+            "wins": 0,
+            "draws": 0,
+            "games": 1,
+            "kills": m[f'team{team}'][i]['kills'],
+            "deaths": m[f'team{team}'][i]['deaths'],
+            "score": m[f'team{team}'][i]['score']
+        }
+
+        if m['outcome'] == 0:
+            res['draws'] = 1
+        elif m['outcome'] == team:
+            res['wins'] = 1
+
+        for k in res.keys():
+            maps[m['map']][k] += res[k]
+
+    maps = dict(filter(lambda item: item[1]["games"] >= min_games, maps.items()))
+    return maps
+# endregion
+
 def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
     """
     Wrapper around find_games, parse_matches, dict_string to find synergies for
