@@ -396,10 +396,10 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
 
     for gmap in statline_sort:
         stats_str += f"{gmap}: {round(results[gmap]['score'] / results[gmap]['games'])}, "\
-            f"{results[gmap]['kills']/results[gmap]['deaths']} " \
+            f"{round(results[gmap]['kills']/results[gmap]['deaths'], 2)} " \
             f"(avg score, k/d over {results[gmap]['games']} games)\n"
 
-    return stats_str, winrate_str
+    return winrate_str, stats_str
 
 def map_parse_ffa(db, matches, name, min_games):
     maps = {}
