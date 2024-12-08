@@ -422,7 +422,7 @@ async def map_synergy(message):
     # since there are two modes that are grouped together to AA
     if "Artifact" in mode:
         mode = "Artifact assault"
-    embedVar = discord.Embed(title=f"{player}'s {mode.title()} Synergies", color=0xff00ff)
+    embedVar = discord.Embed(title=f"{player}'s {mode.title()} Map stats", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
         synergies = synergy.map_synergy_ffa(player, mode, min_games, date_range)
         embedVar.add_field(name="Average Finish (wins|pod|games)", value=synergies[0])
