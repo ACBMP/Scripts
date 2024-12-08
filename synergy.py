@@ -469,7 +469,7 @@ def map_parse(matches, name, min_games, ffa=False):
                 if m['players'][i]['player'] == name:
                     break
             p = m['players'][i]
-            pos = p+1
+            pos = i+1
             j = i-1
             while j>=0 and p['score'] == m['players'][j]['score']:
                 pos -= 1
