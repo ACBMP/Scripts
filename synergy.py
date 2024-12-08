@@ -61,7 +61,9 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
         for i in [1, 2]:
             team = m[f"team{i}"]
             players = []
+            changes = []
             for player in team:
+                changes.append(player["mmrchange"])
                 player = player["player"]
                 player = identify_player(db, player)["name"]
                 players.append(player)
@@ -91,25 +93,25 @@ def parse_matches(db, matches, name, min_games, track_teams=False):
                 for j in range(len(players)):
                     if m["outcome"] == 0:
                         try:
-                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2] + 1]
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2] + 1, dicts[d][players[j]][3] + changes[j]]
                         except:
-                            dicts[d][players[j]] = [1, 0, 1]
+                            dicts[d][players[j]] = [1, 0, 1, changes[j]]
                     elif i == m["outcome"]:
                         try:
-                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1, dicts[d][players[j]][2]]
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1] + 1, dicts[d][players[j]][2], dicts[d][players[j]][3] + changes[j]]
                         except:
-                            dicts[d][players[j]] = [1, 1, 0]
+                            dicts[d][players[j]] = [1, 1, 0, changes[j]]
                     else:
                         try:
-                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2]]
+                            dicts[d][players[j]] = [dicts[d][players[j]][0] + 1, dicts[d][players[j]][1], dicts[d][players[j]][2], dicts[d][players[j]][3] + changes[j]]
                         except:
-                            dicts[d][players[j]] = [1, 0, 0]
+                            dicts[d][players[j]] = [1, 0, 0, changes[j]]
     sorted_dicts = [{}, {}]
     for d in range(len(dicts)):
         for player in dicts[d]:
             # make sure min games played
             if dicts[d][player][0] >= min_games:
-                sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1], dicts[d][player][2]]
+                sorted_dicts[d][player] = [dicts[d][player][1] / dicts[d][player][0], dicts[d][player][0], dicts[d][player][1], dicts[d][player][2], dicts[d][player][3], dicts[d][player][3] / dicts[d][player][0]]
         sorted_dicts[d] = dict(sorted(sorted_dicts[d].items(), key=lambda item: item[1][0], reverse=True))
     return sorted_dicts
 
@@ -288,7 +290,7 @@ def own_winrate(name, mode="Manhunt", game_maps=None):
     games, igns = find_games(db, name, mode, game_maps)
     results = parse_matches(db, games, igns, 1, False)
     d = results[1][name]
-    return d[0], f"{name}: {round(d[0] * 100)}% ({d[2]} / {d[1]} | {d[3]} ties)"
+    return d[0], f"{name}: {round(d[0] * 100)}% ({d[2]} / {d[1]} | {d[3]} ties) (MMR: {round(d[4], 2)} total, {round(d[5], 4)} avg)"
 
 
 def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_maps=None, date_range=None, elo=False):
@@ -329,25 +331,25 @@ def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
     return dict_string_ffa(results)
 
 if __name__ == "__main__":
-    # mode = "Domination"
-    # mode = "Escort"
-    mode = "Manhunt"
-    # for m in ["Palenque", "Havana", "Tampa Bay", "Kingston", "Virginian Plantation"]:
-    # for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
-    for m in ["Castel Gandolfo"]:
+    #mode = "Domination"
+    mode = "Escort"
+    #mode = "Manhunt"
+    #for m in ["Palenque", "Havana", "Tampa Bay", "Kingston", "Virginian Plantation"]:
+    for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
+#    for m in ["Castel Gandolfo"]:
         print(m)
         s = []
         # print("Player: Winrate (Games Won / Tied / Played)")
-        # for x in ["Shmush", "Lunaire.-", "Edi", "Xanthex", "Lars", "Christian", "Cota", "Gummy", "Katsvya"]:
+        #for x in ["Shmush", "Lunaire.-", "Edi", "Xanthex", "Lars", "Christian", "Cota", "Gummy", "Katsvya", "Arun", "Skorpius"]:
         for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit", "Jelko"]:
         # for x in ["Dellpit", "Tha Fazz"]:
-            # s.append(own_winrate(x, mode, game_maps=m))
-            print("Finding synergy for:", x)
+            s.append(own_winrate(x, mode, game_maps=m))
+            # print("Finding synergy for:", x)
             # synergies = find_synergy(x, mode, min_games=5, game_maps=None, date_range=("2020-01-01", "2024-01-01"), elo=True)
-            synergies = find_synergy(x, mode, min_games=15, game_maps=None, date_range=None, elo=True)
-            print("Top teammates:")
-            print(synergies[0])
-            print("Top opponents:")
-            print(synergies[1])
+            # synergies = find_synergy(x, mode, min_games=15, game_maps=None, date_range=None, elo=True)
+            # print("Top teammates:")
+            # print(synergies[0])
+            # print("Top opponents:")
+            # print(synergies[1])
         for i in sorted(s, reverse=True):
             print(i[1])
