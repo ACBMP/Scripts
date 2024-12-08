@@ -141,7 +141,11 @@ def player_ratings(match: Match, db_conn, ref=None):
 
     for p in range(len(match.players)):
         player = match.players[p]
-        pos = p if p > 0 and match.players[p].score == match.players[p-1].score else p+1
+        pos = p+1
+        j = p - 1
+        while j>=0 and match.players[j].score == match.players[p].score:
+            pos -= 1
+            j -= 1
         result = get_result(pos, len(match.players))
         mmr_change = rating_change(
             current_mmr=ratings[p],
