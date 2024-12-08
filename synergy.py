@@ -383,9 +383,11 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     games, _ = find_games_w_map(db, name, mode, date_range=date_range)
     results = map_parse(games, name, min_games)
 
-    winrate_sort = dict(sorted(results.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
+    winrate_sort = dict(sorted(results.items(), 
+        key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
     statline_sort = dict(sorted(results.items(), key=lambda item: 
-        (item[1]["score"]/item[1]["games"]) if mode in ['Manhunt', 'Escort'] else (item[1]['kills']/item[1]['deaths'])))
+        (item[1]["score"]/item[1]["games"]) if mode in ['Manhunt', 'Escort'] else (item[1]['kills']/item[1]['deaths']),
+         reverse=True))
     winrate_str = ""
     stats_str = ""
 
