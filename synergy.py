@@ -465,7 +465,7 @@ def map_parse(matches, name, min_games, ffa=False):
         }
         
         if ffa:
-            for i in len(m['players']):
+            for i in range(len(m['players'])):
                 if m['players'][i]['player'] == name:
                     break
             p = m['players'][i]
