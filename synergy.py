@@ -219,10 +219,15 @@ def parse_ffa(db, matches, name, min_games):
         for i in range(len(players)):
             opponents[players[i]]["finishes"] += position
             opponents[players[i]]["games"] += 1
-            if m["players"][i]["score"] == m["players"][position-1]["score"]:
-                opponents[players[i]]["draws"] += 1
-                if i+1 < position:
+            if i+1 < position:
+                if m["players"][i]["score"] == m["players"][position-1]["score"]:
+                    opponents[players[i]]["draws"] += 1
                     opponents[players[i]]["finishes"] -= 1
+                j = i - 1
+                while j >= 0 and m["players"][j]["score"] == m["players"][position-1]["score"]:
+                    opponents[players[i]]["finishes"] -= 1
+                    j -= 1
+            
             elif position < i+1:
                 opponents[players[i]]["wins"] += 1
 
@@ -403,80 +408,94 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
 
     return winrate_str, stats_str
 
-def map_parse_ffa(db, matches, name, min_games):
+def map_ffa_synergy(name, mode="Deathmatch", min_games=25, date_range=None):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find synergies for
+    a given player in a given mode.
+
+    :param name: player name
+    :param mode: mode to search for games of
+    :param min_games: minimum number of games played with a team(mate)
+    :param track_teams: switch between individual teammates or full teams
+    :param game_maps: maps to search for
+    :param date_range: tuple of start and end date
+    :return: string of synergies
+    """
+    db = connect()
+    games, _ = find_games_w_map(db, name, mode, date_range=date_range)
+    results = map_parse(games, name, min_games, ffa=True)
+
+    winrate_sort = dict(sorted(results.items(), 
+        key=lambda item: item[1]["finishes"]/item[1]["games"], reverse=True))
+    statline_sort = dict(sorted(results.items(), key=lambda item: item[1]["score"]/item[1]["games"], reverse=True))
+    winrate_str = ""
+    stats_str = ""
+
+    for gmap in winrate_sort:
+        winrate_str += f"{gmap}: " + str(round(
+            (results[gmap]['finishes']/results[gmap]['games']), 2)) + \
+            f"({results[gmap]['wins']} / {results[gmap]['games']} | {results[gmap]['podiums']} podiums)\n"
+
+    for gmap in statline_sort:
+        stats_str += f"{gmap}: {round(results[gmap]['score'] / results[gmap]['games'])}, "\
+            f"{round(results[gmap]['kills']/results[gmap]['deaths'], 2)} " \
+            f"({results[gmap]['games']} games)\n"
+
+    return winrate_str, stats_str
+
+def map_parse(matches, name, min_games, ffa=False):
     maps = {}
     for m in matches:
-        position = 0
         if not m['map'] in maps:
             maps[m['map']] = {
                 "wins": 0,
                 "draws": 0,
                 "games": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0,
                 "finishes": 0,
-                "kills": 0,
-                "deaths": 0,
-                "score": 0
+                "podiums": 0
             }
-        for i in range(len(m['players'])):
-                player = m['players'][i]["player"]
-                player = identify_player(db, player)["name"]
-                players.append(player)
-                if not opponents.get(player):
-                    opponents[player] = {"wins": 0, "draws": 0, "games": 0, "finishes": 0}
-
-        for ign in name:
-            try:
-                position = [p.lower() for p in players].index(ign.lower()) + 1
-                break
-            except ValueError:
-                 continue
-
-        for i in range(len(players)):
-            opponents[players[i]]["finishes"] += position
-            opponents[players[i]]["games"] += 1
-            if m["players"][i]["score"] == m["players"][position-1]["score"]:
-                opponents[players[i]]["draws"] += 1
-                if i+1 < position:
-                    opponents[players[i]]["finishes"] -= 1
-            elif position < i+1:
-                opponents[players[i]]["wins"] += 1
-
-    opponents = dict(filter(lambda item: item[1]["games"] >= min_games, opponents.items()))
-    return opponents
-
-def map_parse(matches, name, min_games):
-    maps = {}
-    for m in matches:
-        if not m['map'] in maps:
-            maps[m['map']] = {
-                "wins": 0,
-                "draws": 0,
-                "games": 0,
-                "kills": 0,
-                "deaths": 0,
-                "score": 0
-            }
-        team = None
-        for i in [1,2]:
-            for p in m[f'team{i}']:
-                if p['player'] == name:
-                    team = i
-                    break
-            if team:
-                break
+        
         res = {
             "wins": 0,
             "draws": 0,
-            "games": 1,
-            "kills": p['kills'],
-            "deaths": p['deaths'],
-            "score": p['score']
+            "games": 1
         }
+        
+        if ffa:
+            for i in len(m['players']):
+                if m['players'][i]['player'] == name:
+                    break
+            p = m['players'][i]
+            pos = p+1
+            j = i-1
+            while j>=0 and p['score'] == m['players'][j]['score']:
+                pos -= 1
+                j -= 1
+            res['finishes'] = pos
+            if pos == 1:
+                res['wins'] = 1
+            if pos <= 3:
+                res['podiums'] = 1
+        else:
+            team = None
+            for i in [1,2]:
+                for p in m[f'team{i}']:
+                    if p['player'] == name:
+                        team = i
+                        break
+                if team:
+                    break
+            if m['outcome'] == 0:
+                res['draws'] = 1
+            elif m['outcome'] == team:
+                res['wins'] = 1
 
-        if m['outcome'] == 0:
-            res['draws'] = 1
-        elif m['outcome'] == team:
-            res['wins'] = 1
+        res["kills"] = p['kills']
+        res["deaths"] = p['deaths']
+        res["score"] = p['score']
 
         for k in res.keys():
             maps[m['map']][k] += res[k]
