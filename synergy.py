@@ -438,12 +438,15 @@ def map_parse(matches, name, min_games):
                 "deaths": 0,
                 "score": 0
             }
+        team = None
         for i in [1,2]:
             for p in m[f'team{i}']:
                 if p['player'] == name:
                     team = i
                     break
-
+        if not team:
+            print(m)
+            continue
         res = {
             "wins": 0,
             "draws": 0,
