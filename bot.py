@@ -395,6 +395,45 @@ async def lookup_synergy(message):
     await sync_channels(message=message, embed=embedVar)
 
 
+@util.command_dec
+async def map_synergy(message):
+    db = util.connect()
+    content = message.content
+    content = content[8:]
+    content = content.split(" ")
+    player = content[0]
+    if player == "":
+        player = db.players.find_one({"discord_id" : str(message.author.id)})
+        player = player["name"]
+    else:
+        player = util.identify_player(db, player)["name"]
+    # this is so primitive I'm sorry
+    min_games = 5
+    date_range = None
+    if len(content) > 1:
+        mode = content[1]
+        if len(content) > 2:
+            min_games = int(content[2])
+            if len(content) > 3:
+                date_range = (content[4], content[5])
+    else:
+        mode = None
+    mode = util.check_mode(mode, message.guild.id, short=False, channel=message.channel.id).capitalize()
+    # since there are two modes that are grouped together to AA
+    if "Artifact" in mode:
+        mode = "Artifact assault"
+    embedVar = discord.Embed(title=f"{player}'s {mode.title()} Synergies", color=0xff00ff)
+    if util.check_mode(mode, short=True) in util.FFA_MODES:
+        synergies = synergy.map_synergy_ffa(player, mode, min_games, date_range)
+        embedVar.add_field(name="Average Finish (wins|pod|games)", value=synergies[0])
+        embedVar.add_field(name="Average Statline", value=synergies[1])
+    else:
+        synergies = synergy.map_synergy(player, mode, min_games, date_range)
+        embedVar.add_field(name="Winrate", value=synergies[0])
+        embedVar.add_field(name="Average Statline", value=synergies[1])
+
+    await sync_channels(message=message, embed=embedVar)
+
 # add a match to the matches.txt file
 def add_match(message):
     msg = message.content.replace("add ", "")
@@ -1107,6 +1146,13 @@ async def on_message(message):
         elif message.content.lower().startswith("synergy"):
             try:
                 await lookup_synergy(message)
+            except discord.errors.HTTPException as e:
+                print(e)
+                await sync_channels("An error has occurred, you might not have enough games. " + util.find_insult(), message)
+
+        elif message.content.lower().startswith("mapstat"):
+            try:
+                await map_synergy(message)
             except discord.errors.HTTPException as e:
                 print(e)
                 await sync_channels("An error has occurred, you might not have enough games. " + util.find_insult(), message)
