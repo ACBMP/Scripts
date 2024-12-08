@@ -460,9 +460,8 @@ def map_parse(matches, name, min_games):
                 if p['player'] == name:
                     team = i
                     break
-        if not team:
-            print(m)
-            continue
+            if team:
+                break
         res = {
             "wins": 0,
             "draws": 0,
