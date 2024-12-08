@@ -424,7 +424,7 @@ async def map_synergy(message):
         mode = "Artifact assault"
     embedVar = discord.Embed(title=f"{player}'s {mode.title()} Map stats", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
-        synergies = synergy.map_synergy_ffa(player, mode, min_games, date_range)
+        synergies = synergy.map_ffa_synergy(player, mode, min_games, date_range)
         embedVar.add_field(name="Average Finish (wins|pod|games)", value=synergies[0])
         embedVar.add_field(name="Average Statline (score, k/d)", value=synergies[1])
     else:
