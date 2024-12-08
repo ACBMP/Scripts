@@ -330,7 +330,7 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     """
     db = connect()
     games, igns = find_games(db, name, mode, date_range=date_range)
-    results = map_parse(db, games, igns, min_games)
+    results = map_parse(games, igns, min_games)
 
     winrate_sort = dict(sorted(results.items(), key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
     statline_sort = dict(sorted(results.items(), key=lambda item: 
