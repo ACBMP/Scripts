@@ -449,7 +449,9 @@ def map_parse(matches, name, min_games):
                 i = m['team2'].index(ign)
             if team:
                 break
-        
+        if not team:
+            print(m)
+            continue
         res = {
             "wins": 0,
             "draws": 0,
