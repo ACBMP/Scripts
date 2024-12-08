@@ -315,6 +315,22 @@ def find_synergy(name, mode="Manhunt", min_games=25, track_teams=False, game_map
     return dict_string(results[1]), dict_string(results[0])
 
 
+def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
+    """
+    Wrapper around find_games, parse_matches, dict_string to find synergies for
+    a given player in a given mode.
+
+    :param name: player name
+    :param mode: mode to search for games of
+    :param min_games: minimum number of games played with a team(mate)
+    :param track_teams: switch between individual teammates or full teams
+    :return: string of synergies
+    """
+    db = connect()
+    games, igns = find_games(db, name, mode)
+    results = parse_ffa(db, games, igns, min_games)
+    return dict_string_ffa(results)
+
 # region map synergy
 
 def find_games_w_map(db, name, mode, date_range=None):
@@ -381,7 +397,7 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     for gmap in statline_sort:
         stats_str += f"{gmap}: {round(results[gmap]['score'] / results[gmap]['games'])}, "\
             f"{results[gmap]['kills']/results[gmap]['deaths']} " \
-            f"(avg score, k/d over {gmap[gmap]['games']} games)\n"
+            f"(avg score, k/d over {results[gmap]['games']} games)\n"
 
     return stats_str, winrate_str
 
@@ -468,21 +484,6 @@ def map_parse(matches, name, min_games):
     return maps
 # endregion
 
-def find_synergy_ffa(name, mode="Deathmatch", min_games=25):
-    """
-    Wrapper around find_games, parse_matches, dict_string to find synergies for
-    a given player in a given mode.
-
-    :param name: player name
-    :param mode: mode to search for games of
-    :param min_games: minimum number of games played with a team(mate)
-    :param track_teams: switch between individual teammates or full teams
-    :return: string of synergies
-    """
-    db = connect()
-    games, igns = find_games(db, name, mode)
-    results = parse_ffa(db, games, igns, min_games)
-    return dict_string_ffa(results)
 
 if __name__ == "__main__":
     #mode = "Domination"
