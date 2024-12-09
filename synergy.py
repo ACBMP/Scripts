@@ -434,7 +434,7 @@ def map_ffa_synergy(name, mode="Deathmatch", min_games=25, date_range=None):
     for gmap in winrate_sort:
         winrate_str += f"{gmap}: " + str(round(
             (results[gmap]['finishes']/results[gmap]['games']), 2)) + \
-            f"({results[gmap]['wins']} / {results[gmap]['games']} | {results[gmap]['podiums']} podiums)\n"
+            f" ({results[gmap]['wins']}W | {results[gmap]['podiums']}P / {results[gmap]['games']})\n"
 
     for gmap in statline_sort:
         stats_str += f"{gmap}: {round(results[gmap]['score'] / results[gmap]['games'])}, "\
