@@ -1,6 +1,5 @@
-from flask_pymongo import PyMongo
 from pymongo import MongoClient
-from util import *
+from util import identify_player, check_mode, FFA_MODES
 from pydantic import BaseModel
 import numpy as np
 from typing import List
@@ -69,7 +68,11 @@ def rating_change(current_mmr: int, result: float, expected_result: float, games
     if games_played > 10:
         if max_change is None:
             max_change = max_mmr_change(games_played, current_mmr)
-        return max_change * (result - expected_result) * stomp_mmr_modifier(position, scores, stomp_ref) + result # for inflation
+        stomp_mod = stomp_mmr_modifier(position, scores, stomp_ref)
+        performance = result - expected_result
+        if performance < 0:
+            stomp_mod = 1/stomp_mod
+        return max_change * performance * stomp_mod + result # for inflation
     else:
         return (result * 60) - 10
 
@@ -110,8 +113,7 @@ def stomp_mmr_modifier(position:int, scores: List[int], ref_score: int = None):
     
     if ref_score == 0:
         return 1
-
-    return 1 + (abs(scores[position-1] - avg_score) / ref_score)
+    return (scores[position-1] + ref_score - avg_score) / ref_score
 
 
 def get_result(position: int, players: int):
@@ -190,7 +192,7 @@ def new_matches():
             raise ValueError(f"match for mode {mode} must have players field")
 
         if mode == "dm":
-            ref = 0
+            ref = None
         else:
             ref = 10000
 
