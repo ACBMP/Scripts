@@ -108,12 +108,14 @@ def stomp_mmr_modifier(position:int, scores: List[int], ref_score: int = None):
     """
     avg_score = sum(scores) / len(scores)
 
-    if ref_score is None:
-        ref_score = avg_score
-    
-    if ref_score == 0:
+    if not ref_score:
         return 1
-    return (scores[position-1] + ref_score - avg_score) / ref_score
+    stomp_mod = 1 + (abs(scores[position-1] - avg_score) / ref_score)
+    
+    if scores[position-1] < avg_score:
+        return 1/stomp_mod
+    return stomp_mod
+
 
 
 def get_result(position: int, players: int):
@@ -192,7 +194,7 @@ def new_matches():
             raise ValueError(f"match for mode {mode} must have players field")
 
         if mode == "dm":
-            ref = None
+            ref = 8000
         else:
             ref = 10000
 
