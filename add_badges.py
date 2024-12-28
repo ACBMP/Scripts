@@ -253,7 +253,7 @@ if __name__ == "__main__":
     add_badge("Edi", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Rorce", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("MilliaRage89", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
-    add_badge("Qutra", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
+    add_badge("Kapi", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Cota", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Ariiro", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     
