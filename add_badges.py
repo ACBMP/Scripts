@@ -256,8 +256,6 @@ if __name__ == "__main__":
     add_badge("Qutra", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Cota", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Ariiro", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
-
-    season = 6
     
     add_badge("Edi", "2024-03-26", "1st", "AA Defending", season)
     add_badge("Onyxies", "2024-03-26", "2nd", "AA Defending", season)
@@ -279,3 +277,21 @@ if __name__ == "__main__":
     add_badge("Tha Fazz", "2024-03-26", "All-Star", "Escort", season, f"Season {season} Escort All-Star")
     add_badge("Lunaire.-", "2024-03-26", "Rookie", "all", season, f"Season {season} Rookie of the Season")
 
+    season = 6
+    add_badge("Edi", "2024-12-28", "1st", "Domination", season)
+    add_badge("Xanthex", "2024-12-28", "2nd", "Domination", season)
+    add_badge("Lars", "2024-12-28", "3rd", "Domination", season)
+    add_badge("Lunaire.-", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Cota", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Gummy", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Arun", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    add_badge("Christian", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+
+    #add_badge("", "2024-12-28", "Custom", "Domination", season, f"Season {season} Manhunt All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
+    #add_badge("", "2024-12-28", "Custom", "Domination", season, f"Season {season} Manhunt All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
+    #add_badge("", "2024-12-28", "Custom", "Domination", season, f"Season {season} Manhunt All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
+    #add_badge("", "2024-12-28", "Custom", "Domination", season, f"Season {season} Manhunt All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
+
+    add_badge("Lunaire.-", "2024-03-26", "1st", "Deathmatch", season)
+    add_badge("Arun", "2024-03-26", "2nd", "Deathmatch", season)
+    add_badge("Xanthex", "2024-03-26", "3rd", "Deathmatch", season)
