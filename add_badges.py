@@ -281,10 +281,10 @@ if __name__ == "__main__":
     add_badge("Edi", "2024-12-28", "1st", "Domination", season)
     add_badge("Xanthex", "2024-12-28", "2nd", "Domination", season)
     add_badge("Lars", "2024-12-28", "3rd", "Domination", season)
-    add_badge("Lunaire.-", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
-    add_badge("Cota", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    #add_badge("Lunaire.-", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    #add_badge("Cota", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
     add_badge("Gummy", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
-    add_badge("Arun", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
+    #add_badge("Arun", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
     add_badge("Christian", "2024-12-28", "All-Star", "Domination", season, f"Season {season} Domination All-Star")
     add_badge("Gummy", "2024-12-28", "Rookie", "all", season, f"Season {season} Rookie of the Season")
 
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     add_badge("Xanthex", "2024-12-28", "Custom", "Domination", season, f"Season {season} Domination All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
     add_badge("Lunaire.-", "2024-12-28", "Custom", "Domination", season, f"Season {season} Domination All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
     add_badge("Cota", "2024-12-28", "Custom", "Domination", season, f"Season {season} Domination All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
-    add_badge("Arun", "2024-12-28", "Custom", "Domination", season, f"Season {season} Domination All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
+    add_badge("Arun", "2024-12-28", "Custom", "Domination", season, f"Season {season} Manhunt All-Star Match Champion", {"Discord": ":star2:", "HTML": "&#127775"})
 
     add_badge("Lunaire.-", "2024-03-26", "1st", "Deathmatch", season)
     add_badge("Arun", "2024-03-26", "2nd", "Deathmatch", season)
