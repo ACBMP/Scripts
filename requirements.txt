@@ -1,0 +1,17 @@
+APScheduler
+discord.py
+emoji_country_flag
+Flask_PyMongo
+Markdown
+matplotlib
+numpy
+pandas
+pydantic
+pymongo
+python-telegram-bot
+Requests
+scipy
+six
+six
+tweepy
+VapourSynth
