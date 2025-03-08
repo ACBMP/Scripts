@@ -17,20 +17,15 @@ import os
 import sanity
 import synergy
 import elostats
-import subprocess
 import numpy as np
-import telegram_bot
 from scipy.special import binom
 from add_badges import readable_badges
 
 # Members intent
 intents = discord.Intents.default()
 intents.members = True
-client = commands.Bot(intents=intents, command_prefix="an")
-
-#subprocess.Popen(["python3", "telegram_bot.py"])
-
-#client = discord.Client()
+intents.message_content = True
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
@@ -47,32 +42,6 @@ modes_dict = {
         'dm' : 'Deathmatch',
         'asb': 'Assassinate Brotherhood'
         }
-
-abilities = ["Normal Disguise","Long Lasting Disguise", "Strong Disguise",
-"Rapid Reload Disguise", "Normal Sprint Boost", "Long Lasting Sprint Boost", "Strong Sprint Boost",
-"Rapid Reload Sprint Boost", "Normal Smoke Bomb", "Long Lasting Smoke Bomb", "Strong Smoke Bomb",
-"Rapid Reload Smoke Bomb", "Normal Templar Vision", "Long Lasting Templar Vision", "Strong Templar Vision",
-"Rapid Reload Templar Vision", "Normal Fire Crackers", "Long Lasting Fire Crackers", "Strong Fire Crackers",
-"Rapid Reload Fire Crackers", "Normal Charge", "Long Lasting Charge", "Strong Charge", "Rapid Reload Charge",
-"Normal Mute", "Long Lasting Mute", "Strong Mute", "Rapid Reload Mute", "Normal Hidden Gun",
-"Deadly Hidden Gun","Quick Fire Hidden Gun", "Rapid Reload Hidden Gun", "Normal Throwing Knives",
-"Long Lasting Throwing Knives", "Sharp Throwing Knives",
-"Rapid Reload Throwing Knives","Normal Poison", "Fast Acting Poison", "Slow Acting Poison", "Rapid Reload Poison", "Normal Morph",
-"Power Morph", "Strong Morph", "Rapid Reload Morph", "Normal Decoy", "Long Lasting Decoy", "Disguised Decoy", "Rapid Reload Decoy"]
-
-Perks = ["Enhanced Autobash", "Wall Runner", "Resistance", "Blender", "Fast Getaway", "Chase Expert", "Overall Cooldowns"]
-
-Kill_Streak = ["+100", "+300", "+250", "+750"]
-Loss_Streak = ["Extra Precision", "Reset Cooldowns", "Score X2", "Boost Cooldowns"]
-
-#Command which generates random ability sets for a set number of players
-@util.command_dec
-async def ability_randomizer(message):
-    aset = ", ".join(random.sample(abilities, k=2))
-    aset += "\n" + ", ".join(random.sample(Perks, k=2))
-    aset += "\n" + random.choice(Kill_Streak)
-    await sync_channels(aset + "\n" + random.choice(Loss_Streak), message)
-    return
 
 
 async def send_long_message(content, channel):
@@ -666,7 +635,7 @@ async def ocr_screenshot(message):
         correction = msg[-2:]
         msg = msg[:-2]
 
-    
+
 
     # if one of game, players isn't specified use guild_params
     if len(msg) == 2:
@@ -952,14 +921,14 @@ async def estimate_change(message):
     else:
         await sync_channels("team splitting token ' vs ' missing. " + util.find_insult(), message)
         return
-    
+
     embedVar = discord.Embed(title="Rating Change Estimates", url = "https://assassins.network/elo", color = 0xff00ff)
     ts = [ts[i].split(", ") for i in [0, 1]]
     try:
         ts = [teams.extract_players(t, mode) for t in ts]
     except Exception as e:
         await sync_channels(f"There's an error with your input ({e}). {util.find_insult()}", message)
-        return  
+        return
     team_ratings = [[p[f"{mode}mmr"] for p in ts[i]] for i in [0, 1]]
     if mode in util.FFA_MODES:
         import eloupdate_ffa as ffaelo
@@ -982,28 +951,28 @@ async def estimate_change(message):
                 result, expected, player[f'{mode}games']["total"],
                 pos, fake_scores
             ))
-            
+
             beating = total_players-pos
             beat_by = total_players-1-beating
             placing_chance = (expected**beating)*binom(total_players-1, beating)
             placing_chance *= ((1-expected)**beat_by)*binom((total_players-1)-beating, beat_by)
             pos_chances.append(placing_chance)
 
-        
+
         expected_pos = total_players - expected*(total_players-1)
         opp_ratings = np.array(team_ratings[1])
         opposition_rating = (opp_ratings.mean() + np.median(opp_ratings)) / 2
-        
+
         # display
         player_display =\
             f"""{player['name']} ({round(player[f'{mode}mmr'], 1)})
             Average Expected Finish: **{ffaelo.pos_to_str(round(expected_pos))}** ({round(expected_pos, 2)})"""
         opp_display = "\n".join([f"{o['name']} ({round(o[f'{mode}mmr'], 1)})" for o in ts[1]]) + \
                     f"\n**Estimated opposition strength: {round(opposition_rating, 1)}**"
-        
+
         embedVar.add_field(name="Player", value=player_display, inline=False)
         embedVar.add_field(name="Opposition", value=opp_display, inline=False)
-        
+
         results = []
         for pos in range(1, total_players+1):
             change = round(changes[pos-1], 1)
@@ -1161,10 +1130,6 @@ async def on_message(message):
         elif message.content.lower().startswith("add "):
             add_match(message)
             await sync_channels("Game(s) added!", message)
-
-        #ability randomizer
-        elif message.content.lower().startswith("randomizer"):
-            await ability_randomizer(message)
 
         # print matches.txt
         elif message.content.lower() == "print":
