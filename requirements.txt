@@ -14,4 +14,3 @@ scipy
 six
 six
 tweepy
-VapourSynth

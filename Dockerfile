@@ -23,5 +23,6 @@ WORKDIR /app
 
 RUN pip3 install -r requirements.txt --break-system-packages
 
-CMD ["python3", "telegram_bot.py", "&", "python3", "queue_bot.py", "&", "python3", "bot.py"]
+CMD ["python3", "bot.py"]
+#CMD ["python3", "telegram_bot.py", "&", "python3", "queue_bot.py", "&", "python3", "bot.py"]
 
