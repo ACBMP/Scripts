@@ -1,9 +1,9 @@
-from telegram.ext.updater import Updater
-from telegram.update import Update
-from telegram.ext.callbackcontext import CallbackContext
-from telegram.ext.commandhandler import CommandHandler
-from telegram.ext.messagehandler import MessageHandler
-from telegram.ext.filters import Filters
+from telegram.ext import Updater
+from telegram import Update
+from telegram.ext import CallbackContext
+from telegram.ext import CommandHandler
+from telegram.ext import MessageHandler
+from telegram.ext import filters
 import telegram
 import logging
 from botconfig import *
@@ -66,7 +66,7 @@ def main():
     
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("username", username))
-    dispatcher.add_handler(MessageHandler(Filters.text, unknown))
+    dispatcher.add_handler(MessageHandler(filters.TEXT, unknown))
     dispatcher.add_handler(MessageHandler(Filters.command, unknown))
     
     updater.start_polling()

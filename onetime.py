@@ -49,6 +49,58 @@ def test_query():
         print(p["name"])
     return
 
+def change_name():
+    db = connect()
+    names = {"Alexutza123": "Alewoo",
+             "Auditore92": "Audi",
+             "BB-MurderCases": "BB",
+             "BigDriply": "Drip",
+             "Bounty Hunta 08": "Bounty",
+             "Crispi Kreme": "Crispi",
+             "DANIEL_BAILOTE": "Daniel",
+             "Dellpit": "Dell",
+             "DevelSpirit": "Try",
+             "DurandalSword": "Durandal",
+             "EternityEzioWolf": "Ezio",
+             "Fabianfosf": "Fabian",
+             "FatalWolf": "Fatal",
+             "FynnC": "Fynn",
+             "GamerPrince98": "Prince",
+             "H4v0k": "Havok",
+             "I Jaamie AC I": "Jamie",
+             "I-14-Inch-LEGEND": "Inch",
+             "IntooDeep202": "Deep",
+             "LaDamaRossa77": "Dama",
+             "Lime232": "Lime",
+             "Lunaire.-": "Lunaire",
+             "mariyaban": "Mariya",
+             "MagicalNightKat": "Kat",
+             "Maxi911": "Maxi",
+             "Merrick 73": "Merrick",
+             "MilliaRage89": "Millia",
+             "piesio1": "piesio",
+             "robin331": "Robin",
+             "Reaper19111": "Reaper",
+             "Sugarfree": "Sugar",
+             "TDA-TheBeast": "Beast",
+             "TL_ANGE": "Ange",
+             "Ted95On": "Ted",
+             "Tha Fazz": "Fazz",
+             "TheAngryRiver": "Omse",
+             "Vinny_Ferrara": "Vinny",
+             "werty125": "Werty",
+             "XxSkixxo": "Skixxo",
+             "dreamkiller2000": "Dream",
+             "jurrevolkers3000": "Jurre",
+             "oliguembol": "Zysl",
+             "x-JigZaw": "Jig",
+             "xAlmighty IV": "Almighty",
+             "xCanibal96": "Canibal",
+             "xPsychoticLlama": "Llama"}
+    for k, v in names.items():
+        db.players.update_one({"name": k}, {"$set": {"name": v}})
+    return
+
 #def cleanup():
 #    db = connect()
 #    ps = db.players.find()
@@ -65,5 +117,6 @@ def test_query():
 #                pass
 
 if __name__ == "__main__":
-    new_maps()
+    change_name()
+    #new_maps()
     #change_usernames()
