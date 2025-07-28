@@ -39,4 +39,5 @@ if __name__ == '__main__':
         df = read_mongo('public', 'matches', {'mode': mode.title()}, 'localhost', 27017)
         df.to_csv(f"/home/dell/AN_Flask/static/matches_{m.lower().replace(' ', '_')}.csv", index=False)
 #        df.to_csv(f"matches_{m.lower().replace(' ', '_')}.csv", index=False)
-
+    df = read_mongo("public", "matches", {}, "localhost", 27017)
+    df.to_csv("/home/dell/AN_Flask/static/matches.csv", index=False)

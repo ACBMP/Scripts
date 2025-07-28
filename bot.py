@@ -1068,6 +1068,7 @@ async def on_member_join(member):
             # ideally I'd like to append badges to names
             # I prefer that over adding igns
             await member.edit(nick=new_nick)
+            await member.add_roles(conf.verified_role)
         else:
             print(f"Couldn't identify user {member.id}")
             channel = client.get_channel(conf.main_channel)

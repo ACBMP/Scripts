@@ -4,11 +4,17 @@ def change_usernames():
     db = connect()
     matches = db.matches.find()
     for m in matches:
-        for i in [1, 2]:
-            for j in range(len(m[f"team{i}"])):
-                p = identify_player(db, m[f"team{i}"][j]["player"])
-                m[f"team{i}"][j]["player"] = p["name"]
-        db.matches.update_one({"_id": m["_id"]}, {"$set": {"team1": m["team1"], "team2": m["team2"]}})
+        if "team1" in m:
+            for i in [1, 2]:
+                for j in range(len(m[f"team{i}"])):
+                    p = identify_player(db, m[f"team{i}"][j]["player"])
+                    m[f"team{i}"][j]["player"] = p["name"]
+            db.matches.update_one({"_id": m["_id"]}, {"$set": {"team1": m["team1"], "team2": m["team2"]}})
+        else:
+            for i in range(len(m["players"])):
+                p = identify_player(db, m["players"][i]["player"])
+                m["players"][i]["player"] = p["name"]
+            db.matches.update_one({"_id": m["_id"]}, {"$set": {"players": m["players"]}})
     print("Done")
     return
 
@@ -101,6 +107,50 @@ def change_name():
         db.players.update_one({"name": k}, {"$set": {"name": v}})
     return
 
+def inactive_users():
+    db = connect()
+    queries = [{f"{i}games.total": 0} for i in ALL_MODES]
+    players = db.players.find({"$and": queries})
+    for p in players:
+        print(p["name"])
+
+def remove_inactive():
+    db = connect()
+    to_delete = ["Ejesza", "Exological", "Bounty", "Alewoo", "POPO91Z", "Shen", "speedydrg", "wabashop", "fouadix", "zado", "Skill", "Gwin", "captainvallois", "darkcepters", "Swan_Maiden", "Tobiname", "Alkumer", "XxSilentdeathx", "Treyway", "Darius", "Vex", "Maxi", "Kyle", "PikuEon", "Nikita_Schur", "Rychu", "Trazz", "delfix", "Rabbi", "EazyAdry", "execution_time"]
+    for n in to_delete:
+        db.players.delete_one({"name": n})
+
+def merge_user_average_pug(username):
+    db = connect()
+    player = db.players.find_one({"name": username})
+    if not player:
+        print(f"Name {username} not found")
+        return
+    igns = player["ign"] 
+    if type(igns) == str:
+        igns = [igns]
+    if username not in igns:
+        igns += [username]
+    # I just haven't had to do this for team modes yet
+#    search = [{"team1":{"$elemMatch":{"player":ign}}} for ign in igns]
+#    t1_matches = db.matches.find({"$or": search}).sort("_id", -1)
+#    search = [{"team2":{"$elemMatch":{"player":ign}}} for ign in igns]
+#    t2_matches = db.matches.find({"$or": search}).sort("_id", -1)
+    search = [{"players":{"$elemMatch":{"player":ign}}} for ign in igns]
+    ffa_matches = db.matches.find({"$or": search}).sort("_id", -1)
+    for m in ffa_matches:
+        print(m)
+        for ign in igns:
+            db.matches.update_one(
+                    {"_id": m["_id"], "players": {"$elemMatch":{"player":ign}}},
+                    {"$set": {"players.$.player": "Average Pug"}}
+                    )
+    pug = db.players.find_one({"name": "Average Pug"})
+    db.players.update_one({"_id": pug["_id"]}, {"$push": {"ign": username}})
+    db.players.delete_one({"name": username})
+    return
+    
+
 #def cleanup():
 #    db = connect()
 #    ps = db.players.find()
@@ -117,6 +167,9 @@ def change_name():
 #                pass
 
 if __name__ == "__main__":
-    change_name()
+    #merge_user_average_pug("sKIDcROW2018")
+    #remove_inactive()
+    inactive_users()
+    #change_name()
     #new_maps()
     #change_usernames()

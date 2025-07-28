@@ -37,6 +37,7 @@ sync_roles = {
         #server : #role
     }
 } #ints everywhere
+verified_role = # int
 twitter_authhandler = ["", ""]
 twitter_access_token = ["", ""]
 telegram_token = ""
