@@ -1072,7 +1072,7 @@ async def on_member_join(member):
         else:
             print(f"Couldn't identify user {member.id}")
             channel = client.get_channel(conf.main_channel)
-            await sync_channels(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will add you to the database.")
+            await channel.send(f"Hello {member.mention}, I couldn't find you in the AN database. If you're new here, please reply to this with your prefered name, in-game usernames, platforms, and the nation you'd like to represent, and an admin will verify if you're a member of the competitive AC community and add you to the database if so.")
     return
 
 @util.permission_locked
