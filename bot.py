@@ -90,7 +90,7 @@ AN queue [MODE]```"""
     remake_help = """To calculate whether a game should be remade after a disutil.connect, use\n```css
 AN remake TEAM_1_SCORE TEAM_2_SCORE TIME_LEFT PLAYERS_PER_TEAM [MODE]```Whereby time is in-game time formatted as X:YZ."""
     ocr_help = """To use optical character recognition to scan screenshots into the AN matches format, use the following with the screenshot attached\n```css
-AN OCR [GAME] [TOTAL_PLAYERS] [+CORRECTION TEAM]```This currently only supports ACB and ACR AA.\nScreenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work.\nTo correct for e.g. one dodge on team 1, append +750 1."""
+AN OCR [GAME] [TOTAL_PLAYERS] [+CORRECTION TEAM]```Screenshots must be uncropped pictures taken from your PC or similar, i.e. phone pictures won't work.\nTo correct for e.g. one dodge on team 1, append +750 1. For AC4, you can add \"post\" to force the post-game algorithm or \"in-game\" to force the in-game algorithm, otherwise it'll auto-detect."""
     add_help = f"""To queue matches for being added to AN, use\n```css
 AN add FORMATTED_MATCH```with the match data formatted in the AN format pinned in #an-help on the #secualhealing server, e.g.:\n```css
 M, 3, 1, DevelSpirit$7760$8$6, x-JigZaw$6960$6$7, EsquimoJo$4400$5$6, Tha Fazz$6325$6$6, dripdriply$5935$6$6, Dellpit$5515$7$7```If you want to save map and/or host:\n```css
@@ -619,8 +619,11 @@ async def ocr_screenshot(message):
         msg.remove("post")
         if msg == []:
             msg = [""]
-    else:
-        post = False
+    elif "in-game" in msg:
+        post = None
+        msg.remove("in-game")
+        if msg == []:
+            msg = [""]
 
     if "ffa" in message.content:
         ffa = True

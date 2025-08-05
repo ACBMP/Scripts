@@ -7,7 +7,7 @@ import numpy as np
 
 os.environ['LC_ALL'] = 'C'
 
-def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: bool = False):
+def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None, ffa: bool = False):
     """
     Screenshot OCR function using OpenCV and Tesseract.
 
@@ -117,6 +117,14 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
         scale_y = img.shape[0] / 1080
         blue_v = [0, 255]
         threshold = 150
+        # auto detect post game based on top and bottom rows being within a color range
+        if post_game is None:
+            c = int(99 * scale)
+            top = img[:, :c, :]
+            bot = img[:, -c:, :]
+            test = cv2.vconcat([top, bot])
+            ranges = [[20, 80], [10, 80], [0, 70]]
+            post_game = all([ranges[i][0] < np.median(test[:, :, i]) < ranges[i][1] for i in range(3)])
         img = img[:, :, 2]
         if not ffa:
             if not post_game:
@@ -248,8 +256,8 @@ def correct_score(match: str, correction: int, team: int):
 if __name__ == "__main__":
     # OCR("./manhunt1.png", "acb", 6)
     # OCR("./escort1.png", "acb", 4)
-    print(OCR("./domi.png", "ac4", 8, post_game=True))
-    print(OCR("./domiC.png", "ac4", 8, post_game=False))
+    print(OCR("./domi.png", "ac4", 8, post_game=None))
+    print(OCR("./domiC.png", "ac4", 8, post_game=None))
     # OCR("./domi3.png", "ac4", 8, post_game=True)
     # OCR("./aa1.png", "acr", 8)
     # OCR("./domi2.jpg", "ac4", 8, post_game=False)
