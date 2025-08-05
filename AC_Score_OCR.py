@@ -9,7 +9,7 @@ os.environ['LC_ALL'] = 'C'
 
 def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: bool = False):
     """
-    Screenshot OCR function using VapourSynth and Tesseract.
+    Screenshot OCR function using OpenCV and Tesseract.
 
     :param screenshot: path to screenshot file
     :param game: game initials to change settings
@@ -19,7 +19,8 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
     """
     players = int(players)
     orig = cv2.imread(screenshot)
-    img = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
+    # img = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
+    img = orig
     if game.lower() == "acb":
         scale = img.shape[1] / 1280
         left = int(229 * scale)
@@ -116,6 +117,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
         scale_y = img.shape[0] / 1080
         blue_v = [0, 255]
         threshold = 150
+        img = img[:, :, 2]
         if not ffa:
             if not post_game:
                 left = 650 * scale
@@ -123,23 +125,27 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
                 right = 486 * scale
                 bottom = [267 * scale_y, 39 * scale_y]
                 binarize = [140, 90]
+                columns = None
             else:
-                # get rid of abstergo nonsense
-                for h in range(img.shape[0]):
-                    for w in range(img.shape[1]):
-                        if orig[h, w, 0] < 60 and orig[h, w, 2] > 100:
-                            img[h, w] = 255
+                # # get rid of abstergo nonsense
+                # for h in range(img.shape[0]):
+                #     for w in range(img.shape[1]):
+                #         if orig[h, w, 0] < 60 and orig[h, w, 2] > 100:
+                #             img[h, w] = 255
                 left = 906 * scale
                 top = [526 * scale_y, 755 * scale_y]
                 right = 196 * scale
                 bottom = [402 * scale_y, 174 * scale_y]
                 binarize = [140, 130]
+                columns = [360, 375, 560, 575, 710, 725]
             left = int(left)
             top = [int(i) for i in top]
             width = int(img.shape[1] - left - right)
             height = int(img.shape[0] - top[0] - bottom[0])
             img = cv2.vconcat([img[top[i]:top[i] + height, left:left + width] for i in range(2)])
-            img = cv2.hconcat([img[:, :360], img[:, 375:560], img[:, 575:710], img[:, 725:]])
+            if columns:
+                columns = [int(i * scale) for i in columns]
+                img = cv2.hconcat([img[:, :columns[0]], img[:, columns[1]:columns[2]], img[:, columns[3]:columns[4]], img[:, columns[5]:]])
         else:
             left = int(650 * scale)
             top = int(682 * scale_y)
@@ -171,7 +177,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
                 "$Xanthe$x": "Xanthex",
                 "$Xanthex": "Xanthex",
                 "chrlstlanC": "Chr1st1anC",
-                "Arun0G": "ArunOG"
+                "Arun0G": "ArunOG",
                 }
     else:
         return OCR(screenshot, "acb", players)
@@ -199,7 +205,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
     result = []
     for i in img_arr:
         r = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7 -c tessedit_char_whitelist={whitelist}")
-        r = r.replace("'", "").replace(" ", "$").replace("\\n", ", ").replace("\n", ", ")
+        r = r.replace("'", "").replace(" ", "$").replace("\\n", "").replace("\n", "")
         for m in [*common]:
             r = r.replace(m, common[m])
         result.append(r)
@@ -240,10 +246,11 @@ def correct_score(match: str, correction: int, team: int):
 
 
 if __name__ == "__main__":
-    OCR("./manhunt1.png", "acb", 6)
-    OCR("./escort1.png", "acb", 4)
-    OCR("./domi1.jpg", "ac4", 8, post_game=True)
-    OCR("./domi3.png", "ac4", 8, post_game=True)
-    OCR("./aa1.png", "acr", 8)
-    OCR("./domi2.jpg", "ac4", 8, post_game=False)
+    # OCR("./manhunt1.png", "acb", 6)
+    # OCR("./escort1.png", "acb", 4)
+    print(OCR("./domi.png", "ac4", 8, post_game=True))
+    print(OCR("./domiC.png", "ac4", 8, post_game=False))
+    # OCR("./domi3.png", "ac4", 8, post_game=True)
+    # OCR("./aa1.png", "acr", 8)
+    # OCR("./domi2.jpg", "ac4", 8, post_game=False)
 
