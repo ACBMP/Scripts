@@ -613,6 +613,7 @@ async def ocr_screenshot(message):
     msg = msg.replace("ocr ", "").replace("ocr", "")
     msg = msg.split(" ")
 
+    post = None
     # check if post game (for AC4)
     if "post" in msg:
         post = True
@@ -620,7 +621,7 @@ async def ocr_screenshot(message):
         if msg == []:
             msg = [""]
     elif "in-game" in msg:
-        post = None
+        post = False
         msg.remove("in-game")
         if msg == []:
             msg = [""]
