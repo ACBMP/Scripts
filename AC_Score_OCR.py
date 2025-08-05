@@ -196,16 +196,17 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool = False, ffa: 
         # cv2.waitKey(0)
 
     whitelist = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"
+    result = []
     for i in img_arr:
-        result = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7 -c tessedit_char_whitelist={whitelist}")
-        result = result.replace("'", "").replace(" ", "$").replace("\\n", ", ")
+        r = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7 -c tessedit_char_whitelist={whitelist}")
+        r = r.replace("'", "").replace(" ", "$").replace("\\n", ", ").replace("\n", ", ")
         for m in [*common]:
-            result = result.replace(m, common[m])
-        print(result)
+            r = r.replace(m, common[m])
+        result.append(r)
 
     # remove n from earlier and join
-    # out = ", ".join([p[1:] for p in sorted(result)]).replace("$O", "$0")
-    # return re.sub("[\[].*?[\]]", "", out)
+    out = ", ".join([p[1:] for p in result]).replace("$O", "$0")
+    return re.sub("[\[].*?[\]]", "", out)
 
 
 def correct_score(match: str, correction: int, team: int):
