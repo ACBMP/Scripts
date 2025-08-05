@@ -212,7 +212,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None,
     whitelist = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"
     result = []
     for i in img_arr:
-        r = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7 -c tessedit_char_whitelist={whitelist}")
+        r = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7") # -c tessedit_char_whitelist={whitelist} if we wanna use the whitelist again
         r = r.replace("'", "").replace(" ", "$").replace("\\n", "").replace("\n", "")
         for m in [*common]:
             r = r.replace(m, common[m])
