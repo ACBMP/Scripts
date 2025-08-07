@@ -33,12 +33,14 @@ def add_badge(player: str, date: str, rank: str = "", mode: str = "", season: in
     return
 
 
-def readable_badges(player, discord=True):
+def readable_badges(player, discord=True, as_html=True):
     db = connect()
-    badges_list = identify_player(db, player)["badges"]
-
-    if len(badges_list) == 0:
-        return ""
+    if type(player) == dict:
+        badges_list = player["badges"]
+    elif type(player) == str:
+        badges_list = identify_player(db, player)["badges"]
+    else:
+        raise TypeError(f"Bad player type: {type(player)}")
 
     badges = ""
     for badge in badges_list:
@@ -100,13 +102,18 @@ def readable_badges(player, discord=True):
                 medal = badge["medal"]["HTML"]
         else:
             raise ValueError("Unknown rank! Options are: 1st, 2nd, 3rd, Trophy, Rookie, Special, All-Star, and Custom.")
-        if rank in ["Trophy", "All-Star", "Custom", "Special"]:
-            badges = f"{medal} {name}\n" + badges
-        elif rank == "Rookie":
-            badges = f"{medal} Season {season} Rookie of the Season\n" + badges
+        if as_html:
+            if rank in ["Trophy", "All-Star", "Custom", "Special"]:
+                badges = f"{medal} {name}\n" + badges
+            elif rank == "Rookie":
+                badges = f"{medal} Season {season} Rookie of the Season\n" + badges
+            else:
+                badges = f"{medal} Season {season} {mode} {rank} Place\n" + badges
         else:
-            badges = f"{medal} Season {season} {mode} {rank} Place\n" + badges
-    return badges[:-1]
+            import html
+            medal = html.unescape(medal)
+            badges = medal + badges
+    return badges[:-1] if as_html else badges
 
 
 

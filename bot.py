@@ -1065,14 +1065,15 @@ async def reload_modules(message):
 async def on_member_join(member):
     if member.guild.id == conf.main_server:
         db = util.connect()
+        verified = member.guild.get_role(conf.verified_role)
         user_id = member.mention.replace("@!", "").replace(">", "").replace("<", "").replace("@", "")
         in_db = db.players.find_one({"discord_id": user_id})
         if in_db:
             new_nick = in_db["name"]
-            # ideally I'd like to append badges to names
-            # I prefer that over adding igns
+            badges = readable_badges(in_db, False, False)
+            new_nick += badges
             await member.edit(nick=new_nick)
-            await member.add_roles(conf.verified_role)
+            await member.add_roles(verified)
         else:
             print(f"Couldn't identify user {member.id}")
             channel = client.get_channel(conf.main_channel)
@@ -1082,13 +1083,26 @@ async def on_member_join(member):
 @util.permission_locked
 async def rename_all(message):
     db = util.connect()
-    for member in message.guild.members:
-        if member.id == message.guild.owner.id:
-            continue
+    guild = message.guild
+    verified = guild.get_role(conf.verified_role)
+    members = []
+    async for member in message.guild.fetch_members(limit=None):
+        members.append(member)
+
+    for member in members:
         in_db = db.players.find_one({"discord_id": member.mention.replace("@!", "").replace(">", "").replace("<", "").replace("@", "")})
         if in_db:
-            print(f"Renaming {in_db['name']}")
-            await member.edit(nick=in_db["name"])
+            new_nick = in_db["name"]
+            print(f"Renaming {in_db['name']} to {new_nick}")
+            badges = readable_badges(in_db, False, False)
+            new_nick += badges
+            try:
+                await member.edit(nick=new_nick)
+                await member.add_roles(verified)
+            except discord.Forbidden:
+                print(f"No permission to edit {member.name}")
+            except discord.HTTPException as e:
+                print(f"HTTP error for {member.name}: {e}")
         else:
             print(f"Couldn't identify {member.name}")
     return
