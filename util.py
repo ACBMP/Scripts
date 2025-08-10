@@ -2,6 +2,7 @@ import botconfig as conf
 import datetime
 import discord
 import random
+import traceback
 
 GAME_MODES = ["e", "mh", "aa", "do", "dm", "asb"]
 ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm", "asb"]
@@ -151,7 +152,7 @@ def command_dec(func):
         try:
             await func(*arg)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             await arg[0].channel.send(str(e) + " " + find_insult())
     return exceptionhandler
 
