@@ -188,18 +188,20 @@ async def team_comps(message, ident):
         # check if groups specified
         delim = " & "
         groups = []
+        only_players = []
+
         for p in players:
             if delim in p:
-                # if so delete the group element
-                players.remove(p)
                 # figure out the grouped players
                 group_players = p.split(delim)
                 # add to groups list
                 groups.append(group_players)
                 # and add the playres back into the overall list
-                for gp in group_players:
-                    players.append(gp)
-        matchup = team_finder(players, mode, r_factor, groups=groups)
+                only_players += group_players
+            else:
+                only_players.append(p)
+
+        matchup = team_finder(only_players, mode, r_factor, groups=groups)
         await sync_channels(matchup, message)
     # otherwise we try to grab the mode's queue and use that
     else:
