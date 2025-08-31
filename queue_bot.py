@@ -146,9 +146,9 @@ async def update_presence():
 
 # team comp finder
 # teams.py is the really relevant stuff
-def team_finder(players, mode, random, groups=[]):
+def team_finder(players, mode, random, groups=[], exclusives=[]):
     # this outputs all the players in one array so we need to split it
-    ts = teams.find_teams(players, mode=mode, random=random, groups=groups)
+    ts = teams.find_teams(players, mode=mode, random=random, groups=groups, exclusives=exclusives)
     t1, t2 = [], []
     for i in [0, 1]:
         for player in ts[i]:
@@ -186,22 +186,31 @@ async def team_comps(message, ident):
     # if players were specified we can just run the team_finder func and send that
     if len(players) > 1:
         # check if groups specified
-        delim = " & "
+        delim_groups = " & "
+        delim_exclusives = " | "
         groups = []
+        exclusives = []
         only_players = []
 
         for p in players:
-            if delim in p:
+            if delim_groups in p:
                 # figure out the grouped players
-                group_players = p.split(delim)
+                group_players = p.split(delim_groups)
                 # add to groups list
                 groups.append(group_players)
                 # and add the playres back into the overall list
                 only_players += group_players
+            elif delim_exclusives in p:
+                # figure out the exclusive players
+                exclusive_players = p.split(delim_exclusives)
+                # add to groups list
+                exclusives.append(exclusive_players)
+                # and add the playres back into the overall list
+                only_players += exclusive_players
             else:
                 only_players.append(p)
 
-        matchup = team_finder(only_players, mode, r_factor, groups=groups)
+        matchup = team_finder(only_players, mode, r_factor, groups=groups, exclusives=exclusives)
         await sync_channels(matchup, message)
     # otherwise we try to grab the mode's queue and use that
     else:
