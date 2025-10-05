@@ -30,6 +30,21 @@ def worst_game(mode):
     return None
 
 
+def stat_avg(mode, stat):
+    db = connect()
+    matches = db.matches.find({"mode": mode})
+    stats = 0
+    games = 0
+    for m in matches:
+        for i in [1, 2]:
+            for p in m[f"team{i}"]:
+                stats += p[stat]
+                games += 1
+
+    print(f"Average {stat}(s): {stats / games}")
+    return
+
+
 def best_avg(mode, stat):
     db = connect()
     matches = db.matches.find({"mode": mode})
@@ -501,7 +516,8 @@ def map_kd(mode="Domination"):
     return
 
 if __name__ == "__main__":
-    map_kd()
+    stat_avg("Escort", "kills")
+#     map_kd()
     # lobby_mmr("Manhunt")
     # lobby_score("Manhunt")
     # lobby_number_games("Escort", 200)
