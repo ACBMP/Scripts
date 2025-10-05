@@ -12,7 +12,7 @@ class Player(BaseModel):
     db_data: dict = None
 
     def get_db_data(self, db_conn = None) -> dict:
-        if not db_conn:
+        if db_conn is None:
             return self.db_data
         if not self.db_data:
             self.db_data = identify_player(db_conn, self.player)
