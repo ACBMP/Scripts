@@ -219,7 +219,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None,
         result.append(r)
 
     # remove n from earlier and join
-    out = ", ".join([p[1:] for p in result]).replace("$O", "$0")
+    out = ", ".join(result).replace("$O", "$0")
     return re.sub("[\[].*?[\]]", "", out)
 
 
@@ -255,9 +255,9 @@ def correct_score(match: str, correction: int, team: int):
 
 if __name__ == "__main__":
     # OCR("./manhunt1.png", "acb", 6)
-    # OCR("./escort1.png", "acb", 4)
-    print(OCR("./domi.png", "ac4", 8, post_game=None))
-    print(OCR("./domiC.png", "ac4", 8, post_game=None))
+    print(OCR("./escort.png", "acb", 4))
+    # print(OCR("./domi.png", "ac4", 8, post_game=None))
+    # print(OCR("./domiC.png", "ac4", 8, post_game=None))
     # OCR("./domi3.png", "ac4", 8, post_game=True)
     # OCR("./aa1.png", "acr", 8)
     # OCR("./domi2.jpg", "ac4", 8, post_game=False)
