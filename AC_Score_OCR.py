@@ -132,7 +132,7 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None,
                 top = [660 * scale_y, 890 * scale_y]
                 right = 486 * scale
                 bottom = [267 * scale_y, 39 * scale_y]
-                binarize = [140, 90]
+                binarize = [140, 120]
                 columns = None
             else:
                 # # get rid of abstergo nonsense
@@ -206,21 +206,27 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None,
             _, img_arr[i] = cv2.threshold(img_arr[i], binarize[0], 255, cv2.THRESH_BINARY_INV)
         else:
             _, img_arr[i] = cv2.threshold(img_arr[i], binarize[1], 255, cv2.THRESH_BINARY)
-        # cv2.imshow("", img_arr[i])
-        # cv2.waitKey(0)
 
     whitelist = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-_ []"
     result = []
     for i in img_arr:
+        # cv2.imshow("", i)
+        # cv2.waitKey(0)
         r = pytesseract.image_to_string(i, lang="eng", config=f"--psm 7") # -c tessedit_char_whitelist={whitelist} if we wanna use the whitelist again
         r = r.replace("'", "").replace(" ", "$").replace("\\n", "").replace("\n", "")
         for m in [*common]:
             r = r.replace(m, common[m])
+        # clan tags
+        if "[" in r and "]" in r:
+            r = re.sub("[\[].*?[\]]", "", r)
+            r = r.replace(" $", " ")
+            if r.startswith("$"):
+                r = r[1:]
         result.append(r)
 
     # remove n from earlier and join
     out = ", ".join(result).replace("$O", "$0")
-    return re.sub("[\[].*?[\]]", "", out)
+    return out
 
 
 def correct_score(match: str, correction: int, team: int):
@@ -255,8 +261,8 @@ def correct_score(match: str, correction: int, team: int):
 
 if __name__ == "__main__":
     # OCR("./manhunt1.png", "acb", 6)
-    print(OCR("./escort.png", "acb", 4))
-    # print(OCR("./domi.png", "ac4", 8, post_game=None))
+    # print(OCR("./escort.png", "acb", 4))
+    print(OCR("./edi.jpg", "ac4", 8, post_game=None))
     # print(OCR("./domiC.png", "ac4", 8, post_game=None))
     # OCR("./domi3.png", "ac4", 8, post_game=True)
     # OCR("./aa1.png", "acr", 8)
