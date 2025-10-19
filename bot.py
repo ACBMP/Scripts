@@ -20,6 +20,7 @@ import elostats
 import numpy as np
 from scipy.special import binom
 from add_badges import readable_badges
+import telegram_bot
 
 # Members intent
 intents = discord.Intents.default()
@@ -1111,6 +1112,9 @@ async def rename_all(message):
 async def on_message(message):
     if message.author == client.user:
         return
+
+    if (message.guild.id in conf.e_servers or message.channel.id in conf.e_channels) and message.author.id != 148265423668772864:
+        await telegram_bot.message_player("Dell", f"{message.author.nick} ({message.author.name}): {message.content}")
 
     if message.content.lower().startswith("an "):
 #        await sync_channels(message.content, message, bot_response=False)

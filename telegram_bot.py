@@ -1,4 +1,4 @@
-from telegram.ext import Updater
+from telegram.ext import Application
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.ext import CommandHandler
@@ -17,9 +17,12 @@ def notify_player(player, mode):
     :param player: player to notify
     :param mode: mode to play
     """
+    message_player(player, f"{mode} time!")
+    return
+
+async def message_player(player, message):
     bot = telegram.Bot(token=telegram_token)
-    bot.sendMessage(chat_id=identify_player(db, player)["telegram_id"],
-            text=f"{mode} time!")
+    await bot.sendMessage(chat_id=identify_player(db, player)["telegram_id"], text=message)
     return
 
 
@@ -59,18 +62,16 @@ def main():
                     text=f"Could not tie to AN account {player['name']}, as it already has a Telegram account tied to it. Please contact an administrator for help.")
         return
 
-    updater = Updater(telegram_token, use_context=True)
-    dispatcher = updater.dispatcher
+    application = Application.builder().token(telegram_token).build()
     
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("username", username))
-    dispatcher.add_handler(MessageHandler(filters.TEXT, unknown))
-    dispatcher.add_handler(MessageHandler(Filters.command, unknown))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("username", username))
+    application.add_handler(MessageHandler(filters.TEXT, unknown))
+    application.add_handler(MessageHandler(filters.COMMAND, unknown))
     
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
     return
 
