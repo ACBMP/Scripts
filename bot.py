@@ -245,6 +245,7 @@ async def lookup_user(message):
         player = player_db["name"]
     else:
         player_db = util.identify_player(db, player)
+        player = player_db["name"]
     if player_db is None:
         embedVar = discord.Embed(title="Congratulations, you're an Xbox player!", url="https://assassins.network/players", color=0xff00ff)
         embedVar.add_field(name=util.find_insult(), value="Did not recognize username.\nPlease check that it's the same as on https://assassins.network/players.")
@@ -319,7 +320,7 @@ async def lookup_ladder(message):
     embedVar = discord.Embed(title=util.check_mode(mode).title() + " Leaderboard",
             url=f"https://assassins.network/{mode_link}", color=0xff00ff)
     embedVar.set_image(url=f"attachment://{fname}")
-    await sync_channels(message=message, embed=embedVar, attachments=[table])
+    await sync_channels(message=message, embed=embedVar, attachments=[table], file=table)
 
 
 @util.command_dec
@@ -815,7 +816,7 @@ async def user_edit(message):
     return
 
 
-async def sync_channels(content=None, message=None, channel_id=None, server_id=None, nick=None, attachments=None, embed=None, bot_response=True):
+async def sync_channels(content=None, message=None, channel_id=None, server_id=None, nick=None, attachments=None, embed=None, bot_response=True, file=None):
 
     if message:
         channel_id = message.channel.id
@@ -840,7 +841,7 @@ async def sync_channels(content=None, message=None, channel_id=None, server_id=N
                 if x != channel_id or bot_response:
                     channel = client.get_channel(x)
                     if embed:
-                        await channel.send(embed=embed)
+                        await channel.send(embed=embed, file=file)
                     else:
                         # filter the roles
                         content = replace_roles(content, server_id, channel.guild.id)
@@ -866,7 +867,7 @@ async def sync_channels(content=None, message=None, channel_id=None, server_id=N
     if bot_response and not sent:
         channel = client.get_channel(channel_id)
         if embed:
-            await channel.send(embed=embed)
+            await channel.send(embed=embed, file=file)
             return
         await channel.send(content)
     return

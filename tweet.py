@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import six
 import tweepy
 import random
+from add_badges import readable_badges
+from matplotlib.font_manager import FontProperties
+
+EMOJI_FONT = FontProperties(fname="/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf")
 
 def generate_table(table, df, rowLabels=None):
     """
@@ -36,9 +40,11 @@ def generate_table(table, df, rowLabels=None):
             cell.set_edgecolor(edge_color)
             if k[0] == 0 or k[1] < header_columns:
                 cell.set_text_props(weight='bold', color='#ececec')
+                #cell.set_text_props(weight='bold', color='#ececec', fontproperties=EMOJI_FONT)
                 cell.set_facecolor(header_color)
             else:
                 cell.set_text_props(color='#c6c6c6')
+                #cell.set_text_props(color='#c6c6c6', fontproperties=EMOJI_FONT)
                 cell.set_facecolor(row_colors[k[0]%len(row_colors) ])
         return ax
     
@@ -67,7 +73,9 @@ def rank_frame(mode, table):
     for p in p_sorted:
         ranks.append(p[f"{mode}rank"])
         changes.append(p[f"{mode}rankchange"])
-        players.append(p[f"name"])
+        #badges = readable_badges(p, discord=False, as_html=False)
+        #players.append(f'{p[f"name"]} {badges}')
+        players.append(p["name"])
         points.append(int(round(p[f"{mode}mmr"])))
 
     df['Rank'] = ranks
