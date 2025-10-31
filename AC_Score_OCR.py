@@ -186,6 +186,9 @@ def OCR(screenshot: str, game: str, players: int, post_game: bool | None = None,
                 "$Xanthex": "Xanthex",
                 "chrlstlanC": "Chr1st1anC",
                 "Arun0G": "ArunOG",
+                "piesiol": "piesio1",
+                "$ll": "$11",
+                "$/": "$7",
                 }
     else:
         return OCR(screenshot, "acb", players)
