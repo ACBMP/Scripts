@@ -227,7 +227,7 @@ def parse_ffa(db, matches, name, min_games):
                 while j >= 0 and m["players"][j]["score"] == m["players"][position-1]["score"]:
                     opponents[players[i]]["finishes"] -= 1
                     j -= 1
-            
+
             elif position < i+1:
                 opponents[players[i]]["wins"] += 1
 
@@ -388,9 +388,9 @@ def map_synergy(name, mode="Manhunt", min_games=25, date_range=None):
     games, _ = find_games_w_map(db, name, mode, date_range=date_range)
     results = map_parse(games, name, min_games)
 
-    winrate_sort = dict(sorted(results.items(), 
+    winrate_sort = dict(sorted(results.items(),
         key=lambda item: (item[1]["wins"]+item[1]["draws"]/2)/item[1]["games"], reverse=True))
-    statline_sort = dict(sorted(results.items(), key=lambda item: 
+    statline_sort = dict(sorted(results.items(), key=lambda item:
         (item[1]["score"]/item[1]["games"]) if mode in ['Manhunt', 'Escort'] else (item[1]['kills']/item[1]['deaths']),
          reverse=True))
     winrate_str = ""
@@ -425,7 +425,7 @@ def map_ffa_synergy(name, mode="Deathmatch", min_games=25, date_range=None):
     games, _ = find_games_w_map(db, name, mode, date_range=date_range)
     results = map_parse(games, name, min_games, ffa=True)
 
-    winrate_sort = dict(sorted(results.items(), 
+    winrate_sort = dict(sorted(results.items(),
         key=lambda item: item[1]["finishes"]/item[1]["games"]))
     statline_sort = dict(sorted(results.items(), key=lambda item: item[1]["score"]/item[1]["games"], reverse=True))
     winrate_str = ""
@@ -457,13 +457,13 @@ def map_parse(matches, name, min_games, ffa=False):
                 "finishes": 0,
                 "podiums": 0
             }
-        
+
         res = {
             "wins": 0,
             "draws": 0,
             "games": 1
         }
-        
+
         if ffa:
             for i in range(len(m['players'])):
                 if m['players'][i]['player'] == name:
@@ -510,15 +510,18 @@ if __name__ == "__main__":
     mode = "Escort"
     #mode = "Manhunt"
     #for m in ["Palenque", "Havana", "Tampa Bay", "Kingston", "Virginian Plantation"]:
-    for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome"]:
+    for m in ["Castel Gandolfo", "Siena", "Venice", "Forli", "San Donato", "Rome", "Florence"]:
 #    for m in ["Castel Gandolfo"]:
         print(m)
         s = []
         # print("Player: Winrate (Games Won / Tied / Played)")
         #for x in ["Shmush", "Lunaire.-", "Edi", "Xanthex", "Lars", "Christian", "Cota", "Gummy", "Katsvya", "Arun", "Skorpius"]:
-        for x in ["DevelSpirit", "Sugarfree", "Tha Fazz", "Ted95On", "Dellpit", "Jelko"]:
+        for x in ["Try", "Sugar", "Fazz", "Dell", "Jelko"]:
         # for x in ["Dellpit", "Tha Fazz"]:
-            s.append(own_winrate(x, mode, game_maps=m))
+            try:
+                s.append(own_winrate(x, mode, game_maps=m))
+            except:
+                pass
             # print("Finding synergy for:", x)
             # synergies = find_synergy(x, mode, min_games=5, game_maps=None, date_range=("2020-01-01", "2024-01-01"), elo=True)
             # synergies = find_synergy(x, mode, min_games=15, game_maps=None, date_range=None, elo=True)

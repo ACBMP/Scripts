@@ -1109,6 +1109,23 @@ async def rename_all(message):
             print(f"Couldn't identify {member.name}")
     return
 
+
+@util.command_dec
+async def send_review(message):
+    db = util.connect()
+    from year_review import create_review
+    content = message.content
+    content = content[7:]
+    content = content.split(" ")
+    player = content[0]
+    if player == "":
+        player = db.players.find_one({"discord_id" : str(message.author.id)})
+    else:
+        player = util.identify_player(db, player)
+    embedVar = create_review(player["name"])
+    await sync_channels(embed=embedVar, message=message)
+
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -1204,6 +1221,9 @@ async def on_message(message):
 
         elif message.content.lower() == "rename all":
             await rename_all(message)
+        
+        elif message.content.lower().startswith("recap"):
+            await send_review(message)
 
     elif message.content == "Y":
         await sync_channels(f"{message.author.name} has tacoed out.", message)
