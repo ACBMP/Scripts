@@ -39,6 +39,7 @@ def sanity_check(data, max_err = 0):
             mode = players[0]
             map_name = None
             host_player = None
+            map_found = False
             if "$" in mode:
                 temp = mode.split("$")
                 mode = temp[0]
@@ -48,6 +49,7 @@ def sanity_check(data, max_err = 0):
                 else:
                     try:
                         map_name = identify_map(temp[1])
+                        map_found = True
                     except:
                         try:
                             host_player = identify_player(db, temp[1])
@@ -60,7 +62,7 @@ def sanity_check(data, max_err = 0):
                 raise SanityError(f"Unknown mode {mode} detected in:\n{game}\n")
                 errs += 1
             # sanity check map name
-            if map_name:
+            if map_name and not map_found:
                 try:
                     identify_map(map_name)
                 except:
