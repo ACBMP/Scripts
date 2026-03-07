@@ -19,6 +19,31 @@ def change_usernames():
     return
 
 
+def fix_usernames():
+    db = connect()
+    matches = db.matches.find()
+    replaces = {"Wihtedeka": "Ted"}
+    c = 0
+    for m in matches:
+        if "team1" in m:
+            for i in [1, 2]:
+                for j in range(len(m[f"team{i}"])):
+                    p = m[f"team{i}"][j]["player"]
+                    if p in replaces.keys():
+                        m[f"team{i}"][j]["player"] = replaces[p]
+                        c += 1
+            db.matches.update_one({"_id": m["_id"]}, {"$set": {"team1": m["team1"], "team2": m["team2"]}})
+        else:
+            for i in range(len(m["players"])):
+                p = m["players"][i]["player"]
+                if p in replaces.keys():
+                    m["players"][i]["player"] = replaces[p]
+                    c += 1
+            db.matches.update_one({"_id": m["_id"]}, {"$set": {"players": m["players"]}})
+    print("Done")
+    print(c)
+    return
+
 def new_maps():
     import maps
     db = connect()
@@ -166,10 +191,29 @@ def merge_user_average_pug(username):
 #            except:
 #                pass
 
+def introduce_api_keys():
+    import secrets
+    db = connect()
+    players = db.players.find({})
+    
+    for p in players:
+        key = secrets.token_hex(32)  # 64‑char key
+        db.players.update_one(
+            {"_id": p["_id"]},
+            {"$set": {
+                "api_key": key,
+                "privilege": 10,
+                "revoked": False
+            }}
+        )
+
+
 if __name__ == "__main__":
+    #introduce_api_keys()
     #merge_user_average_pug("sKIDcROW2018")
     #remove_inactive()
-    inactive_users()
+    #inactive_users()
     #change_name()
     #new_maps()
     #change_usernames()
+    fix_usernames()

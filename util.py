@@ -31,9 +31,13 @@ def identify_player(db, name):
     :param name: name to search for
     :return: player mongodb object
     """
-    import re
-    rename = re.compile(name, re.IGNORECASE)
-    player = db.players.find_one({"name" : rename})
+    player = db.players.find_one({"name": name})
+    if player is None:
+        player = db.players.find_one({"ign": name})
+    if player is None:
+        import re
+        rename = re.compile(name, re.IGNORECASE)
+        player = db.players.find_one({"name" : rename})
     if player is None:
         player = db.players.find_one({"ign": rename})
     if player is None:
