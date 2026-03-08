@@ -91,7 +91,7 @@ class QueueCog(commands.Cog):
                 #         pass
             else:
                 await interaction.followup.send(
-                    f"{player} added to {modes_dict[mode]} "
+                    f"{player} added to {modes_dict[mode]} for {play_for} hours"
                     f"{len(queues[mode])}/{queue_lengths[mode]}"
                 )
 
@@ -110,7 +110,7 @@ class QueueCog(commands.Cog):
                 replace_existing=True,
             )
             await interaction.followup.send(
-                f"Will queue in {start_in} hours."
+                f"Will queue in {start_in} hours for {play_for} hours."
             )
         else:
             await add_to_queue()
