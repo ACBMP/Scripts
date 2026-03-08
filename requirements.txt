@@ -16,3 +16,5 @@ six
 tweepy
 opencv-python-headless
 pytesseract
+aiohttp
+beautifulsoup4
