@@ -5,9 +5,12 @@ import botconfig as conf
 from util import util
 from motor.motor_asyncio import AsyncIOMotorClient
 
+def connect():
+    client = AsyncIOMotorClient("mongodb://localhost:27017")
+    return client.public
 
 async def setup_db(bot):
-    bot.db = util.connect()["queuebot"]
+    bot.db = connect()["queuebot"]
 
 
 class ANBot(commands.Bot):
