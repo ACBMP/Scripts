@@ -2,6 +2,13 @@ import discord
 from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import botconfig as conf
+from util import util
+from motor.motor_asyncio import AsyncIOMotorClient
+
+
+async def setup_db(bot):
+    bot.db = util.connect()["queuebot"]
+
 
 class ANBot(commands.Bot):
     def __init__(self):
@@ -17,6 +24,8 @@ class ANBot(commands.Bot):
     async def setup_hook(self):
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+
+        await setup_db(bot)
 
         await self.load_extension("cogs.queue")
         # await self.load_extension("cogs.teams")

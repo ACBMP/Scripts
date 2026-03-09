@@ -6,6 +6,8 @@ from functools import partial
 from util import util
 # import telegram_bot
 
+
+
 queues = {"e": [], "mh": [], "do": [], "asb": []}
 queue_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
 modes_dict = {
@@ -38,6 +40,23 @@ def get_job_eta(job):
 class QueueCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    async def get_players(self, mode):
+        doc = await self.bot.db.queues.find_one({"mode": mode})
+        return doc["players"]
+
+    async def add_player(self, mode, player):
+        await self.bot.db.queues.update_one(
+            {"mode": mode},
+            {"$addToSet": {"players": player}}
+        )
+
+    async def remove_player(self, mode, player):
+        await self.bot.db.queues.update_one(
+            {"mode": mode},
+            {"$pull": {"players": player}}
+        )
+
 
     async def update_presence(self):
         text = []
@@ -73,9 +92,7 @@ class QueueCog(commands.Cog):
         scheduler = self.bot.scheduler
 
         async def add_to_queue():
-            if player not in queues[mode]:
-                queues[mode].append(player)
-
+            await self.add_player(mode, player)
             await self.update_presence()
 
             if len(queues[mode]) == queue_lengths[mode]:
@@ -91,14 +108,13 @@ class QueueCog(commands.Cog):
                 #         pass
             else:
                 await interaction.followup.send(
-                    f"{player} added to {modes_dict[mode]} for {play_for} hours"
+                    f"{player} added to {modes_dict[mode]} for {play_for} hours: "
                     f"{len(queues[mode])}/{queue_lengths[mode]}"
                 )
 
         async def remove_from_queue():
-            if player in queues[mode]:
-                queues[mode].remove(player)
-                await self.update_presence()
+            await self.remove_player(mode, player)
+            await self.update_presence()
 
         # schedule start
         if start_in > 0:
@@ -134,7 +150,8 @@ class QueueCog(commands.Cog):
         current = {k: "" for k in modes}
         if len(jobs) > 0:
             for m in modes:
-                for p in queues[m]:
+                players = await self.get_players(m)
+                for p in players:
                     if current[m]:
                         current[m] += ", "
                     current[m] += f"{p} (for {get_job_eta(self.bot.scheduler.get_job(f'{p}_{m}_remove'))})"
@@ -150,7 +167,7 @@ class QueueCog(commands.Cog):
             for m in modes:
                 if queues[m]:
                     current[m] = ", ".join(queues[m])
-        response = "\n".join([f"{modes_dict[m]} {len(queues[m])}/{queue_lengths[m]}: {current[m]}" for m in modes])
+        response = "\n".join([f"{modes_dict[m]} {len(await self.get_players(m)))}/{queue_lengths[m]}: {current[m]}" for m in modes])
 
         await interaction.response.send_message(
             response
@@ -160,24 +177,27 @@ class QueueCog(commands.Cog):
     async def remove(self, interaction: discord.Interaction):
         player = interaction.user.display_name
 
-        removed = False
         for mode in queues:
-            if player in queues[mode]:
-                queues[mode].remove(player)
-                removed = True
+            await self.remove_player(mode, player)
 
-                try:
-                    self.bot.scheduler.remove_job(f"{player}_{mode}_remove")
-                except:
-                    pass
+            try:
+                self.bot.scheduler.remove_job(f"{player}_{mode}_remove")
+            except:
+                pass
 
         await self.update_presence()
 
-        if removed:
-            await interaction.response.send_message("Removed from queue.")
-        else:
-            await interaction.response.send_message("You were not queued.")
+        await interaction.response.send_message("Removed from all queues.")
 
+
+async def ensure_queue_docs(db):
+    for mode in ["e", "mh", "do", "asb"]:
+        await db.queues.update_one(
+            {"mode": mode},
+            {"$setOnInsert": {"players": []}},
+            upsert=True
+        )
 
 async def setup(bot):
+    await ensure_queue_docs(util.connect())
     await bot.add_cog(QueueCog(bot))
