@@ -5,6 +5,11 @@ from datetime import datetime, timedelta, timezone
 from functools import partial
 from util import util
 # import telegram_bot
+from motor.motor_asyncio import AsyncIOMotorClient
+
+def connect():
+    client = AsyncIOMotorClient("mongodb://localhost:27017")
+    return client.public
 
 
 
@@ -199,5 +204,5 @@ async def ensure_queue_docs(db):
         )
 
 async def setup(bot):
-    await ensure_queue_docs(util.connect())
+    await ensure_queue_docs(connect())
     await bot.add_cog(QueueCog(bot))
