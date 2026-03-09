@@ -167,7 +167,7 @@ class QueueCog(commands.Cog):
             for m in modes:
                 if queues[m]:
                     current[m] = ", ".join(queues[m])
-        response = "\n".join([f"{modes_dict[m]} {len(await self.get_players(m)))}/{queue_lengths[m]}: {current[m]}" for m in modes])
+        response = "\n".join([f"{modes_dict[m]} {len(await self.get_players(m))}/{queue_lengths[m]}: {current[m]}" for m in modes])
 
         await interaction.response.send_message(
             response
