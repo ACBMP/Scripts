@@ -163,11 +163,11 @@ def permission_locked(func):
     async def permission_checker(*args):
         message = args[0]
         db = connect()
-        user = db.players.find_one({"discord_id": message.author.id})
-        if user["privilege"] <= 5:
-            await func(*args)
-        else:
+        user = db.players.find_one({"discord_id": str(message.author.id}))
+        if not user or user["privilege"] > 5:
             await message.channel.send("You do not have the required permissions! Please contact an admin.")
+        else:
+            await func(*args)
     return permission_checker
 
 
