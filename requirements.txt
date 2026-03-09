@@ -18,3 +18,4 @@ opencv-python-headless
 pytesseract
 aiohttp
 beautifulsoup4
+motor
