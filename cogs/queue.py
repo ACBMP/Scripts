@@ -62,19 +62,22 @@ class QueueCog(commands.Cog):
             {"$pull": {"players": player}}
         )
 
-
     async def update_presence(self):
         text = []
 
-        for mode, players in queues.items():
-            if players:
-                text.append(f"{mode.upper()}: {len(players)}/{queue_lengths[mode]}")
+        for mode in ["e", "mh", "do", "asb"]:
+            players = await self.get_players(mode)
+            count = len(players)
+
+            if count > 0:
+                text.append(f"{mode.upper()}: {count}/{queue_lengths[mode]}")
 
         presence = ", ".join(text) if text else "Wanted 6/9"
 
         await self.bot.change_presence(
             activity=discord.Game(name=f"{presence} | /queue")
         )
+
 
     @app_commands.command(name="play", description="Join a queue")
     @app_commands.describe(
@@ -100,8 +103,9 @@ class QueueCog(commands.Cog):
             await self.add_player(mode, player)
             await self.update_presence()
 
-            if len(queues[mode]) == queue_lengths[mode]:
-                teams = ", ".join(queues[mode])
+            players = await self.get_players(mode)
+            if len(players) == queue_lengths[mode]:
+                teams = ", ".join(players)
                 await interaction.followup.send(
                     f"{modes_dict[mode]} full! {teams}"
                 )
@@ -114,7 +118,7 @@ class QueueCog(commands.Cog):
             else:
                 await interaction.followup.send(
                     f"{player} added to {modes_dict[mode]} for {play_for} hours: "
-                    f"{len(queues[mode])}/{queue_lengths[mode]}"
+                    f"{len(players)}/{queue_lengths[mode]}"
                 )
 
         async def remove_from_queue():
@@ -170,8 +174,9 @@ class QueueCog(commands.Cog):
         else:
             futures = ""
             for m in modes:
-                if queues[m]:
-                    current[m] = ", ".join(queues[m])
+                players = await self.get_players(m)
+                if players:
+                    current[m] = ", ".join(players)
         response = "\n".join([f"{modes_dict[m]} {len(await self.get_players(m))}/{queue_lengths[m]}: {current[m]}" for m in modes])
 
         await interaction.response.send_message(
