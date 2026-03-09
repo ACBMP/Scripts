@@ -160,10 +160,11 @@ def permission_locked(func):
     """
     Locks a command behind the Assassins' Network role or admin accounts.
     """
-    from discord.utils import get
     async def permission_checker(*args):
         message = args[0]
-        if get(message.author.roles, name="Assassins' Network") or message.author.id in conf.admin:
+        db = connect()
+        user = db.players.find_one({"discord_id": message.author.id})
+        if user["privilege"] <= 5:
             await func(*args)
         else:
             await message.channel.send("You do not have the required permissions! Please contact an admin.")
