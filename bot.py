@@ -795,6 +795,9 @@ async def user_edit(message):
     if key not in all_keys:
         await sync_channels(f"Improper key specified! Possible keys are: {', '.join(all_keys)}.", message)
         return
+    if key == "privilege":
+        await sync_channels("No.")
+        return
     # kinda iffy to do this but there's a reason why it's permission locked
     value = eval(info[2])
     # update names in case that's what's updated
