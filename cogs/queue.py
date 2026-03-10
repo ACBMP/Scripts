@@ -90,6 +90,7 @@ class QueueCog(commands.Cog):
 
         mode = util.check_mode(mode, server=interaction.guild_id, short=True)
         player = interaction.user.display_name
+        await self.remove_player(mode, player)
 
         scheduler = self.bot.scheduler
 
@@ -121,7 +122,6 @@ class QueueCog(commands.Cog):
 
         # schedule start
         if start_in > 0:
-            await self.remove_player(mode, player)
             scheduler.add_job(
                 add_to_queue,
                 "date",
