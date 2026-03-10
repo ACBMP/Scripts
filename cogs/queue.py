@@ -121,6 +121,7 @@ class QueueCog(commands.Cog):
 
         # schedule start
         if start_in > 0:
+            await self.remove_player(mode, player)
             scheduler.add_job(
                 add_to_queue,
                 "date",
