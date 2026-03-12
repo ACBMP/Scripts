@@ -11,9 +11,9 @@ import os
 import signal
 import sys
 import re
+from motor.motor_asyncio import AsyncIOMotorClient
 
-
-db = util.connect()
+db = AsyncIOMotorClient("mongodb://localhost:27017").public["queuebot"]
 
 scheduler = AsyncIOScheduler()
 
@@ -97,7 +97,7 @@ async def sync_channels(content=None, message=None, channel_id=None, server_id=N
             return
         await channel.send(content)
     return
- 
+
 
 queues = {"e": [], "mh": [], "do": [], "asb": []}
 queues_users = {"e": [], "mh": [], "do": [], "asb": []}
@@ -127,13 +127,31 @@ queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
 #    queues_users["asb"] = old_queues[7] if old_queues[7] != " " else []
 #    f.close()
 
+async def get_players(mode) -> list:
+    players = await db.queues.find_one({"mode": mode})
+    if players is None:
+        return []
+    return players
+
+async def add_player(mode, player):
+    await db.queues.update_one(
+        {"mode": mode},
+        {"$addToSet": {"players": player}}
+    )
+
+async def remove_player(mode, player):
+    await db.queues.update_one(
+        {"mode": mode},
+        {"$pull": {"players": player}}
+    )
+
 # change bot presence function
 # it just appends queues if there's someone in one
 # otherwise it shows Wanted 6/9
 async def update_presence():
     presence = ""
     for mode in util.QUEUEABLE_MODES:
-        if len(queues[mode]):
+        if len(await get_players(mode)):
             if presence:
                 presence += ", "
             presence += f"{mode.upper()}: {len(queues[mode])}/{queues_lengths[mode]}"
@@ -215,7 +233,7 @@ async def team_comps(message, ident):
     # otherwise we try to grab the mode's queue and use that
     else:
         try:
-            matchup = team_finder(queues[mode], mode, r_factor)
+            matchup = team_finder(await get_players(mode), mode, r_factor)
             await sync_channels(matchup, message)
         except:
             await sync_channels("That didn't work, idiot. " + util.find_insult(), message)
@@ -245,9 +263,8 @@ async def find_lobbies(message):
 # super straightforward
 async def queue_rm(mode, user, player, channel):
     try:
-        queues[mode].remove(player)
-        queues_users[mode].remove(user.mention)
-        await sync_channels(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}", channel_id=channel.id, server_id=channel.guild.id)
+        await remove_player(mode, player)
+        await sync_channels(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(await get_players(mode))}/{queues_lengths[mode]}", channel_id=channel.id, server_id=channel.guild.id)
         await update_presence()
     except Exception as e:
         print(e)
@@ -303,17 +320,17 @@ async def play_command(msg, user, channel, gid):
     # if mode is empty use guild ID to auto determine mode
     else:
         mode = util.check_mode(0, gid, short=True, channel=channel.id)
-    
+
     # now that the rest of the message has been parsed only the player name should be left
     player = msg
-    
+
     # remove leading and trailing spaces in player names
     if player:
         if player[-1] == " ":
             player = player[:-1]
         elif player[0] == " ":
             player = player[1:]
-    
+
     # this is where we try to find the player according to their Discord ID if no player is specified
     # otherwise we try to match the given player to an AN user
     db = util.connect()
@@ -332,7 +349,7 @@ async def play_command(msg, user, channel, gid):
             return
 
     # remove from queue before re-adding
-    if player in queues[mode]:
+    if player in await get_players(mode):
         await queue_rm(mode, user, player, channel)
     for i in scheduler.get_jobs():
         if player + f"_{mode}_start" == i.id:
@@ -344,19 +361,20 @@ async def play_command(msg, user, channel, gid):
 
     # the part where people are added to the queue
     async def queue():
-        queues[mode].append(player)
-        queues_users[mode].append(user.mention)
+        await add_player(mode, player)
         await update_presence()
-        if len(queues[mode]) == queues_lengths[mode]:
-            matchup = team_finder(queues[mode], mode=mode, random=0)
-            await sync_channels(", ".join(queues_users[mode]) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup, channel_id=channel.id, server_id=gid, nick=user.name)
-            for p in queues[mode]:
+        players = await get_players(mode)
+        if len(players) == queues_lengths[mode]:
+            matchup = team_finder(await get_players(mode), mode=mode, random=0)
+            users = ["@" + util.identify_player(util.connect(), p)["discord_id"] for p in players]
+            await sync_channels(", ".join(users) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup, channel_id=channel.id, server_id=gid, nick=user.name)
+            for p in get_players(mode):
                 try:
                     telegram_bot.notify_player(p, modes_dict[mode])
                 except:
                     pass
-        elif len(queues[mode]) < queues_lengths[mode]:
-            await sync_channels(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(queues[mode])}/{queues_lengths[mode]}", channel_id=channel.id, server_id=gid, nick=user.name)
+        elif len(players) < queues_lengths[mode]:
+            await sync_channels(f"Added {player} to the queue for {length} hour(s). {modes_dict[mode]}: {len(players)}/{queues_lengths[mode]}", channel_id=channel.id, server_id=gid, nick=user.name)
         else:
             await sync_channels(f"We're already enough for {modes_dict[mode]}.", channel_id=channel.id, server_id=gid, nick=user.name)
         return
@@ -364,7 +382,7 @@ async def play_command(msg, user, channel, gid):
     # if a start time was specified we add a job to the scheduler
     # the 1s timedelta is in case the script lags for a second
     if start > 0:
-        try: 
+        try:
             end_time_add = datetime.isoformat(datetime.now() + timedelta(seconds = 1, hours = start))
             scheduler.add_job(queue, 'interval', hours=start, end_date=end_time_add, id=player + f"_{mode}_start")
             await sync_channels(f"Will add {player} to the queue in {start} hour(s).", channel_id=channel.id, server_id=gid, nick=user.name)
@@ -381,7 +399,7 @@ async def play_command(msg, user, channel, gid):
 
 # queue removal command
 @util.command_dec
-async def queue_rm_command(msg, user, channel): 
+async def queue_rm_command(msg, user, channel):
     # remove trailing and leading spaces
     if msg:
         if msg[-1] == " ":
@@ -453,9 +471,10 @@ async def print_queue(message):
     msg = msg.replace("queue", "")
     mode = util.check_mode(msg, message.guild.id, short=True, channel=message.channel.id)
     jobs = scheduler.get_jobs()
+    players = await get_players(mode)
     if len(jobs) > 0:
         current = ""
-        for p in queues[mode]:
+        for p in players:
             if current:
                 current += ", "
             current += f"{p} (for {get_job_eta(scheduler.get_job(f'{p}_{mode}_remove'))})"
@@ -467,8 +486,8 @@ async def print_queue(message):
                 futures += "\n"
     else:
         futures = ""
-        current = ", ".join(queues[mode])
-    response = f"{modes_dict[mode]} {len(queues[mode])}/{queues_lengths[mode]}: {current}"
+        current = ", ".join(players)
+    response = f"{modes_dict[mode]} {len(players)}/{queues_lengths[mode]}: {current}"
     await sync_channels(response + futures, message)
     return
 
@@ -477,12 +496,12 @@ async def print_queue(message):
 async def on_message(message):
     if message.author == client.user:
         return
-    
+
     elif message.content.lower().startswith("an "):
         message.content = message.content[3:]
-    
+
         ident = "team comps"
-    
+
         if message.content.lower().startswith(ident):
             await team_comps(message, ident)
             return
@@ -490,9 +509,9 @@ async def on_message(message):
         if message.content.lower().startswith("lobbies"):
             await find_lobbies(message)
             return
-    
+
         play = "play"
-    
+
         # the queue
         if message.content.lower().startswith(play):
             channel = message.channel
@@ -504,9 +523,9 @@ async def on_message(message):
             msg = msg.replace("Play", "")
             await play_command(msg, user, channel, message.guild.id)
             return
-    
+
         ident = "queue remove"
-    
+
         if ident in message.content.lower():
             channel = message.channel
             user = message.author
@@ -519,16 +538,16 @@ async def on_message(message):
             except:
                 await sync_channels("Did not find you in a queue. " + util.find_insult(), message)
             return
-    
+
         # print current queue
         if message.content.lower().startswith("queue"):
             await print_queue(message)
             return
-    
+
         if message.content.lower().startswith("remake"):
             await check_remake(message)
             return
- 
+
 
 client.run(conf.discord_id)
 
