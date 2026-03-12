@@ -127,10 +127,10 @@ queues_lengths = {"e": 4, "mh": 6, "do": 8, "asb": 6}
 #    queues_users["asb"] = old_queues[7] if old_queues[7] != " " else []
 #    f.close()
 
-async def get_players(mode) -> list:
+async def get_players(mode):
     players = await db.queues.find_one({"mode": mode})
     if players is None:
-        return []
+        return {"_id": [], "players": []}
     return players
 
 async def add_player(mode, player):
@@ -151,7 +151,7 @@ async def remove_player(mode, player):
 async def update_presence():
     presence = ""
     for mode in util.QUEUEABLE_MODES:
-        if len(await get_players(mode)):
+        if (await get_players(mode))["players"]:
             if presence:
                 presence += ", "
             presence += f"{mode.upper()}: {len(queues[mode])}/{queues_lengths[mode]}"
@@ -233,7 +233,7 @@ async def team_comps(message, ident):
     # otherwise we try to grab the mode's queue and use that
     else:
         try:
-            matchup = team_finder(await get_players(mode), mode, r_factor)
+            matchup = team_finder((await get_players(mode))["players"], mode, r_factor)
             await sync_channels(matchup, message)
         except:
             await sync_channels("That didn't work, idiot. " + util.find_insult(), message)
@@ -264,7 +264,8 @@ async def find_lobbies(message):
 async def queue_rm(mode, user, player, channel):
     try:
         await remove_player(mode, player)
-        await sync_channels(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(await get_players(mode))}/{queues_lengths[mode]}", channel_id=channel.id, server_id=channel.guild.id)
+        players = (await get_players(mode))["players"]
+        await sync_channels(f"Removed {user.name} from the queue. {modes_dict[mode]}: {len(players)}/{queues_lengths[mode]}", channel_id=channel.id, server_id=channel.guild.id)
         await update_presence()
     except Exception as e:
         print(e)
@@ -349,7 +350,8 @@ async def play_command(msg, user, channel, gid):
             return
 
     # remove from queue before re-adding
-    if player in await get_players(mode):
+    players = await get_players(mode)
+    if player in players["players"]:
         await queue_rm(mode, user, player, channel)
     for i in scheduler.get_jobs():
         if player + f"_{mode}_start" == i.id:
@@ -364,11 +366,12 @@ async def play_command(msg, user, channel, gid):
         await add_player(mode, player)
         await update_presence()
         players = await get_players(mode)
+        players = players["players"]
         if len(players) == queues_lengths[mode]:
-            matchup = team_finder(await get_players(mode), mode=mode, random=0)
+            matchup = team_finder(players, mode=mode, random=0)
             users = ["@" + util.identify_player(util.connect(), p)["discord_id"] for p in players]
             await sync_channels(", ".join(users) + f": {modes_dict[mode]} {queues_lengths[mode]}/{queues_lengths[mode]}, get on!\nMy suggested teams: " + matchup, channel_id=channel.id, server_id=gid, nick=user.name)
-            for p in get_players(mode):
+            for p in players:
                 try:
                     telegram_bot.notify_player(p, modes_dict[mode])
                 except:
@@ -472,6 +475,7 @@ async def print_queue(message):
     mode = util.check_mode(msg, message.guild.id, short=True, channel=message.channel.id)
     jobs = scheduler.get_jobs()
     players = await get_players(mode)
+    players = players["players"]
     if len(jobs) > 0:
         current = ""
         for p in players:
