@@ -118,6 +118,7 @@ class QueueCog(commands.Cog):
 
         async def remove_from_queue():
             await self.remove_player(mode, player)
+            await interaction.guild.send(f"{player} removed from {mode} queue. {len(await self.get_players(mode))}/{queues_lengths[mode]}")
             await self.update_presence()
 
         # schedule start
@@ -158,7 +159,10 @@ class QueueCog(commands.Cog):
                 for p in players:
                     if current[m]:
                         current[m] += ", "
-                    current[m] += f"{p} (for {get_job_eta(self.bot.scheduler.get_job(f'{p}_{m}_remove'))})"
+                    try:
+                        current[m] += f"{p} (for {get_job_eta(self.bot.scheduler.get_job(f'{p}_{m}_remove'))})"
+                    except:
+                        current[m] += p
             futures = "\n"
             for m in modes:
                 for job in jobs:
