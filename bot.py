@@ -21,6 +21,8 @@ import numpy as np
 from scipy.special import binom
 from add_badges import readable_badges
 import telegram_bot
+import json
+from urllib.parse import urlparse
 
 # Members intent
 intents = discord.Intents.default()
@@ -421,6 +423,57 @@ def add_match(message):
     with open("matches.txt", mode) as f:
         f.write(msg + "\n")
         f.close()
+    return
+
+
+@util.command_dec
+@util.permission_locked
+async def submit_match(message) -> None:
+    """
+    Submit an extracted match JSON directly to the database.
+    """
+    if not message.attachments:
+        await sync_channels("Attachment missing", message)
+        return
+    db = util.connect()
+    host = None
+    content = str(message.content).replace("submit", "")
+    if content:
+        host = content[1:]
+    for attachment in message.attachments:
+        match_json = requests.get(attachment.url).content
+        match = json.loads(match_json)
+        match["new"] = True
+        match["inhist"] = False
+        match["host"] = host
+        fname = os.path.basename(urlparse(attachment.url).path)
+        fname = os.path.splitext(fname)[0]
+        match["date"], match["time"] = fname.split("T")
+        players = match["players"]
+        for i in range(len(players)):
+            players[i] = util.identify_player(db, players[i])["name"]
+        match["players"] = players
+        if match["mode"] in util.TEAM_MODES:
+            players.sort(key=lambda p: p["character"])
+            match["team1"] = players[:len(players) // 2]
+            match["team2"] = players[len(players) // 2:]
+            del match["players"]
+            teams = [match["team1"], match["team2"]]
+            scores = [sum([p["score"] for p in t]) for t in teams]
+            if scores[0] == scores[1]:
+                match["outcome"] = 0
+            elif scores[0] > scores[1]:
+                match["outcome"] = 1
+            else:
+                match["outcome"] = 2
+            if host:
+                if any(p["player"] == host for p in teams[0]):
+                    match["hostteam"] = 1
+                else:
+                    match["hostteam"] = 2
+        db.matches.insert_one(match)
+        await sync_channels(f"Submitted game from {fname}")
+    await sync_channels("Finished submitting games")
     return
 
 
@@ -1224,9 +1277,12 @@ async def on_message(message):
 
         elif message.content.lower() == "rename all":
             await rename_all(message)
-        
+
         elif message.content.lower().startswith("recap"):
             await send_review(message)
+
+        elif message.content.lower().startswith("submit"):
+            await submit_match(message)
 
     elif message.content == "Y":
         await sync_channels(f"{message.author.name} has tacoed out.", message)
