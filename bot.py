@@ -440,6 +440,7 @@ async def submit_match(message) -> None:
     content = str(message.content).replace("submit", "")
     if content:
         host = content[1:]
+    matches = {}
     for attachment in message.attachments:
         match_json = requests.get(attachment.url).content
         match = json.loads(match_json)
@@ -471,6 +472,9 @@ async def submit_match(message) -> None:
                     match["hostteam"] = 1
                 else:
                     match["hostteam"] = 2
+        matches[fname] = match
+    matches = dict(sorted(matches.items()))
+    for fname, match in matches.items():
         db.matches.insert_one(match)
         await sync_channels(f"Submitted game from {fname}", message)
     await sync_channels("Finished submitting games", message)
