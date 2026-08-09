@@ -472,8 +472,8 @@ async def submit_match(message) -> None:
                 else:
                     match["hostteam"] = 2
         db.matches.insert_one(match)
-        await sync_channels(f"Submitted game from {fname}")
-    await sync_channels("Finished submitting games")
+        await sync_channels(f"Submitted game from {fname}", message)
+    await sync_channels("Finished submitting games", message)
     return
 
 
