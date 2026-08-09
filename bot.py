@@ -454,7 +454,7 @@ async def submit_match(message) -> None:
         for i in range(len(players)):
             players[i]["player"] = util.identify_player(db, players[i]["player"])["name"]
         match["players"] = players
-        if match["mode"] in util.TEAM_MODES:
+        if util.check_mode(match["mode"], short=True) in util.TEAM_MODES:
             players.sort(key=lambda p: p["character"])
             match["team1"] = players[:len(players) // 2]
             match["team2"] = players[len(players) // 2:]
