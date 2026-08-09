@@ -451,7 +451,7 @@ async def submit_match(message) -> None:
         match["date"], match["time"] = fname.split("T")
         players = match["players"]
         for i in range(len(players)):
-            players[i]["name"] = util.identify_player(db, players[i]["name"])["name"]
+            players[i]["player"] = util.identify_player(db, players[i]["player"])["name"]
         match["players"] = players
         if match["mode"] in util.TEAM_MODES:
             players.sort(key=lambda p: p["character"])
