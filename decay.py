@@ -20,25 +20,36 @@ def update_sessions(players, mode):
 
 
 def spread_decay(mode, amount, excluded):
-    try:
-        len(excluded)
-    except:
+    if not excluded:
         return
-    if not len(excluded):
-        return
+
     db = connect()
-    players = list(db.players.find({"$and": [
-        {f"{mode}games.total": {"$gte": 10}},
-        {"_id": {"$nin": excluded}},
-        ]}))
-    amount /= len(players)
-    db.players.update_many({"$and": [
-        {f"{mode}games.total": {"$gte": 10}},
-        {"_id": {"$nin": excluded}},
-        ]},
-        {"$inc": {f"{mode}mmr": amount}})
-    return
-    
+    now = datetime.now()
+    recipients = []
+    excluded_ids = [p["_id"] for p in excluded]
+
+    for p in db.players.find({
+        f"{mode}games.total": {"$gte": 10},
+        "_id": {"$nin": excluded_ids}
+    }):
+        last_day = p[f"{mode}history"]["dates"][-1]
+        last_day = datetime.strptime(last_day, "%y-%m-%d")
+
+        if (now - last_day).days <= 7:
+            recipients.append(p)
+
+    if not recipients:
+        return
+
+    amount_per_player = amount / len(recipients)
+
+    db.players.update_many(
+        {"_id": {"$in": [p["_id"] for p in recipients]}},
+        {"$inc": {f"{mode}mmr": amount_per_player}}
+    )
+
+    return   
+
 
 def decay_all(mode):
     db = connect()
@@ -49,31 +60,28 @@ def decay_all(mode):
     # amount to be subtracted from decay
     decay_base = 10
     # mmr after which decay sets in and lowest value you can decay to
-    decay_threshold = 900
+    decay_threshold = 1000
     # how often the decay should be applied
     decay_interval = 7 # days
     # find all players with mmr > threshold and sessions since played > threshold
-    players = db.players.find({"$and": [
+    players = list(db.players.find({"$and": [
         {f"{mode}sessionssinceplayed": {"$gte": sessions_threshold}},
         {f"{mode}mmr": {"$gt": decay_threshold}},
 #        {f"{mode}games.total": {"$gte": 9}}
-        ]})
+        ]}))
     # global spread decay pool
     decay_pool = 0
     # go through the players and make sure their last day played is also > threshold
-
-    last_match = db.players.find_one({f'{mode}sessionssinceplayed': 0})[f'{mode}history']["dates"][-1]
-    last_match = datetime.strptime(last_match, "%y-%m-%d")
     now = datetime.now()
-    diff_to_last_match = now - last_match
 
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
         last_day = datetime.strptime(last_day, "%y-%m-%d")
-        diff_play = now - last_day
+        days_inactive = (now - last_day).days
+        last_decay = datetime.strptime(p[f"{mode}lastdecay"], "%Y-%m-%d").date()
+        days_since_decay = (now - last_decay).days
         
-        if diff_play.days >= days_threshold and diff_play.days >= decay_interval and \
-                diff_play.days > diff_to_last_match.days:
+        if days_inactive >= days_threshold and days_since_decay >= decay_interval:
             decay = decay_base * p[f'{mode}sessionssinceplayed'] / sessions_threshold
             decay = min(decay, p[f"{mode}mmr"] - decay_threshold)
             db.players.update_one({"_id": p["_id"]},
