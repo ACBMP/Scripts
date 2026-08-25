@@ -72,11 +72,11 @@ def decay_all(mode):
     # global spread decay pool
     decay_pool = 0
     # go through the players and make sure their last day played is also > threshold
-    now = datetime.now()
+    now = datetime.now().date()
 
     for p in players:
         last_day = p[f"{mode}history"]["dates"][-1]
-        last_day = datetime.strptime(last_day, "%y-%m-%d")
+        last_day = datetime.strptime(last_day, "%y-%m-%d").date()
         days_inactive = (now - last_day).days
         last_decay = datetime.strptime(p[f"{mode}lastdecay"], "%Y-%m-%d").date()
         days_since_decay = (now - last_decay).days
