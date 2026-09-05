@@ -453,9 +453,12 @@ async def submit_match(message) -> None:
         players = match["players"]
         for i in range(len(players)):
             players[i]["player"] = util.identify_player(db, players[i]["player"])["name"]
-        match["players"] = players
         if util.check_mode(match["mode"], short=True) in util.TEAM_MODES:
-            players.sort(key=lambda p: p["character"])
+            match["players"] = players
+            if "team" in players[0].keys():
+                players.sort(key=lambda p: p["team"])
+            else:
+                players.sort(key=lambda p: p["character"])
             match["team1"] = players[:len(players) // 2]
             match["team2"] = players[len(players) // 2:]
             del match["players"]
@@ -472,6 +475,8 @@ async def submit_match(message) -> None:
                     match["hostteam"] = 1
                 else:
                     match["hostteam"] = 2
+        else:
+            match["players"] = [{k: v for k, v in players.items if k != "team"}]
         matches[fname] = match
     matches = dict(sorted(matches.items()))
     for fname, match in matches.items():
