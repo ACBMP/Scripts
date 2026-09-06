@@ -453,7 +453,31 @@ async def submit_match(message) -> None:
         players = match["players"]
         for i in range(len(players)):
             players[i]["player"] = util.identify_player(db, players[i]["player"])["name"]
-        if util.check_mode(match["mode"], short=True) in util.TEAM_MODES:
+
+        mode_key = util.check_mode(match["mode"], short=True)
+        map_key = match["map"].lower()
+        for p in players:
+            heatmap = p.get("heatmap")
+            if heatmap is None:
+                continue
+            new_cells = {f"{gx},{gy}": ms for gx, gy, ms in heatmap}
+            player_doc = util.identify_player(db, p["player"])
+            existing = (player_doc.get(f"{mode_key}heatmap") or {}).get(map_key, {})
+            count = existing.get("count", 0)
+            old_cells = existing.get("heatmap", {})
+            merged = {
+                key: (old_cells.get(key, 0) * count + new_cells.get(key, 0)) / (count + 1)
+                for key in old_cells.keys() | new_cells.keys()
+            }
+            db.players.update_one(
+                {"_id": player_doc["_id"]},
+                {"$set": {
+                    f"{mode_key}heatmap.{map_key}.heatmap": merged,
+                    f"{mode_key}heatmap.{map_key}.count": count + 1,
+                }},
+            )
+
+        if mode_key in util.TEAM_MODES:
             match["players"] = players
             if "team" in players[0].keys():
                 players.sort(key=lambda p: p["team"])
