@@ -446,7 +446,8 @@ async def submit_match(message) -> None:
         match = json.loads(match_json)
         match["new"] = True
         match["inhist"] = False
-        match["host"] = host
+        if host:
+            match["host"] = host
         fname = os.path.basename(urlparse(attachment.url).path)
         fname = os.path.splitext(fname)[0]
         match["date"], match["time"] = fname.split("T")
