@@ -244,6 +244,7 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
                 )
             }})
     except KeyError:
+        print(f"Skipping map {match.get('map', None)}")
         pass
 
     return result
@@ -258,7 +259,7 @@ def new_matches():
     db = client.public
 
     #Querying the db about new matches
-    matches = db.matches.find({"new":True})
+    matches = db.matches.find({"new":True}).sort("date", 1)
     matches = list(matches)
     #Checking whether there are new matches
     if not matches:
@@ -272,7 +273,7 @@ def new_matches():
         i = 0
         R_team = [0, 0] # team ratings which should be calculated in the loop
         score_key = "score"
-        if check_mode(m["mode"], short=True) not in TEAM_MODES:
+        if check_mode(m["mode"], short=True) in FFA_MODES:
             continue
         if m["mode"] == "Artifact assault":
             score_key += "d"
