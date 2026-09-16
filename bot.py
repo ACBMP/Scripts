@@ -480,7 +480,7 @@ async def submit_match(message) -> None:
 
         if mode_key in util.TEAM_MODES:
             match["players"] = players
-            if "team" in players[0].keys():
+            if "team" in players[0].keys() and players[0]["team"] != -1:
                 players.sort(key=lambda p: p["team"])
             else:
                 players.sort(key=lambda p: p["character"])
