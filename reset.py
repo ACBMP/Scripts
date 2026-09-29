@@ -1,4 +1,4 @@
-from util import connect, check_mode
+from util import AA_ROLE_MODES, connect, check_mode
 import historyupdate as history
 
 def reset_stats(mode):
@@ -9,7 +9,7 @@ def reset_stats(mode):
     if mode in ["dm", "asb"]:
         games["podium"] = games["finished"] = 0
     stats = {"highscore": 0, "kills": 0, "deaths": 0, "totalscore": 0}
-    if mode in ["aar", "aad"]:
+    if mode in AA_ROLE_MODES:
         stats["scored"] = stats["conceded"] = 0
     rank = 0
     rankchange = 0

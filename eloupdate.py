@@ -1,3 +1,6 @@
+# aliased: `from util import *` below brings in util's own `datetime`
+from datetime import datetime as _datetime, timezone as _timezone
+
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from util import *
@@ -140,7 +143,8 @@ def w_mean(ratings, ratings_o):
     return sum([ratings[_] * weights[_] for _ in range(len(ratings))]) / sum(weights), weights
 
 
-def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref=None):
+def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref=None, db=None,
+                 update_map_rating=True):
     """
     Calculate new ratings for all players in a match.
 
@@ -152,6 +156,9 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     :param score_2: team 2's score
     :param aa: artifact assault switch
     :param ref: set reference stomp value
+    :param db: database (defaults to connect())
+    :param update_map_rating: also update the map's host rating; off when
+                              replaying matches after a correction
     :return: list of dicts containing names and new MMRs
     """
 
@@ -180,9 +187,9 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     if aa:
         for i in range(l):
             role = match["team1"][i]["role"]
-            R_old_1.append(team_1[i][f"aa{role}mmr"])
+            R_old_1.append(team_1[i][f"{mode}{role}mmr"])
             role = match["team2"][i]["role"]
-            R_old_2.append(team_2[i][f"aa{role}mmr"])
+            R_old_2.append(team_2[i][f"{mode}{role}mmr"])
     else:
         for i in range(l):
             R_old_1.append(team_1[i][f"{mode}mmr"])
@@ -204,8 +211,8 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
         for j in range(2):
             if aa:
                 role = match[f'team{j + 1}'][i]['role']
-                rating = teams[j][i][f"aa{role}mmr"]
-                games = teams[j][i][f"aa{role}games"]["total"]
+                rating = teams[j][i][f"{mode}{role}mmr"]
+                games = teams[j][i][f"{mode}{role}games"]["total"]
                 ref = 4
             else:
                 rating = teams[j][i][f"{mode}mmr"]
@@ -228,8 +235,11 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
             if aa:
                 result[-1]["role"] = match[f'team{j + 1}'][i]['role']
     # update the teams in the match so they include mmr change for all players
-    db = connect()
+    if db is None:
+        db = connect()
     db.matches.update_one({"_id": match["_id"]}, {"$set": {"team1": match["team1"], "team2": match["team2"]}})
+    if not update_map_rating:
+        return result
     # if host data is given update those
     try:
         map_db = db.maps.find_one({"name": match["map"]})
@@ -250,16 +260,24 @@ def team_ratings(match, team_1, team_2, outcome, score_1, score_2, aa=False, ref
     return result
 
 
-def new_matches():
+def new_matches(db=None, matches=None, update_map_rating=True):
     """
     Parse new matches in the database and update MMRs accordingly.
+
+    :param db: database (defaults to the local server)
+    :param matches: process exactly these match documents, in this order,
+                    instead of every new match (used by matchops to replay
+                    matches after an undo or correction)
+    :param update_map_rating: passed on to team_ratings
     """
     #Establishing a connectiong to the db
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client.public
+    if db is None:
+        client = MongoClient('mongodb://localhost:27017/')
+        db = client.public
 
     #Querying the db about new matches
-    matches = db.matches.find({"new":True}).sort("date", 1)
+    if matches is None:
+        matches = db.matches.find({"new":True}).sort("date", 1)
     matches = list(matches)
     #Checking whether there are new matches
     if not matches:
@@ -275,7 +293,8 @@ def new_matches():
         score_key = "score"
         if check_mode(m["mode"], short=True) in FFA_MODES:
             continue
-        if m["mode"] == "Artifact assault":
+        aa_match = is_aa(check_mode(m["mode"], short=True))
+        if aa_match:
             score_key += "d"
 
             kds = [{}, {}]
@@ -312,7 +331,7 @@ def new_matches():
                 s[team - 1] += m[f"team{team}"][i][score_key]
                 if m["mode"] in ["Escort", "Manhunt"]:
                     R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}mmr"]
-                elif m["mode"] == "Artifact assault":
+                elif aa_match:
                     R_team[team - 1] += temp_[f"{check_mode(m['mode'], short=True)}{role}mmr"]
                 i += 1
             i = 0
@@ -343,7 +362,8 @@ def new_matches():
         else:
             ref = None
 
-        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=m["mode"] == "Artifact assault", ref=ref)
+        result = team_ratings(match=m, team_1=t[0], team_2=t[1], outcome=m["outcome"], score_1=s[0], score_2=s[1], aa=aa_match, ref=ref,
+                              db=db, update_map_rating=update_map_rating)
 
         #Updating: mmr, total games played, wins/losses, total score, kills, deaths, check highscore
 
@@ -396,7 +416,7 @@ def new_matches():
                                 )
 
 
-        elif m["mode"] == "Artifact assault":
+        elif aa_match:
             mode = check_mode(m["mode"], short=True)
 
             concededs = [sum([p["scored"] for p in m[f"team{team}"]]) for team in [2, 1]]
@@ -428,7 +448,11 @@ def new_matches():
                             }}
                         )
 
-        db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False}})
+        done = {"new": False}
+        # remember the processing order; matchops replays corrections in it
+        if "processed_at" not in m:
+            done["processed_at"] = _datetime.now(_timezone.utc)
+        db.matches.update_one({"_id":m["_id"]},{"$set":done})
         print("Match updated successfully!")
 
 

@@ -55,7 +55,8 @@ def update():
     for m in matches:
         mode = m["mode"]
         # for aa we have to figure out roles
-        if mode == "Artifact assault":
+        aa_match = is_aa(check_mode(mode, short=True))
+        if aa_match:
             m = aa_roles(m)
         if check_mode(mode, short=True) in FFA_MODES:
             for p in m["players"]:
@@ -69,8 +70,8 @@ def update():
             for i in [1, 2]:
                 for p in m[f"team{i}"]:
                     # we can just use shortened roles
-                    if mode == "Artifact assault":
-                        mode = "aa" + p["role"]
+                    if aa_match:
+                        mode = check_mode(m["mode"], short=True) + p["role"]
                     try:
                         if p["player"] in players[mode]:
                             continue

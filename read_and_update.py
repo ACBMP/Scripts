@@ -9,6 +9,23 @@ from datetime import date
 from util import *
 import maps
 
+def map_for(mode_code, name):
+    """
+    Identify a map; for the other games' Artifact assault modes, whose maps
+    aren't all in identify_map yet, an unknown name is kept as written.
+    """
+    try:
+        return identify_map(name)
+    except KeyError:
+        try:
+            key = check_mode(mode_code, short=True)
+        except ValueError:
+            key = None
+        if key is not None and is_aa(key) and key != "acraa":
+            return name.strip().title()
+        raise
+
+
 def read_and_update():
     """
     Read and update the new matches file defined in botconfig.
@@ -37,6 +54,8 @@ def read_and_update():
             entry_dict["new"]=True
             # inhist flag
             entry_dict["inhist"] = False
+            # the bot posts processed matches with undo/correct buttons
+            entry_dict["announced"] = False
             host_player = None
 
             # save map/host
@@ -44,13 +63,13 @@ def read_and_update():
                 temp = csv_entry[0].split("$")
                 csv_entry[0] = temp[0]
                 if len(temp) == 3:
-                    entry_dict["map"] = identify_map(temp[1])
+                    entry_dict["map"] = map_for(temp[0], temp[1])
                     entry_dict["host"] = identify_player(db, temp[2])["name"]
                     host_player = entry_dict["host"]
                 else:
                     # check if either a map or player can be identified
                     try:
-                        entry_dict["map"] = identify_map(temp[1])
+                        entry_dict["map"] = map_for(temp[0], temp[1])
                     except:
                         try:
                             entry_dict["host"] = identify_player(db, temp[2])["name"]
@@ -62,7 +81,7 @@ def read_and_update():
             try:
                 mode = check_mode(csv_entry[0])
                 smode = check_mode(csv_entry[0], short=True)
-                entry_dict["mode"] = mode.capitalize()
+                entry_dict["mode"] = MODE_NAMES.get(smode, mode.capitalize())
                 mode_tracker[smode] = True
             except ValueError:
                 print("Error in the \'mode\' field!")
@@ -106,7 +125,7 @@ def read_and_update():
                         temp_dict["score"] = int(temp_list[1])
                         temp_dict["kills"] = int(temp_list[2])
                         temp_dict["deaths"] = int(temp_list[3])
-                        if csv_entry[0] == "AA":
+                        if is_aa(check_mode(csv_entry[0], short=True)):
                             temp_dict["scored"] = int(temp_list[4])
                         entry_dict[team_n].append(temp_dict)
             
@@ -170,13 +189,13 @@ def read_and_edit():
                 temp = csv_entry[0].split("$")
                 csv_entry[0] = temp[0]
                 if len(temp) == 3:
-                    entry_dict["map"] = identify_map(temp[1])
+                    entry_dict["map"] = map_for(temp[0], temp[1])
                     entry_dict["host"] = identify_player(db, temp[2])["name"]
                     host_player = entry_dict["host"]
                 else:
                     # check if either a map or player can be identified
                     try:
-                        entry_dict["map"] = identify_map(temp[1])
+                        entry_dict["map"] = map_for(temp[0], temp[1])
                     except:
                         try:
                             entry_dict["host"] = identify_player(db, temp[2])["name"]
@@ -187,7 +206,7 @@ def read_and_edit():
             #mode
             mode = check_mode(csv_entry[0])
             smode = check_mode(csv_entry[0], short=True)
-            entry_dict["mode"] = mode.capitalize()
+            entry_dict["mode"] = MODE_NAMES.get(smode, mode.capitalize())
             #outcome
             if check_mode(entry_dict["mode"], short=True) in FFA_MODES:
                 csv_entry.pop(0)
@@ -227,7 +246,7 @@ def read_and_edit():
                         temp_dict["score"] = int(temp_list[1])
                         temp_dict["kills"] = int(temp_list[2])
                         temp_dict["deaths"] = int(temp_list[3])
-                        if csv_entry[0] == "AA":
+                        if is_aa(check_mode(csv_entry[0], short=True)):
                             temp_dict["scored"] = int(temp_list[4])
                         entry_dict[team_n].append(temp_dict)
 
@@ -277,9 +296,9 @@ def main():
     mkeys = list(modes.keys())
     for m in mkeys:
         if modes[m]:
-            if m == "aa":
-                rmodes.append("aar")
-                rmodes.append("aad")
+            if is_aa(m):
+                rmodes.append(m + "r")
+                rmodes.append(m + "d")
             else:
                 rmodes.append(m)
     ranks.main(rmodes)

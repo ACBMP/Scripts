@@ -13,3 +13,5 @@ old_matches/
 *.patch
 *.txt
 *.md
+.matchops.lock
+.pytest_cache/

@@ -35,6 +35,53 @@ Some housekeeping things to do before you're able to use this bot completely. Ma
 - The `read_and_update.py` script will update the Elo ratings as well.
 - Run the script using [Python 3.X](https://www.python.org/downloads/).
 
+## Undoing and correcting matches
+
+`matchops.py` submits, processes, undoes and corrects matches. The bot, AN-API and the command line all use it:
+
+```
+python3 matchops.py submit [--host NAME] < match.json   # insert an extracted match and process it
+python3 matchops.py process                              # process all new matches (AN update without matches.txt)
+python3 matchops.py undo MATCH_ID [--dry-run]
+python3 matchops.py edit MATCH_ID [--dry-run] < changes.json
+```
+
+A correction (`changes.json`) can contain `team1`/`team2` (or `players` for free-for-all modes) as lists of
+`{"player", "score", "kills", "deaths"}` (plus `"scored"` in Artifact assault), `outcome`, `map` and `host`.
+
+Undo and correction roll back every later processed match of the same mode, apply the change and replay those
+matches with the normal rating code. Other rating changes in between (decay, manual edits) are kept. Map
+counters, high scores, MMR history and ranks are updated as well; the map host rating is not.
+
+- Operations are serialised with a lock file shared by the bot, AN-API and cron jobs (`AN_MATCHOPS_LOCK` to move it).
+- If an operation fails part-way, everything it touched is restored.
+- Each change is recorded in `match_edits`; undone matches are kept in `matches_undone`.
+- Matches processed before `mmrchange` was stored on every player can't be recalculated; the operation refuses
+  instead of guessing.
+
+In Discord, set `match_channel` in `botconfig.py`: every processed match is posted there with **Undo** and
+**Correct** buttons (privilege 5 or better), and changes made on the website or through the API are noted under
+the post. `AN undo MATCH_ID` does the same as the button.
+
+Tests: `uv run --no-project --with pytest --with pytest-asyncio --with 'pymongo<4.9' --with mongomock --with flask_pymongo --with discord.py --with pydantic --with numpy pytest`
+
+## Artifact assault per game
+
+Artifact assault is rated separately for ACR (`acraa`), AC3 (`ac3aa`) and AC4 (`ac4aa`), each with running
+(`<key>r`, e.g. `acraarmmr`) and defending (`<key>d`) ratings, stats, history and ranks. Matches are stored
+with the modes `ACR Artifact assault`, `AC3 Artifact assault` and `AC4 Artifact assault`. In `matches.txt`
+use the mode codes `ACRAA`, `AC3AA` and `AC4AA` (same format as before, with the scored artifacts after the
+deaths). Maps AC3/AC4 use that aren't known yet are kept as written.
+
+ACR's used to be the plain `aa` / `aar` / `aad` and `Artifact assault`. Those spellings are still accepted
+as input (`AA` in `matches.txt`, bot commands), but the data is stored under the new names only.
+
+Deploying this, once, with the bots and match update stopped:
+
+1. `python3 migrate_acr_aa.py` shows what it would rename, `python3 migrate_acr_aa.py --apply` renames it
+   (players' `aar*`/`aad*` fields and AA badges, the maps' `aa` stats, the matches' mode).
+2. `python3 add_mode.py` gives every player the AC3/AC4 modes (it only adds what's missing).
+
 ## Bots
 
 ### Discord

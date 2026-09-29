@@ -144,12 +144,12 @@ if __name__ == "__main__":
 
     add_badge("Sugarfree", "2022-02-01", "Rookie", "all", season, f"Season {season} Rookie of the Season")
 
-    add_badge("Edi", "2022-02-01", "1st", "AA Defending", season)
-    add_badge("piesio1", "2022-02-01", "2nd", "AA Defending", season)
-    add_badge("robin331", "2022-02-01", "3rd", "AA Defending", season)
-    add_badge("dreamkiller2000", "2022-02-01", "1st", "AA Running", season)
-    add_badge("DurandalSword", "2022-02-01", "2nd", "AA Running", season)
-    add_badge("Onyxies", "2022-02-01", "3rd", "AA Running", season)
+    add_badge("Edi", "2022-02-01", "1st", "ACR AA Defending", season)
+    add_badge("piesio1", "2022-02-01", "2nd", "ACR AA Defending", season)
+    add_badge("robin331", "2022-02-01", "3rd", "ACR AA Defending", season)
+    add_badge("dreamkiller2000", "2022-02-01", "1st", "ACR AA Running", season)
+    add_badge("DurandalSword", "2022-02-01", "2nd", "ACR AA Running", season)
+    add_badge("Onyxies", "2022-02-01", "3rd", "ACR AA Running", season)
 
     add_badge("Jelko", "2021-07-25", "Trophy", "Assassinate", season, f"El's Cancer Fundraiser Assassinate Tournament Champion")
     add_badge("Dellpit", "2021-07-25", "Trophy", "Assassinate", season, f"El's Cancer Fundraiser Assassinate Tournament Champion")
@@ -158,18 +158,18 @@ if __name__ == "__main__":
     add_badge("Auditore92", "2021-11-01", "2nd", "Manhunt", season)
     add_badge("Jelko", "2021-11-01", "3rd", "Manhunt", season)
 
-#    add_badge("Edi", "2022-02-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
-#    add_badge("piesio1", "2022-02-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
-#    add_badge("robin331", "2022-02-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
-    add_badge("Onyxies", "2022-02-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+#    add_badge("Edi", "2022-02-01", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+#    add_badge("piesio1", "2022-02-01", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+#    add_badge("robin331", "2022-02-01", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+    add_badge("Onyxies", "2022-02-01", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
 
-#    add_badge("dreamkiller2000", "2022-02-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
-#    add_badge("DurandalSword", "2022-02-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+#    add_badge("dreamkiller2000", "2022-02-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+#    add_badge("DurandalSword", "2022-02-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
 #    # Onyxies only has 44 games as a runner and 185 as a defender so let's give priority there
-#    #add_badge("Onyxies", "2022-02-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
-    add_badge("Reaper19111", "2022-02-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+#    #add_badge("Onyxies", "2022-02-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+    add_badge("Reaper19111", "2022-02-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
     # replacement for Onyxies
-    add_badge("Sugarfree", "2022-02-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+    add_badge("Sugarfree", "2022-02-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
 
 #    add_badge("DevelSpirit", "2021-11-01", "All-Star", "Manhunt", season, f"Season {season} Manhunt All-Star")
 #    add_badge("Auditore92", "2021-11-01", "All-Star", "Manhunt", season, f"Season {season} Manhunt All-Star")
@@ -221,15 +221,15 @@ if __name__ == "__main__":
 
     season = 4
 
-    add_badge("piesio1", "2023-05-01", "1st", "AA Defending", season)
-    add_badge("Edi", "2023-05-01", "2nd", "AA Defending", season)
-    add_badge("dreamkiller2000", "2023-05-01", "3rd", "AA Defending", season)
-    add_badge("Sugarfree", "2023-05-01", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+    add_badge("piesio1", "2023-05-01", "1st", "ACR AA Defending", season)
+    add_badge("Edi", "2023-05-01", "2nd", "ACR AA Defending", season)
+    add_badge("dreamkiller2000", "2023-05-01", "3rd", "ACR AA Defending", season)
+    add_badge("Sugarfree", "2023-05-01", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
 
-    add_badge("Sugarfree", "2023-05-01", "1st", "AA Running", season)
-    add_badge("Onyxies", "2023-05-01", "2nd", "AA Running", season)
-    add_badge("Dusk", "2023-05-01", "3rd", "AA Running", season)
-    add_badge("dreamkiller2000", "2023-05-01", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+    add_badge("Sugarfree", "2023-05-01", "1st", "ACR AA Running", season)
+    add_badge("Onyxies", "2023-05-01", "2nd", "ACR AA Running", season)
+    add_badge("Dusk", "2023-05-01", "3rd", "ACR AA Running", season)
+    add_badge("dreamkiller2000", "2023-05-01", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
 
     add_badge("Edi", "2023-05-01", "1st", "Domination", season)
     add_badge("Rorce", "2023-05-01", "2nd", "Domination", season)
@@ -264,15 +264,15 @@ if __name__ == "__main__":
     add_badge("Cota", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     add_badge("Ariiro", "2023-10-28", "Custom", "Escort", season, "EPIC GAMER", {"Discord": ":medal:", "HTML": "&#127941"})
     
-    add_badge("Edi", "2024-03-26", "1st", "AA Defending", season)
-    add_badge("Onyxies", "2024-03-26", "2nd", "AA Defending", season)
-    add_badge("piesio1", "2024-03-26", "3rd", "AA Defending", season)
-    add_badge("robin331", "2024-03-26", "All-Star", "AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
+    add_badge("Edi", "2024-03-26", "1st", "ACR AA Defending", season)
+    add_badge("Onyxies", "2024-03-26", "2nd", "ACR AA Defending", season)
+    add_badge("piesio1", "2024-03-26", "3rd", "ACR AA Defending", season)
+    add_badge("robin331", "2024-03-26", "All-Star", "ACR AA Defending", season, f"Season {season} Artifact Assault All-Star Defender")
 
-    add_badge("Sugarfree", "2024-03-26", "1st", "AA Running", season)
-    add_badge("Reaper19111", "2024-03-26", "2nd", "AA Running", season)
-    add_badge("D4", "2024-03-26", "3rd", "AA Running", season)
-    add_badge("GamerPrince98", "2024-03-26", "All-Star", "AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
+    add_badge("Sugarfree", "2024-03-26", "1st", "ACR AA Running", season)
+    add_badge("Reaper19111", "2024-03-26", "2nd", "ACR AA Running", season)
+    add_badge("D4", "2024-03-26", "3rd", "ACR AA Running", season)
+    add_badge("GamerPrince98", "2024-03-26", "All-Star", "ACR AA Running", season, f"Season {season} Artifact Assault All-Star Runner")
 
     add_badge("Jelko", "2024-03-26", "1st", "Assassinate", season)
     add_badge("Lime232", "2024-03-26", "2nd", "Assassinate", season)

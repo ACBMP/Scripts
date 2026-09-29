@@ -87,7 +87,7 @@ def sanity_check(data, max_err = 0):
                 deaths = [0, 0]
                 # team index
                 i = 0
-                if mode == "aa":
+                if is_aa(mode):
                     num_delim += 1
 
             else:
@@ -115,7 +115,7 @@ def sanity_check(data, max_err = 0):
                     all_gamers.append(player[0])
 
                 # sum score
-                if mode != "aa":
+                if not is_aa(mode):
                     try:
                         if mode not in FFA_MODES:
                             score[i] += int(player[1])

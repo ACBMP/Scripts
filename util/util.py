@@ -4,10 +4,62 @@ import discord
 import random
 import traceback
 
-GAME_MODES = ["e", "mh", "aa", "do", "dm", "asb"]
-ALL_MODES = ["e", "mh", "aar", "aad", "do", "dm", "asb"]
-TEAM_MODES = ["e", "mh", "aar", "aad", "do"]
+# Artifact assault is played in several games; each is its own mode, rated
+# separately for running and defending: players carry <key>rmmr / <key>dmmr
+# ("acraa" gives "acraarmmr" / "acraadmmr"). ACR's used to be the plain
+# "aa" / "aar" / "aad"; migrate_acr_aa.py renames existing data, and
+# check_mode still understands the old spellings.
+AA_GAMES = {"acraa": "ACR", "ac3aa": "AC3", "ac4aa": "AC4"}
+AA_MODES = list(AA_GAMES)
+AA_ROLE_MODES = [key + role for key in AA_MODES for role in ("r", "d")]
+
+GAME_MODES = ["e", "mh", "do", "dm", "asb"] + AA_MODES
+ALL_MODES = ["e", "mh", "do", "dm", "asb"] + AA_ROLE_MODES
+TEAM_MODES = ["e", "mh", "do"] + AA_ROLE_MODES
 FFA_MODES = ["dm", "asb"]
+
+# how each mode is spelled in match documents
+MODE_NAMES = {
+    "e": "Escort",
+    "mh": "Manhunt",
+    "do": "Domination",
+    "dm": "Deathmatch",
+    "asb": "Assassinate brotherhood",
+    "acraa": "ACR Artifact assault",
+    "ac3aa": "AC3 Artifact assault",
+    "ac4aa": "AC4 Artifact assault",
+}
+
+
+def is_aa(mode):
+    """True for any Artifact assault mode key ("acraa", "ac3aa", ...)."""
+    return mode in AA_GAMES
+
+
+def aa_mode_of(role_mode):
+    """The Artifact assault mode of a role key: "ac3aar" -> "ac3aa"."""
+    return role_mode[:-1] if role_mode[:-1] in AA_GAMES else None
+
+
+def mode_name(mode):
+    """The spelling of a mode key in match documents."""
+    return MODE_NAMES[check_mode(mode, short=True)]
+
+
+def _aa_variant(mode, short):
+    """check_mode for Artifact assault spelled with its game ("ac3 aa", "acr aa running", ...)."""
+    for key, game in AA_GAMES.items():
+        g = game.lower()
+        full = f"{g} artifact assault"
+        base = {key, f"{g} aa", f"{g}aa", f"{g} artifact assault", f"artifact assault {g}", f"aa {g}"}
+        if mode in base:
+            return key if short else full
+        for role, word in (("r", "running"), ("d", "defending")):
+            names = {key + role, f"{g} aa{role}", f"{g} aa {word}", f"{g} artifact assault {word}",
+                     f"artifact assault {word} {g}"}
+            if mode in names:
+                return key + role if short else f"{full} {word}"
+    return None
 QUEUEABLE_MODES = ["e", "mh", "do", "asb"]
 
 def connect():
@@ -62,7 +114,7 @@ def check_mode(mode, server=None, short=False, channel=None):
         elif channel in conf.mh_channels:
             return "mh" if short else "manhunt"
         elif channel in conf.aa_channels:
-            return "aa" if short else "artifact assault"
+            return "acraa" if short else "acr artifact assault"
         elif channel in conf.do_channels:
             return "do" if short else "domination"
         elif channel in conf.dm_channels:
@@ -74,7 +126,7 @@ def check_mode(mode, server=None, short=False, channel=None):
         elif server in conf.mh_servers:
             return "mh" if short else "manhunt"
         elif server in conf.aa_servers:
-            return "aa" if short else "artifact assault"
+            return "acraa" if short else "acr artifact assault"
         elif server in conf.do_servers:
             return "do" if short else "domination"
         elif server in conf.dm_servers:
@@ -89,18 +141,21 @@ def check_mode(mode, server=None, short=False, channel=None):
         return "mh" if short else "manhunt"
     elif mode in ["e", "escort"]:
         return "e" if short else "escort"
+    # ACR's Artifact assault under its old names
     elif mode in ["aa", "artifact assault"]:
-        return "aa" if short else "artifact assault"
+        return "acraa" if short else "acr artifact assault"
     elif mode in ["aar", "artifact assault running"]:
-        return "aar" if short else "artifact assault running"
+        return "acraar" if short else "acr artifact assault running"
     elif mode in ["aad", "artifact assault defending"]:
-        return "aad" if short else "artifact assault defending"
+        return "acraad" if short else "acr artifact assault defending"
     elif mode in ["do", "domination"]:
         return "do" if short else "domination"
     elif mode in ["dm", "deathmatch"]:
         return "dm" if short else "deathmatch"
     elif mode in ["asb", "assassinate brotherhood"]:
         return "asb" if short else "assassinate brotherhood"
+    elif _aa_variant(mode, short) is not None:
+        return _aa_variant(mode, short)
     else:
         raise ValueError("check_mode: Unsupported mode found.")
 

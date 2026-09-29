@@ -23,17 +23,18 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm', 'asb']
+modes_list = list(util.ALL_MODES)
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
-        'aar' : 'AA Running',
-        'aad' : 'AA Defending',
-        'aa' : 'Artifact Assault',
         'do' : 'Domination',
         'dm' : 'Deathmatch',
         'asb': 'Assassinate Brotherhood'
         }
+for _key, _game in util.AA_GAMES.items():
+    modes_dict[_key] = f"{_game} Artifact Assault"
+    modes_dict[_key + "r"] = f"{_game} AA Running"
+    modes_dict[_key + "d"] = f"{_game} AA Defending"
 
 
 @client.event
@@ -242,7 +243,7 @@ async def team_comps(message, ident):
 
 @util.command_dec
 async def find_lobbies(message):
-    lobby_sizes = {"e": 4, "mh": 6, "do": 8, "aa": 8, "asb": 6}
+    lobby_sizes = {"e": 4, "mh": 6, "do": 8, "acraa": 8, "asb": 6}
     channel = message.channel
     # let's just stick to default modes so people don't get confused
     msg = message.content[len("lobbies "):]

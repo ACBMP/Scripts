@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from pymongo import MongoClient
 from util import identify_player, check_mode, FFA_MODES
 from pydantic import BaseModel
@@ -170,14 +172,20 @@ def player_ratings(match: Match, db_conn, ref=None):
     return results
 
 
-def new_matches():
+def new_matches(db=None, matches=None):
     """
         Parse new matches in the database and update MMRs accordingly.
+
+        :param db: database (defaults to the local server)
+        :param matches: process exactly these match documents, in this order,
+                        instead of every new match (used by matchops)
     """
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client.public
+    if db is None:
+        client = MongoClient('mongodb://localhost:27017/')
+        db = client.public
     #Querying the db about new matches
-    matches = db.matches.find({"new":True})
+    if matches is None:
+        matches = db.matches.find({"new":True})
     matches = list(matches)
 
     if not matches:
@@ -234,7 +242,11 @@ def new_matches():
                 }, {
                     "$set": {f"{mode}stats.highscore": player.score}})
 
-        db.matches.update_one({"_id":m["_id"]},{"$set":{"new":False, "players": m["players"]}})
+        done = {"new": False, "players": m["players"]}
+        # remember the processing order; matchops replays corrections in it
+        if "processed_at" not in m:
+            done["processed_at"] = datetime.now(timezone.utc)
+        db.matches.update_one({"_id":m["_id"]},{"$set":done})
         print("Match updated successfully!")
 
 if __name__=="__main__":

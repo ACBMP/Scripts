@@ -23,6 +23,8 @@ from add_badges import readable_badges
 import telegram_bot
 import json
 from urllib.parse import urlparse
+import matchops
+import match_announce
 
 # Members intent
 intents = discord.Intents.default()
@@ -30,21 +32,29 @@ intents.members = True
 intents.message_content = True
 client = discord.Client(intents=intents)
 
+
+async def setup_hook():
+    # persistent Undo / Correct buttons and the match channel posts
+    match_announce.setup(client)
+
+client.setup_hook = setup_hook
+
 @client.event
 async def on_ready():
     print("Starting.")
 
-modes_list = ['e', 'mh', 'aar', 'aad', 'do', 'dm', 'asb']
+modes_list = list(util.ALL_MODES)
 modes_dict = {
         'e' : "Escort",
         'mh' : 'Manhunt',
-        'aar' : 'AA Running',
-        'aad' : 'AA Defending',
-        'aa' : 'Artifact Assault',
         'do' : 'Domination',
         'dm' : 'Deathmatch',
-        'asb': 'Assassinate Brotherhood'
+        'asb': 'Assassinate Brotherhood',
         }
+for _key, _game in util.AA_GAMES.items():
+    modes_dict[_key] = f"{_game} Artifact Assault"
+    modes_dict[_key + "r"] = f"{_game} AA Running"
+    modes_dict[_key + "d"] = f"{_game} AA Defending"
 
 
 async def send_long_message(content, channel):
@@ -123,6 +133,8 @@ AN estimate PLAYER_A[, ADDITIONAL_PLAYER_A] vs PLAYER_B[, ADDITIONAL_PLAYER_B] [
 AN ladder [MODE]```"""
     reload_help = """To reload all the bot's imported modules, run\n```css
 AN reload```"""
+    undo_help = """To remove a processed match and recalculate every rating it touched, run\n```css
+AN undo MATCH_ID```The match ID is in the footer of the match's post in the match channel, where the Undo and Correct buttons do the same."""
     lobbies_help = """To generate MMR-based lobbies, run\n```css
 AN lobbies PLAYER_A, PLAYER_B, PLAYER_C, PLACER_D, ...```Grouped lobby generation is currently not supported, but is being worked on."""
     swap_help = """To swap teams in an OCR result, run\n```css
@@ -204,12 +216,15 @@ AN swap MATCHDATA```with `MATCHDATA` formatted for AN add."""
                 return discord.Embed(title=":performing_arts: Edit Users", description=user_edit_help, color=0xff00fe)
             elif msg == "reload":
                 return discord.Embed(title=":arrows_clockwise: Reload Modules", description=reload_help, color=0xff00fe)
+            elif msg == "undo":
+                return discord.Embed(title=":rewind: Undo Match", description=undo_help, color=0xff00fe)
         else:
             embedVar.add_field(name=":pencil2: Edit Matches", value="AN edit", inline=True)
             embedVar.add_field(name=":pager: Update Matches", value="AN update", inline=True)
             embedVar.add_field(name=":chess_pawn: Add Users", value="AN user add", inline=True)
             embedVar.add_field(name=":performing_arts: Edit Users", value="AN user edit", inline=True)
             embedVar.add_field(name=":arrows_clockwise: Reload Modules", value="AN reload", inline=True)
+            embedVar.add_field(name=":rewind: Undo Match", value="AN undo", inline=True)
 
     return embedVar
 
@@ -277,13 +292,13 @@ async def lookup_user(message):
                 if mode in util.FFA_MODES:
                     user_stats += f"Podium Rate: {round((player_db[f'{mode}games']['podium'] / (player_db[f'{mode}games']['total'])) * 100)}% \n"
                     user_stats += f"Average Finish: {round(player_db[f'{mode}games']['finishes'] / (player_db[f'{mode}games']['total']))} \n"
-                if 'aa' not in mode:
+                if not util.aa_mode_of(mode):
                     embedVar.add_field(name=modes_dict[mode], value=user_stats +
                     f"K/D Ratio: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}stats']['deaths'], 2)} \n \
                      Avg Kills / Deaths: {round(player_db[f'{mode}stats']['kills'] / player_db[f'{mode}games']['total'], 2)} / {round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}games']['total'], 2)}\n \
                      Highscore: {player_db[f'{mode}stats']['highscore']}", inline=False)
                 else:
-                    if mode == 'aar':
+                    if util.aa_mode_of(mode) and mode.endswith("r"):
                         try:
                             deaths_per_score = round(player_db[f'{mode}stats']['deaths'] / player_db[f'{mode}stats']['scored'], 2)
                         except ZeroDivisionError:
@@ -351,10 +366,9 @@ async def lookup_synergy(message):
                     date_range = (content[4], content[5])
     else:
         mode = None
-    mode = util.check_mode(mode, message.guild.id, short=False, channel=message.channel.id).capitalize()
-    # since there are two modes that are grouped together to AA
-    if "Artifact" in mode:
-        mode = "Artifact assault"
+    mode = util.check_mode(mode, message.guild.id, short=True, channel=message.channel.id)
+    # running and defending are grouped together to their game's AA
+    mode = util.mode_name(util.aa_mode_of(mode) or mode)
     embedVar = discord.Embed(title=f"{player}'s {mode.title()} Synergies", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
         synergies = synergy.find_synergy_ffa(player, mode, min_games)
@@ -391,10 +405,9 @@ async def map_synergy(message):
                 date_range = (content[4], content[5])
     else:
         mode = None
-    mode = util.check_mode(mode, message.guild.id, short=False, channel=message.channel.id).capitalize()
-    # since there are two modes that are grouped together to AA
-    if "Artifact" in mode:
-        mode = "Artifact assault"
+    mode = util.check_mode(mode, message.guild.id, short=True, channel=message.channel.id)
+    # running and defending are grouped together to their game's AA
+    mode = util.mode_name(util.aa_mode_of(mode) or mode)
     embedVar = discord.Embed(title=f"{player}'s {mode.title()} Map stats", color=0xff00ff)
     if util.check_mode(mode, short=True) in util.FFA_MODES:
         synergies = synergy.map_ffa_synergy(player, mode, min_games, date_range)
@@ -443,69 +456,14 @@ async def submit_match(message) -> None:
     matches = {}
     for attachment in message.attachments:
         match_json = requests.get(attachment.url).content
-        match = json.loads(match_json)
-        match["new"] = True
-        match["inhist"] = False
-        if host:
-            match["host"] = host
         fname = os.path.basename(urlparse(attachment.url).path)
         fname = os.path.splitext(fname)[0]
-        match["date"], match["time"] = fname.split("T")
-        players = match["players"]
-        for i in range(len(players)):
-            players[i]["player"] = util.identify_player(db, players[i]["player"])["name"]
-
-        mode_key = util.check_mode(match["mode"], short=True)
-        map_key = match["map"].lower()
-        for p in players:
-            heatmap = p.get("heatmap")
-            if heatmap is None:
-                continue
-            new_cells = {f"{gx},{gy}": ms for gx, gy, ms in heatmap}
-            player_doc = util.identify_player(db, p["player"])
-            existing = (player_doc.get(f"{mode_key}heatmap") or {}).get(map_key, {})
-            count = existing.get("count", 0)
-            old_cells = existing.get("heatmap", {})
-            merged = {
-                key: (old_cells.get(key, 0) * count + new_cells.get(key, 0)) / (count + 1)
-                for key in old_cells.keys() | new_cells.keys()
-            }
-            db.players.update_one(
-                {"_id": player_doc["_id"]},
-                {"$set": {
-                    f"{mode_key}heatmap.{map_key}.heatmap": merged,
-                    f"{mode_key}heatmap.{map_key}.count": count + 1,
-                }},
-            )
-
-        if mode_key in util.TEAM_MODES:
-            match["players"] = players
-            if "team" in players[0].keys() and players[0]["team"] != -1:
-                players.sort(key=lambda p: p["team"])
-            else:
-                players.sort(key=lambda p: p["character"])
-            match["team1"] = players[:len(players) // 2]
-            match["team2"] = players[len(players) // 2:]
-            del match["players"]
-            teams = [match["team1"], match["team2"]]
-            scores = [sum([p["score"] for p in t]) for t in teams]
-            if scores[0] == scores[1]:
-                match["outcome"] = 0
-            elif scores[0] > scores[1]:
-                match["outcome"] = 1
-            else:
-                match["outcome"] = 2
-            if host:
-                if any(p["player"] == host for p in teams[0]):
-                    match["hostteam"] = 1
-                else:
-                    match["hostteam"] = 2
-        else:
-            match["players"] = [{k: v for k, v in players.items if k != "team"}]
-        matches[fname] = match
+        date_str, time_str = fname.split("T")
+        matches[fname] = (json.loads(match_json), date_str, time_str)
     matches = dict(sorted(matches.items()))
-    for fname, match in matches.items():
-        db.matches.insert_one(match)
+    for fname, (raw, date_str, time_str) in matches.items():
+        with matchops.locked():
+            matchops.submit(db, raw, host=host, date_str=date_str, time_str=time_str)
         await sync_channels(f"Submitted game from {fname}", message)
     await sync_channels("Finished submitting games", message)
     return
@@ -606,13 +564,16 @@ async def updater(message):
     os.system(f"mongodump -d public -o dump/dump_{str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))}")
     try:
         import read_and_update as rau
-        rau.main()
+        with matchops.locked():
+            rau.main()
         #rau.read_and_update()
         #rau.eloupdate.new_matches()
         #rau.historyupdate.update()
         await sync_channels("Successfully updated the leaderboards!", message)
     except OutcomeError as e:
-        await sync_channels("Error! " + e, message)
+        await sync_channels("Error! " + str(e), message)
+    except matchops.MatchOpError as e:
+        await sync_channels(str(e), message)
     except:
         await sync_channels("An error has occurred, please message an administrator.", message)
 
@@ -818,29 +779,21 @@ async def user_add(message):
             "badges": [],
             "emmr":starting_mmr,
             "mhmmr":starting_mmr,
-            "aarmmr":starting_mmr,
-            "aadmmr":starting_mmr,
             "dommr":starting_mmr,
             "dmmmr":starting_mmr,
             "asbmmr":starting_mmr,
             "ehistory":{"dates":[d], "mmrs":[starting_mmr]},
             "mhhistory":{"dates":[d], "mmrs":[starting_mmr]},
-            "aarhistory":{"dates":[d], "mmrs":[starting_mmr]},
-            "aadhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "dohistory":{"dates":[d], "mmrs":[starting_mmr]},
             "dmhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "asbhistory":{"dates":[d], "mmrs":[starting_mmr]},
             "egames":{"total":int(0), "won":int(0), "lost":int(0)},
             "mhgames":{"total":int(0), "won":int(0), "lost":int(0)},
-            "aargames":{"total":int(0), "won":int(0), "lost":int(0)},
-            "aadgames":{"total":int(0), "won":int(0), "lost":int(0)},
             "dogames":{"total":int(0), "won":int(0), "lost":int(0)},
             "dmgames":{"total":int(0), "won":int(0), "lost":int(0), "podium":int(0), "finishes":int(0)},
             "asbgames":{"total":int(0), "won":int(0), "lost":int(0), "podium":int(0), "finishes":int(0)},
             "estats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
             "mhstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
-            "aarstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
-            "aadstats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
             "dostats":{"totalscore":int(0), "kills":int(0), "deaths":int(0), "scored":int(0), "conceded":int(0)},
             "dmstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
             "asbstats":{"totalscore":int(0), "highscore":int(0), "kills":int(0), "deaths":int(0)},
@@ -848,10 +801,6 @@ async def user_add(message):
             "erankchange": 0,
             "mhrank": 0,
             "mhrankchange": 0,
-            "aarrank": 0,
-            "aarrankchange": 0,
-            "aadrank": 0,
-            "aadrankchange": 0,
             "dorankchange": 0,
             "dorank": 0,
             "dmrank": 0,
@@ -861,6 +810,9 @@ async def user_add(message):
             "discord_id": discord_id,
             "hidden": False}
             )
+        # every other mode (each game's Artifact assault, ...)
+        import add_mode
+        add_mode.ensure_modes(db, {"name": name})
         await sync_channels("Successfully added user.", message)
     except:
         await sync_channels("An error has occured.", message)
@@ -1130,6 +1082,24 @@ async def estimate_change(message):
 
 @util.permission_locked
 @util.command_dec
+async def undo_match(message):
+    """Remove a match and recalculate the ratings it touched."""
+    parts = message.content.split()
+    if len(parts) != 2:
+        await sync_channels("Usage: AN undo MATCH_ID", message)
+        return
+    db = util.connect()
+    actor = db.players.find_one({"discord_id": str(message.author.id)})
+    try:
+        result = await match_announce.blocking(matchops.undo, parts[1], actor=actor["name"], source="discord")
+    except matchops.MatchOpError as e:
+        await sync_channels(f"Couldn't undo: {e}", message)
+        return
+    await sync_channels(f"Undone. {result.get('replayed', 0)} later match(es) recalculated.", message)
+
+
+@util.permission_locked
+@util.command_dec
 async def restore_backup(message):
     path = "/home/dell/Match_Update/dump/"
     dumps = os.listdir(path)
@@ -1317,6 +1287,9 @@ async def on_message(message):
 
         elif message.content.lower().startswith("submit"):
             await submit_match(message)
+
+        elif message.content.lower().startswith("undo "):
+            await undo_match(message)
 
     elif message.content == "Y":
         await sync_channels(f"{message.author.name} has tacoed out.", message)

@@ -27,7 +27,7 @@ sync_roles = {
     "do": {
         #server : #role
     },
-    "aa": {
+    "acraa": {
         #server : #role
     },
     "mh": {
@@ -47,3 +47,5 @@ RAU_FILE_PATH=""
 RAU_FILE_NAME=""
 RAU_SPLIT_TOKEN=", "
 RAU_SECONDARY_TOKEN="$"
+# channel where processed matches are posted with Undo / Correct buttons (None disables it)
+match_channel = None #int
