@@ -359,3 +359,16 @@ def test_ensure_modes_adds_only_what_is_missing(db):
     assert alpha["emmr"] == 1234  # existing modes untouched
     assert alpha["ac4aarmmr"] == 800 and alpha["ac4aarstats"]["scored"] == 0
     assert add_mode.ensure_modes(db)["ac4aar"] == 0  # rerunning changes nothing
+
+
+def test_fill_counters_adds_missing_podium_and_finishes(db):
+    import add_mode
+
+    add_players(db)
+    db.players.update_many({}, {"$unset": {"asbgames.finishes": "", "asbgames.podium": ""}})
+    db.players.update_one({"name": "Alpha"}, {"$set": {"asbgames.total": 12}})
+    added = add_mode.fill_counters(db)
+    assert added == {"asbgames.podium": len(NAMES), "asbgames.finishes": len(NAMES)}
+    alpha = db.players.find_one({"name": "Alpha"})
+    assert alpha["asbgames"] == {"total": 12, "won": 10, "lost": 10, "podium": 0, "finishes": 0}
+    assert add_mode.fill_counters(db) == {}

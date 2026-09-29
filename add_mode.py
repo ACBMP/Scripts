@@ -32,6 +32,30 @@ def ensure_modes(db=None, query=None, modes=None):
     return added
 
 
+def fill_counters(db=None, modes=None):
+    """
+    Add counters missing inside modes players already have, e.g. an
+    ``asbgames`` without ``podium``/``finishes``. Existing values are never
+    touched, so this is safe to rerun.
+
+    :return: {field: number of players that got it}, only fields that were missing
+    """
+    db = db if db is not None else connect()
+    added = {}
+    for mode in modes or ALL_MODES:
+        defaults = mode_fields(mode)
+        for part in ("games", "stats"):
+            parent = f"{mode}{part}"
+            for key, value in defaults[parent].items():
+                field = f"{parent}.{key}"
+                n = db.players.update_many(
+                    {parent: {"$type": "object"}, field: {"$exists": False}}, {"$set": {field: value}}
+                ).modified_count
+                if n:
+                    added[field] = n
+    return added
+
+
 def add_mode(mode):
     db = connect()
     d = date.today().strftime("%y-%m-%d")
@@ -89,3 +113,5 @@ if __name__ == "__main__":
     for mode, count in ensure_modes().items():
         if count:
             print(f"Added {check_mode(mode)} to {count} players")
+    for field, count in fill_counters().items():
+        print(f"Added the missing {field} to {count} players")
